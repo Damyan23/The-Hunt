@@ -1,0 +1,8 @@
+{
+	"SourceFiles": [
+		"F:\\Projects\\The-Hunt\\TheHunt\\Source\\TheHunt\\TheHunt.Build.cs",
+		"F:\\Projects\\The-Hunt\\TheHunt\\Source\\TheHunt.Target.cs",
+		"F:\\Projects\\The-Hunt\\TheHunt\\Source\\TheHuntEditor.Target.cs"
+	],
+	"EngineVersion": "5.7.3"
+}

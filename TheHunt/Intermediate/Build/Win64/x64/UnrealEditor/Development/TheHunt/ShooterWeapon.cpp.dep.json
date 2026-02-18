@@ -1,0 +1,22 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\variant_shooter\\weapons\\shooterweapon.cpp",
+        "ProvidedModule": "",
+        "PCH": "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\x64\\thehunteditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.h.pch",
+        "Includes": [
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\thehunt\\definitions.thehunt.h",
+            "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\variant_shooter\\weapons\\shooterweapon.h",
+            "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\variant_shooter\\weapons\\shooterweaponholder.h",
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shooterweaponholder.generated.h",
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shooterweapon.generated.h",
+            "c:\\program files\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\kismet\\kismetmathlibrary.h",
+            "c:\\program files\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\kismetmathlibrary.generated.h",
+            "c:\\program files\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\kismet\\kismetmathlibrary.inl",
+            "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\variant_shooter\\weapons\\shooterprojectile.h",
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shooterprojectile.generated.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}
