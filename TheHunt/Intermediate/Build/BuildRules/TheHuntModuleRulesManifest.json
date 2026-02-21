@@ -1,6 +1,8 @@
 {
 	"SourceFiles": [
 		"F:\\Projects\\The-Hunt\\TheHunt\\Source\\TheHunt\\TheHunt.Build.cs",
+		"F:\\Projects\\The-Hunt\\TheHunt\\Plugins\\VisualStudioTools\\Source\\VisualStudioBlueprintDebuggerHelper\\VisualStudioBlueprintDebuggerHelper.Build.cs",
+		"F:\\Projects\\The-Hunt\\TheHunt\\Plugins\\VisualStudioTools\\Source\\VisualStudioTools\\VisualStudioTools.Build.cs",
 		"F:\\Projects\\The-Hunt\\TheHunt\\Source\\TheHunt.Target.cs",
 		"F:\\Projects\\The-Hunt\\TheHunt\\Source\\TheHuntEditor.Target.cs"
 	],

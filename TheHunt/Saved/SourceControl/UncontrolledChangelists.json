@@ -1,0 +1,47 @@
+{
+	"version": 1,
+	"changelists": [
+		{
+			"guid": "00000000000000000000000000000000",
+			"description": "Default Uncontrolled Changelist",
+			"files": [
+				"F:/Projects/The-Hunt/TheHunt/Content/FirstPerson/Blueprints/BP_FirstPersonCharacter.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Variant_Horror/Blueprints/BP_HorrorCharacter.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Variant_Shooter/Blueprints/BP_ShooterCharacter.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Variant_Shooter/Input/UI_TouchInterface_Shooter.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/FirstPerson/Blueprints/BP_FirstPersonPlayerController.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Variant_Horror/Blueprints/BP_HorrorPlayerController.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Variant_Shooter/Blueprints/BP_ShooterPlayerController.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input-Template/Touch/BPI_TouchInterface.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input-Template/IMC_MouseLook.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input-Template/IMC_Default.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input-Template/Actions/IA_Move.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input-Template/Actions/IA_MouseLook.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input-Template/Actions/IA_Look.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input-Template/Actions/IA_Jump.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input-Template/Touch/UI_Thumbstick.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input-Template/Touch/UI_TouchSimple.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Player/BP_Player.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Player/InputGameMode.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/FirstPerson/Lvl_FirstPerson.umap",
+				"F:/Projects/The-Hunt/TheHunt/Content/Player/Input/MainMappingContext.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Player/Input/Actions/IA_Movement.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Player/Input/Actions/IA_Jump.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Player/Input/Actions/IA_Look.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Player/Input/Actions/IA_Interact.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/MainMappingContext.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/Actions/TestAction.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Player/Input/Actions/IA_Move.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/Touch/UI_TouchSimple.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/Touch/UI_Thumbstick.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/Actions/IA_Jump.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/Actions/IA_Look.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/Actions/IA_MouseLook.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/Actions/IA_Move.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/IMC_Default.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/IMC_MouseLook.uasset",
+				"F:/Projects/The-Hunt/TheHunt/Content/Input/Touch/BPI_TouchInterface.uasset"
+			]
+		}
+	]
+}

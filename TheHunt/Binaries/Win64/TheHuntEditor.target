@@ -4298,6 +4298,26 @@
 		{
 			"Path": "$(ProjectDir)/Binaries/Win64/UnrealEditor.modules",
 			"Type": "RequiredResource"
+		},
+		{
+			"Path": "$(ProjectDir)/Plugins/VisualStudioTools/Binaries/Win64/UnrealEditor-VisualStudioBlueprintDebuggerHelper.dll",
+			"Type": "DynamicLibrary"
+		},
+		{
+			"Path": "$(ProjectDir)/Plugins/VisualStudioTools/Binaries/Win64/UnrealEditor-VisualStudioBlueprintDebuggerHelper.pdb",
+			"Type": "SymbolFile"
+		},
+		{
+			"Path": "$(ProjectDir)/Plugins/VisualStudioTools/Binaries/Win64/UnrealEditor-VisualStudioTools.dll",
+			"Type": "DynamicLibrary"
+		},
+		{
+			"Path": "$(ProjectDir)/Plugins/VisualStudioTools/Binaries/Win64/UnrealEditor-VisualStudioTools.pdb",
+			"Type": "SymbolFile"
+		},
+		{
+			"Path": "$(ProjectDir)/Plugins/VisualStudioTools/Binaries/Win64/UnrealEditor.modules",
+			"Type": "RequiredResource"
 		}
 	],
 	"RuntimeDependencies": [
@@ -28826,6 +28846,10 @@
 			"Type": "UFS"
 		},
 		{
+			"Path": "$(ProjectDir)/Plugins/VisualStudioTools/VisualStudioTools.uplugin",
+			"Type": "UFS"
+		},
+		{
 			"Path": "$(ProjectDir)/TheHunt.uproject",
 			"Type": "UFS"
 		}
@@ -29033,6 +29057,7 @@
 		"VariantManagerContent",
 		"VisualStudioCodeSourceCodeAccess",
 		"VisualStudioSourceCodeAccess",
+		"VisualStudioTools",
 		"WaveTable",
 		"WebMMedia",
 		"WebMMoviePlayer",
