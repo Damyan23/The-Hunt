@@ -3,6 +3,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 AInputCharacter::AInputCharacter()
@@ -96,7 +97,7 @@ void AInputCharacter::Interact()
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 	//const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-	FCollisionShape Sphere = FCollisionShape::MakeSphere(InteractionDistance);
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(InteractionSphereRadius);
 
 	TArray<FHitResult> HitResults;
 	GetWorld()->SweepMultiByChannel(
@@ -104,23 +105,30 @@ void AInputCharacter::Interact()
 		GetActorLocation(),
 		GetActorLocation() + ForwardDirection * InteractionDistance,
 		FQuat::Identity,
-		ECC_Visibility,
+		ECC_GameTraceChannel1,  // your custom trace channel
 		Sphere
+	);
+
+	DrawDebugLine(
+		GetWorld(),
+		GetActorLocation(),
+		GetActorLocation() + ForwardDirection * InteractionDistance,
+		HitResults.Num() > 0 ? FColor::Green : FColor::Red,  // green if hit, red if not
+		false,  // persistent
+		1.0f,   // duration in seconds
+		0,
+		2.0f    // thickness
 	);
 
 	if (HitResults.Num() > 0)
 	{
 		for (const FHitResult& Hit : HitResults)
 		{
-			if (IsValid(Hit.GetActor()))
+			if (IsValid(Hit.GetActor()) && Hit.GetActor() != this)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *Hit.GetActor()->GetName());
+				Hit.GetActor()->Destroy();
 			}
 		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No hit"));
 	}
 }
 

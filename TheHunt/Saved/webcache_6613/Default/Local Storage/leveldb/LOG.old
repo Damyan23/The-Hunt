@@ -1,3 +1,5 @@
-2026/02/20-14:45:47.685 6908 Reusing MANIFEST F:\Projects\The-Hunt\TheHunt\Saved\webcache_6613\Default\Local Storage\leveldb/MANIFEST-000001
-2026/02/20-14:45:47.704 6908 Recovering log #3
-2026/02/20-14:45:47.707 6908 Reusing old log F:\Projects\The-Hunt\TheHunt\Saved\webcache_6613\Default\Local Storage\leveldb/000003.log 
+2026/02/27-16:01:49.254 bd7c Reusing MANIFEST F:\Projects\The-Hunt\TheHunt\Saved\webcache_6613\Default\Local Storage\leveldb/MANIFEST-000001
+2026/02/27-16:01:49.259 bd7c Recovering log #16
+2026/02/27-16:01:49.260 bd7c Level-0 table #19: started
+2026/02/27-16:01:49.265 bd7c Level-0 table #19: 66728 bytes OK
+2026/02/27-16:01:49.270 bd7c Delete type=0 #16

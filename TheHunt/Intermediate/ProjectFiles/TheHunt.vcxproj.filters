@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <None Include="..\..\.editorconfig" />
     <None Include="..\..\.vsconfig" />
     <Filter Include="Config">
       <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
@@ -116,6 +117,7 @@
     <None Include="..\..\Plugins\VisualStudioTools\VisualStudioTools.uplugin">
       <Filter>Plugins\VisualStudioTools</Filter>
     </None>
+    <None Include="..\..\shadertoolsconfig.json" />
     <Filter Include="Source">
       <UniqueIdentifier>{F31BBDD1-B3E8-3BCC-9652-680E16935819}</UniqueIdentifier>
     </Filter>
@@ -136,6 +138,30 @@
     </ClCompile>
     <ClInclude Include="..\..\Source\TheHunt\InputPlayer\InputCharacter.h">
       <Filter>Source\TheHunt\InputPlayer</Filter>
+    </ClInclude>
+    <Filter Include="Source\TheHunt\Items">
+      <UniqueIdentifier>{56773721-21A9-3AD4-A976-F6EC472FB901}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\TheHunt\Items\ItemDefinition.cpp">
+      <Filter>Source\TheHunt\Items</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Items\ItemDefinition.h">
+      <Filter>Source\TheHunt\Items</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\TheHunt\Items\ItemEffect.cpp">
+      <Filter>Source\TheHunt\Items</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Items\ItemEffect.h">
+      <Filter>Source\TheHunt\Items</Filter>
+    </ClInclude>
+    <Filter Include="Source\TheHunt\Items\Weapon">
+      <UniqueIdentifier>{5B0E29D2-18B2-3B84-A8AB-5C6400DB9175}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\TheHunt\Items\Weapon\MeleWeapon.cpp">
+      <Filter>Source\TheHunt\Items\Weapon</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Items\Weapon\MeleWeapon.h">
+      <Filter>Source\TheHunt\Items\Weapon</Filter>
     </ClInclude>
     <None Include="..\..\Source\TheHunt\TheHunt.Build.cs">
       <Filter>Source\TheHunt</Filter>
@@ -296,6 +322,7 @@
     <ClInclude Include="..\..\Source\TheHunt\Variant_Shooter\Weapons\ShooterWeaponHolder.h">
       <Filter>Source\TheHunt\Variant_Shooter\Weapons</Filter>
     </ClInclude>
+    <None Include="..\..\Temp.txt" />
     <None Include="..\..\TheHunt.uproject" />
   </ItemGroup>
 </Project>

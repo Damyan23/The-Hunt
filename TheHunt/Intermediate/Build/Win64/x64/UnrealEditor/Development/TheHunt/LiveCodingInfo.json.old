@@ -7,6 +7,9 @@
 			"HorrorGameMode.gen.cpp.obj",
 			"HorrorPlayerController.gen.cpp.obj",
 			"HorrorUI.gen.cpp.obj",
+			"InputCharacter.gen.cpp.obj",
+			"ItemDefinition.gen.cpp.obj",
+			"ItemEffect.gen.cpp.obj",
 			"ShooterAIController.gen.cpp.obj",
 			"ShooterBulletCounterUI.gen.cpp.obj",
 			"ShooterCharacter.gen.cpp.obj",
@@ -48,7 +51,10 @@
 			"ShooterPickup.cpp.obj",
 			"ShooterProjectile.cpp.obj",
 			"ShooterWeapon.cpp.obj",
-			"ShooterWeaponHolder.cpp.obj"
+			"ShooterWeaponHolder.cpp.obj",
+			"InputCharacter.cpp.obj",
+			"ItemDefinition.cpp.obj",
+			"ItemEffect.cpp.obj"
 		]
 	}
 }

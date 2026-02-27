@@ -30,6 +30,9 @@ protected:
 	class UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
+	float InteractionSphereRadius = 50.f;
+
+	UPROPERTY(EditAnywhere, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	float InteractionDistance = 500.f;
 
 public:

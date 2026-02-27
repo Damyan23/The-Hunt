@@ -9,5 +9,8 @@
 "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/x64/TheHuntEditor/Development/UnrealEd/SharedPCH.UnrealEd.Project.ValApi.ValExpApi.Cpp20.h.obj"
 "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/x64/UnrealEditor/Development/TheHunt/Module.TheHunt.cpp.obj"
 "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/x64/UnrealEditor/Development/TheHunt/InputCharacter.cpp.obj"
+"F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/x64/UnrealEditor/Development/TheHunt/ItemDefinition.cpp.obj"
+"F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/x64/UnrealEditor/Development/TheHunt/ItemEffect.cpp.obj"
+"F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/x64/UnrealEditor/Development/TheHunt/MeleWeapon.cpp.obj"
 "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/x64/UnrealEditor/Development/TheHunt/Default.rc2.res"
 /OUT:"F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/x64/UnrealEditor/Development/TheHunt/UnrealEditor-TheHunt.lib"
