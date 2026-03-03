@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Inventory/UI/InventoryWidget.h"
+#include  "Inventory/InventorySubsystem.h"
 #include "InputCharacter.generated.h"
 
 UCLASS()
@@ -12,6 +14,8 @@ class THEHUNT_API AInputCharacter : public ACharacter
 
 	UPROPERTY(Visibleanywhere, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* Camera;	
+
+	APlayerController* PC;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
@@ -35,6 +39,14 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	float InteractionDistance = 500.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UInventoryWidget> InventoryWidget;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* InventoryAction;
+
 public:
 	// Sets default values for this character's properties
 	AInputCharacter();
@@ -55,4 +67,5 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void Jump();
 	void Interact();
+	void ToggleInventory();
 };

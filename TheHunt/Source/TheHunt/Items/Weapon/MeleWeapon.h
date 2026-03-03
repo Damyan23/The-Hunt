@@ -25,5 +25,5 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
-	TObjectPtr<UItemDefinition> ItemInfo;
+	TSoftObjectPtr<UItemDefinition> ItemDefinition;
 };

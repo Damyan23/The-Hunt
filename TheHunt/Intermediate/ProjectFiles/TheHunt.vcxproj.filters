@@ -139,6 +139,39 @@
     <ClInclude Include="..\..\Source\TheHunt\InputPlayer\InputCharacter.h">
       <Filter>Source\TheHunt\InputPlayer</Filter>
     </ClInclude>
+    <Filter Include="Source\TheHunt\Inventory">
+      <UniqueIdentifier>{4F1C64A9-8127-3C74-A2DB-EDA9C027C02B}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\TheHunt\Inventory\InventoryComponent.cpp">
+      <Filter>Source\TheHunt\Inventory</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\InventoryComponent.h">
+      <Filter>Source\TheHunt\Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\InventorySlot.h">
+      <Filter>Source\TheHunt\Inventory</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\TheHunt\Inventory\InventorySubsystem.cpp">
+      <Filter>Source\TheHunt\Inventory</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\InventorySubsystem.h">
+      <Filter>Source\TheHunt\Inventory</Filter>
+    </ClInclude>
+    <Filter Include="Source\TheHunt\Inventory\UI">
+      <UniqueIdentifier>{D8A862BE-1363-30FF-A9CD-BF2063053495}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\TheHunt\Inventory\UI\InventorySlotWidget.cpp">
+      <Filter>Source\TheHunt\Inventory\UI</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\UI\InventorySlotWidget.h">
+      <Filter>Source\TheHunt\Inventory\UI</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\TheHunt\Inventory\UI\InventoryWidget.cpp">
+      <Filter>Source\TheHunt\Inventory\UI</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\UI\InventoryWidget.h">
+      <Filter>Source\TheHunt\Inventory\UI</Filter>
+    </ClInclude>
     <Filter Include="Source\TheHunt\Items">
       <UniqueIdentifier>{56773721-21A9-3AD4-A976-F6EC472FB901}</UniqueIdentifier>
     </Filter>
@@ -323,6 +356,7 @@
       <Filter>Source\TheHunt\Variant_Shooter\Weapons</Filter>
     </ClInclude>
     <None Include="..\..\Temp.txt" />
+    <None Include="..\..\TheHunt.png" />
     <None Include="..\..\TheHunt.uproject" />
   </ItemGroup>
 </Project>

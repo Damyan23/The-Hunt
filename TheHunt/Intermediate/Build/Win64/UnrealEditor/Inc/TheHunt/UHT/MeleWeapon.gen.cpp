@@ -56,14 +56,14 @@ struct Z_Construct_UClass_AMeleWeapon_Statics
 		{ "IncludePath", "Items/Weapon/MeleWeapon.h" },
 		{ "ModuleRelativePath", "Items/Weapon/MeleWeapon.h" },
 	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_ItemInfo_MetaData[] = {
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_ItemDefinition_MetaData[] = {
 		{ "Category", "Item" },
 		{ "ModuleRelativePath", "Items/Weapon/MeleWeapon.h" },
 	};
 #endif // WITH_METADATA
 
 // ********** Begin Class AMeleWeapon constinit property declarations ******************************
-	static const UECodeGen_Private::FObjectPropertyParams NewProp_ItemInfo;
+	static const UECodeGen_Private::FSoftObjectPropertyParams NewProp_ItemDefinition;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 // ********** End Class AMeleWeapon constinit property declarations ********************************
 	static UObject* (*const DependentSingletons[])();
@@ -74,9 +74,9 @@ struct Z_Construct_UClass_AMeleWeapon_Statics
 }; // struct Z_Construct_UClass_AMeleWeapon_Statics
 
 // ********** Begin Class AMeleWeapon Property Definitions *****************************************
-const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AMeleWeapon_Statics::NewProp_ItemInfo = { "ItemInfo", nullptr, (EPropertyFlags)0x0114000000010001, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMeleWeapon, ItemInfo), Z_Construct_UClass_UItemDefinition_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ItemInfo_MetaData), NewProp_ItemInfo_MetaData) };
+const UECodeGen_Private::FSoftObjectPropertyParams Z_Construct_UClass_AMeleWeapon_Statics::NewProp_ItemDefinition = { "ItemDefinition", nullptr, (EPropertyFlags)0x0014000000010001, UECodeGen_Private::EPropertyGenFlags::SoftObject, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMeleWeapon, ItemDefinition), Z_Construct_UClass_UItemDefinition_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ItemDefinition_MetaData), NewProp_ItemDefinition_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AMeleWeapon_Statics::PropPointers[] = {
-	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMeleWeapon_Statics::NewProp_ItemInfo,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMeleWeapon_Statics::NewProp_ItemDefinition,
 };
 static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_AMeleWeapon_Statics::PropPointers) < 2048);
 // ********** End Class AMeleWeapon Property Definitions *******************************************
@@ -119,10 +119,10 @@ AMeleWeapon::~AMeleWeapon() {}
 struct Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleWeapon_h__Script_TheHunt_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_AMeleWeapon, AMeleWeapon::StaticClass, TEXT("AMeleWeapon"), &Z_Registration_Info_UClass_AMeleWeapon, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AMeleWeapon), 1132332667U) },
+		{ Z_Construct_UClass_AMeleWeapon, AMeleWeapon::StaticClass, TEXT("AMeleWeapon"), &Z_Registration_Info_UClass_AMeleWeapon, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AMeleWeapon), 4105720205U) },
 	};
 }; // Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleWeapon_h__Script_TheHunt_Statics 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleWeapon_h__Script_TheHunt_3669291855{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleWeapon_h__Script_TheHunt_3004698539{
 	TEXT("/Script/TheHunt"),
 	Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleWeapon_h__Script_TheHunt_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleWeapon_h__Script_TheHunt_Statics::ClassInfo),
 	nullptr, 0,

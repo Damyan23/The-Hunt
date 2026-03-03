@@ -20,7 +20,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 struct Z_Construct_UClass_AInputCharacter_Statics;
 THEHUNT_API UClass* Z_Construct_UClass_AInputCharacter_NoRegister();
 
-#define FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_11_INCLASS_NO_PURE_DECLS \
+#define FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_13_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesAInputCharacter(); \
 	friend struct ::Z_Construct_UClass_AInputCharacter_Statics; \
@@ -31,7 +31,7 @@ public: \
 	DECLARE_SERIALIZER(AInputCharacter)
 
 
-#define FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_11_ENHANCED_CONSTRUCTORS \
+#define FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_13_ENHANCED_CONSTRUCTORS \
 	/** Deleted move- and copy-constructors, should never be used */ \
 	AInputCharacter(AInputCharacter&&) = delete; \
 	AInputCharacter(const AInputCharacter&) = delete; \
@@ -41,12 +41,12 @@ public: \
 	NO_API virtual ~AInputCharacter();
 
 
-#define FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_8_PROLOG
-#define FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_11_GENERATED_BODY \
+#define FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_10_PROLOG
+#define FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_13_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_11_INCLASS_NO_PURE_DECLS \
-	FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_11_ENHANCED_CONSTRUCTORS \
+	FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_13_INCLASS_NO_PURE_DECLS \
+	FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h_13_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 

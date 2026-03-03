@@ -578,6 +578,31 @@
       <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
     </ClCompile>
     <ClInclude Include="..\..\Source\TheHunt\InputPlayer\InputCharacter.h"/>
+    <ClCompile Include="..\..\Source\TheHunt\Inventory\InventoryComponent.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
+      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\InventoryComponent.h"/>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\InventorySlot.h"/>
+    <ClCompile Include="..\..\Source\TheHunt\Inventory\InventorySubsystem.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
+      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\InventorySubsystem.h"/>
+    <ClCompile Include="..\..\Source\TheHunt\Inventory\UI\InventorySlotWidget.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
+      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\UI\InventorySlotWidget.h"/>
+    <ClCompile Include="..\..\Source\TheHunt\Inventory\UI\InventoryWidget.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
+      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Inventory\UI\InventoryWidget.h"/>
     <ClCompile Include="..\..\Source\TheHunt\Items\ItemDefinition.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
@@ -736,6 +761,7 @@
     </ClCompile>
     <ClInclude Include="..\..\Source\TheHunt\Variant_Shooter\Weapons\ShooterWeaponHolder.h"/>
     <None Include="..\..\Temp.txt"/>
+    <None Include="..\..\TheHunt.png"/>
     <None Include="..\..\TheHunt.uproject"/>
   </ItemGroup>
   <PropertyGroup>

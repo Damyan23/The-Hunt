@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
+#include "Engine/Texture2D.h"
 #include "ItemDefinition.generated.h"
 //#include "ItemEffect.h"
 
@@ -11,7 +12,7 @@
  * 
  */
 UCLASS(BlueprintType)
-class THEHUNT_API UItemDefinition : public UDataAsset
+class THEHUNT_API UItemDefinition : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 
@@ -21,6 +22,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
 	FName ItemID;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	TSoftObjectPtr<UTexture2D> ItemIcon;
+
 	UPROPERTY(EditAnywhere, Category = "Item")
 	TArray<TSubclassOf<class UItemEffect>> Effects;
 };

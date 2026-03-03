@@ -1,9 +1,13 @@
 #include "TheHunt/InputPlayer/InputCharacter.h"
+
+#include <string>
+
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Items/Weapon/MeleWeapon.h"
 
 // Sets default values
 AInputCharacter::AInputCharacter()
@@ -21,6 +25,16 @@ void AInputCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (InventoryWidgetClass)
+	{
+		InventoryWidget = CreateWidget<UInventoryWidget>(GetWorld(), InventoryWidgetClass);
+		InventoryWidget->InventoryComponent = FindComponentByClass<UInventoryComponent>();
+		InventoryWidget->SetupUI();
+		InventoryWidget->AddToViewport();
+		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed); // hidden by default
+	}
+
+	PC = GetWorld()->GetFirstPlayerController();
 }
 
 // Called every frame
@@ -52,6 +66,7 @@ void AInputCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &AInputCharacter::Look);
 		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AInputCharacter::Jump);
 		Input->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AInputCharacter::Interact);
+		Input->BindAction(InventoryAction, ETriggerEvent::Started, this, &AInputCharacter::ToggleInventory);
 	}
 }
 
@@ -126,9 +141,36 @@ void AInputCharacter::Interact()
 		{
 			if (IsValid(Hit.GetActor()) && Hit.GetActor() != this)
 			{
-				Hit.GetActor()->Destroy();
+				AMeleWeapon* Pickup = Cast<AMeleWeapon>(Hit.GetActor());
+				if (Pickup)
+				{
+					UItemDefinition* ItemDef = Pickup->ItemDefinition.LoadSynchronous();
+					if (ItemDef)
+					{
+						GetWorld()->GetGameInstance()->GetSubsystem<UInventorySubsystem>()->AddItemToActor(this, ItemDef);
+						Pickup->Destroy();
+					}
+				}
 			}
 		}
+	}
+}
+
+void AInputCharacter::ToggleInventory() 
+{
+	if (!InventoryWidget) return;
+
+	if (InventoryWidget->IsVisible())
+	{
+		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
+		PC->SetShowMouseCursor(false);
+		PC->SetInputMode(FInputModeGameOnly());
+	}
+	else
+	{
+		InventoryWidget->SetVisibility(ESlateVisibility::Visible);
+		PC->SetShowMouseCursor(true);
+		PC->SetInputMode(FInputModeGameAndUI());
 	}
 }
 

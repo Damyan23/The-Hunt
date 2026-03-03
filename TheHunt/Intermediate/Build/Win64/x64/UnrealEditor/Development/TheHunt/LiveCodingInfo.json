@@ -8,6 +8,11 @@
 			"HorrorPlayerController.gen.cpp.obj",
 			"HorrorUI.gen.cpp.obj",
 			"InputCharacter.gen.cpp.obj",
+			"InventoryComponent.gen.cpp.obj",
+			"InventorySlot.gen.cpp.obj",
+			"InventorySlotWidget.gen.cpp.obj",
+			"InventorySubsystem.gen.cpp.obj",
+			"InventoryWidget.gen.cpp.obj",
 			"ItemDefinition.gen.cpp.obj",
 			"ItemEffect.gen.cpp.obj",
 			"MeleWeapon.gen.cpp.obj",
@@ -30,6 +35,7 @@
 			"TheHuntGameMode.gen.cpp.obj",
 			"TheHuntPlayerController.gen.cpp.obj",
 			"PerModuleInline.gen.cpp.obj",
+			"ItemEffect.cpp.obj",
 			"TheHunt.cpp.obj",
 			"TheHuntCameraManager.cpp.obj",
 			"TheHuntCharacter.cpp.obj",
@@ -54,8 +60,11 @@
 			"ShooterWeapon.cpp.obj",
 			"ShooterWeaponHolder.cpp.obj",
 			"InputCharacter.cpp.obj",
+			"InventoryComponent.cpp.obj",
+			"InventorySubsystem.cpp.obj",
+			"InventorySlotWidget.cpp.obj",
+			"InventoryWidget.cpp.obj",
 			"ItemDefinition.cpp.obj",
-			"ItemEffect.cpp.obj",
 			"MeleWeapon.cpp.obj"
 		]
 	}

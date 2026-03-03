@@ -12,6 +12,7 @@ static_assert(!UE_WITH_CONSTINIT_UOBJECT, "This generated code can only be compi
 	THEHUNT_API UFunction* Z_Construct_UDelegateFunction_TheHunt_PawnDeathDelegate__DelegateSignature();
 	THEHUNT_API UFunction* Z_Construct_UDelegateFunction_TheHunt_SprintStateChangedDelegate__DelegateSignature();
 	THEHUNT_API UFunction* Z_Construct_UDelegateFunction_TheHunt_UpdateSprintMeterDelegate__DelegateSignature();
+	THEHUNT_API UFunction* Z_Construct_UDelegateFunction_UInventoryComponent_OnSlotUpdated__DelegateSignature();
 	static FPackageRegistrationInfo Z_Registration_Info_UPackage__Script_TheHunt;
 	FORCENOINLINE UPackage* Z_Construct_UPackage__Script_TheHunt()
 	{
@@ -23,19 +24,20 @@ static_assert(!UE_WITH_CONSTINIT_UOBJECT, "This generated code can only be compi
 			(UObject* (*)())Z_Construct_UDelegateFunction_TheHunt_PawnDeathDelegate__DelegateSignature,
 			(UObject* (*)())Z_Construct_UDelegateFunction_TheHunt_SprintStateChangedDelegate__DelegateSignature,
 			(UObject* (*)())Z_Construct_UDelegateFunction_TheHunt_UpdateSprintMeterDelegate__DelegateSignature,
+			(UObject* (*)())Z_Construct_UDelegateFunction_UInventoryComponent_OnSlotUpdated__DelegateSignature,
 		};
 		static const UECodeGen_Private::FPackageParams PackageParams = {
 			"/Script/TheHunt",
 			SingletonFuncArray,
 			UE_ARRAY_COUNT(SingletonFuncArray),
 			PKG_CompiledIn | 0x00000000,
-			0x54DE1347,
-			0xE78100BB,
+			0xBDEEB526,
+			0xBF13E676,
 			METADATA_PARAMS(0, nullptr)
 		};
 		UECodeGen_Private::ConstructUPackage(Z_Registration_Info_UPackage__Script_TheHunt.OuterSingleton, PackageParams);
 	}
 	return Z_Registration_Info_UPackage__Script_TheHunt.OuterSingleton;
 }
-static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_TheHunt(Z_Construct_UPackage__Script_TheHunt, TEXT("/Script/TheHunt"), Z_Registration_Info_UPackage__Script_TheHunt, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0x54DE1347, 0xE78100BB));
+static FRegisterCompiledInInfo Z_CompiledInDeferPackage_UPackage__Script_TheHunt(Z_Construct_UPackage__Script_TheHunt, TEXT("/Script/TheHunt"), Z_Registration_Info_UPackage__Script_TheHunt, CONSTRUCT_RELOAD_VERSION_INFO(FPackageReloadVersionInfo, 0xBDEEB526, 0xBF13E676));
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
