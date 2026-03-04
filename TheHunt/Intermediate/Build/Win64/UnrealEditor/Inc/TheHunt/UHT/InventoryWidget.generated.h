@@ -19,6 +19,7 @@ class UTexture2D;
 
 // ********** Begin Class UInventoryWidget *********************************************************
 #define FID_TheHunt_Source_TheHunt_Inventory_UI_InventoryWidget_h_23_RPC_WRAPPERS_NO_PURE_DECLS \
+	DECLARE_FUNCTION(execOnSlotClicked); \
 	DECLARE_FUNCTION(execUpdateUI);
 
 

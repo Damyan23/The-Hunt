@@ -9,9 +9,13 @@
             "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\inventory\\inventorycomponent.h",
             "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\items\\itemdefinition.h",
             "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\itemdefinition.generated.h",
+            "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\inventory\\inventoryslot.h",
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\inventoryslot.generated.h",
             "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\inventorycomponent.generated.h",
             "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\inventory\\inventorysubsystem.h",
-            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\inventorysubsystem.generated.h"
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\inventorysubsystem.generated.h",
+            "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\items\\weapon\\meleweapon.h",
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\meleweapon.generated.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []

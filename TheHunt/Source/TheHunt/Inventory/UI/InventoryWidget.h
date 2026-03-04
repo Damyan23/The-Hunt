@@ -46,4 +46,6 @@ public:
 private:
 	UFUNCTION()
 	void UpdateUI(const int32 Index, UTexture2D* ItemIcon);
+	UFUNCTION()
+	void OnSlotClicked(const int32 Index);
 };

@@ -24,6 +24,60 @@ UMG_API UClass* Z_Construct_UClass_UWrapBox_NoRegister();
 UPackage* Z_Construct_UPackage__Script_TheHunt();
 // ********** End Cross Module References **********************************************************
 
+// ********** Begin Class UInventoryWidget Function OnSlotClicked **********************************
+struct Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics
+{
+	struct InventoryWidget_eventOnSlotClicked_Parms
+	{
+		int32 Index;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[] = {
+		{ "ModuleRelativePath", "Inventory/UI/InventoryWidget.h" },
+	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Index_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function OnSlotClicked constinit property declarations *************************
+	static const UECodeGen_Private::FIntPropertyParams NewProp_Index;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function OnSlotClicked constinit property declarations ***************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function OnSlotClicked Property Definitions ************************************
+const UECodeGen_Private::FIntPropertyParams Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::NewProp_Index = { "Index", nullptr, (EPropertyFlags)0x0010000000000082, UECodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(InventoryWidget_eventOnSlotClicked_Parms, Index), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Index_MetaData), NewProp_Index_MetaData) };
+const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::NewProp_Index,
+};
+static_assert(UE_ARRAY_COUNT(Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::PropPointers) < 2048);
+// ********** End Function OnSlotClicked Property Definitions **************************************
+const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::FuncParams = { { (UObject*(*)())Z_Construct_UClass_UInventoryWidget, nullptr, "OnSlotClicked", 	Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::PropPointers, 
+	UE_ARRAY_COUNT(Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::PropPointers), 
+sizeof(Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::InventoryWidget_eventOnSlotClicked_Parms),
+RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x00040401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::Function_MetaDataParams), Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::Function_MetaDataParams)},  };
+static_assert(sizeof(Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::InventoryWidget_eventOnSlotClicked_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UInventoryWidget_OnSlotClicked()
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_UInventoryWidget_OnSlotClicked_Statics::FuncParams);
+	}
+	return ReturnFunction;
+}
+DEFINE_FUNCTION(UInventoryWidget::execOnSlotClicked)
+{
+	P_GET_PROPERTY(FIntProperty,Z_Param_Index);
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	P_THIS->OnSlotClicked(Z_Param_Index);
+	P_NATIVE_END;
+}
+// ********** End Class UInventoryWidget Function OnSlotClicked ************************************
+
 // ********** Begin Class UInventoryWidget Function UpdateUI ***************************************
 struct Z_Construct_UFunction_UInventoryWidget_UpdateUI_Statics
 {
@@ -154,10 +208,12 @@ struct Z_Construct_UClass_UInventoryWidget_Statics
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 // ********** End Class UInventoryWidget constinit property declarations ***************************
 	static constexpr UE::CodeGen::FClassNativeFunction Funcs[] = {
+		{ .NameUTF8 = UTF8TEXT("OnSlotClicked"), .Pointer = &UInventoryWidget::execOnSlotClicked },
 		{ .NameUTF8 = UTF8TEXT("UpdateUI"), .Pointer = &UInventoryWidget::execUpdateUI },
 	};
 	static UObject* (*const DependentSingletons[])();
 	static constexpr FClassFunctionLinkInfo FuncInfo[] = {
+		{ &Z_Construct_UFunction_UInventoryWidget_OnSlotClicked, "OnSlotClicked" }, // 1314020253
 		{ &Z_Construct_UFunction_UInventoryWidget_UpdateUI, "UpdateUI" }, // 753938626
 	};
 	static_assert(UE_ARRAY_COUNT(FuncInfo) < 2048);
@@ -222,10 +278,10 @@ UInventoryWidget::~UInventoryWidget() {}
 struct Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Inventory_UI_InventoryWidget_h__Script_TheHunt_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UInventoryWidget, UInventoryWidget::StaticClass, TEXT("UInventoryWidget"), &Z_Registration_Info_UClass_UInventoryWidget, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UInventoryWidget), 2116479111U) },
+		{ Z_Construct_UClass_UInventoryWidget, UInventoryWidget::StaticClass, TEXT("UInventoryWidget"), &Z_Registration_Info_UClass_UInventoryWidget, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UInventoryWidget), 3512237803U) },
 	};
 }; // Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Inventory_UI_InventoryWidget_h__Script_TheHunt_Statics 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Inventory_UI_InventoryWidget_h__Script_TheHunt_1712006918{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Inventory_UI_InventoryWidget_h__Script_TheHunt_1316284343{
 	TEXT("/Script/TheHunt"),
 	Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Inventory_UI_InventoryWidget_h__Script_TheHunt_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Inventory_UI_InventoryWidget_h__Script_TheHunt_Statics::ClassInfo),
 	nullptr, 0,

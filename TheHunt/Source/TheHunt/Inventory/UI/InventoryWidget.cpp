@@ -30,8 +30,11 @@ void UInventoryWidget::SetupUI()
     {
         SlotWidth = FirstSlot->SizeBox->GetWidthOverride();
         SlotHeight = FirstSlot->SizeBox->GetHeightOverride();
+        FirstSlot->SlotIndex = 0;
+        FirstSlot->OnSlotClicked.AddDynamic(this, &UInventoryWidget::OnSlotClicked);
         WrapBox->AddChildToWrapBox(FirstSlot);
         Slots.Add(FirstSlot);
+
     }
 
     // create the rest
@@ -39,6 +42,8 @@ void UInventoryWidget::SetupUI()
     {
         if (UInventorySlotWidget* SlotWidget = CreateWidget<UInventorySlotWidget>(GetWorld(), SlotWidgetClass))
         {
+            SlotWidget->SlotIndex = i;
+            SlotWidget->OnSlotClicked.AddDynamic(this, &UInventoryWidget::OnSlotClicked);
             WrapBox->AddChildToWrapBox(SlotWidget);
             Slots.Add(SlotWidget);
         }
@@ -68,4 +73,9 @@ void UInventoryWidget::UpdateUI(const int32 Index, UTexture2D* ItemIcon)
     {
         SlotWidget->SetIcon(ItemIcon);
     }
+}
+
+void UInventoryWidget::OnSlotClicked(const int32 Index)
+{
+    InventoryComponent->UseItem(Index);
 }

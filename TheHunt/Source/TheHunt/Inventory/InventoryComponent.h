@@ -30,8 +30,8 @@ public:
 
 	void AddItem(UItemDefinition* Item);
 	void RemoveItem(FInventorySlot* Slot);
+	void UseItem(const int32 Index);
 
-public:
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	int32 Rows = 4;
 

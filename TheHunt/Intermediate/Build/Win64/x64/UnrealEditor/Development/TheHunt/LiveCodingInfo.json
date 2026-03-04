@@ -35,7 +35,9 @@
 			"TheHuntGameMode.gen.cpp.obj",
 			"TheHuntPlayerController.gen.cpp.obj",
 			"PerModuleInline.gen.cpp.obj",
+			"InventorySubsystem.cpp.obj",
 			"ItemEffect.cpp.obj",
+			"MeleWeapon.cpp.obj",
 			"TheHunt.cpp.obj",
 			"TheHuntCameraManager.cpp.obj",
 			"TheHuntCharacter.cpp.obj",
@@ -61,11 +63,9 @@
 			"ShooterWeaponHolder.cpp.obj",
 			"InputCharacter.cpp.obj",
 			"InventoryComponent.cpp.obj",
-			"InventorySubsystem.cpp.obj",
 			"InventorySlotWidget.cpp.obj",
 			"InventoryWidget.cpp.obj",
-			"ItemDefinition.cpp.obj",
-			"MeleWeapon.cpp.obj"
+			"ItemDefinition.cpp.obj"
 		]
 	}
 }

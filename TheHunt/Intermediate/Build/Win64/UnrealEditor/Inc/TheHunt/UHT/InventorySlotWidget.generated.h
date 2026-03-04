@@ -16,6 +16,13 @@
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
+// ********** Begin Delegate FOnSlotClicked ********************************************************
+#define FID_TheHunt_Source_TheHunt_Inventory_UI_InventorySlotWidget_h_34_DELEGATE \
+static void FOnSlotClicked_DelegateWrapper(const FMulticastScriptDelegate& OnSlotClicked, int32 Index);
+
+
+// ********** End Delegate FOnSlotClicked **********************************************************
+
 // ********** Begin Class UInventorySlotWidget *****************************************************
 #define FID_TheHunt_Source_TheHunt_Inventory_UI_InventorySlotWidget_h_18_RPC_WRAPPERS_NO_PURE_DECLS \
 	DECLARE_FUNCTION(execOnButtonClicked);

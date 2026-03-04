@@ -21,5 +21,5 @@ void UInventorySlotWidget::SetIcon(UTexture2D* Icon) const
 
 void UInventorySlotWidget::OnButtonClicked()
 {
-	SetIcon(nullptr);
+	OnSlotClicked.Broadcast(SlotIndex);
 }

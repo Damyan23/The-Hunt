@@ -7,6 +7,7 @@
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "DrawDebugHelpers.h"
+#include "AbilitySystemComponent.h"
 #include "Items/Weapon/MeleWeapon.h"
 
 // Sets default values
@@ -18,6 +19,8 @@ AInputCharacter::AInputCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent); 
 	Camera->bUsePawnControlRotation = true;
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 }
 
 // Called when the game starts or when spawned

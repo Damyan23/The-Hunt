@@ -30,4 +30,9 @@ public:
 	void SetIcon(UTexture2D* Icon) const;
 	UFUNCTION()
 	void OnButtonClicked();
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotClicked, int32, Index);
+	UPROPERTY()
+	FOnSlotClicked OnSlotClicked;
+	int32 SlotIndex;
 };

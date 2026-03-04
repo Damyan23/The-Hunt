@@ -4,6 +4,7 @@
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/InventorySubsystem.h"
 #include "InventorySlot.h"
+#include "Items/Weapon/MeleWeapon.h"
 
 // Sets default values for this component's properties
 UInventoryComponent::UInventoryComponent()
@@ -54,4 +55,28 @@ void UInventoryComponent::RemoveItem(FInventorySlot* Slot)
 	int32 Index = Slots.IndexOfByPredicate([Slot](const FInventorySlot& S) { return &S == Slot; });
 	Slot->ClearSlot();
 	OnSlotUpdated.Broadcast(Index, nullptr);
+}
+
+void UInventoryComponent::UseItem(const int32 Index)
+{
+	if (!Slots.IsValidIndex(Index)) return;
+
+	FInventorySlot& Slot = Slots[Index];
+	if (!Slot.bIsOccupied) return;
+
+	UItemDefinition* ItemDef = Slot.ItemDefinition.LoadSynchronous();
+
+	if (!ItemDef) return;
+
+
+	// spawn the pickup actor back in the world
+	FActorSpawnParameters SpawnParams;
+	AMeleWeapon* SpawnedItem = GetWorld()->SpawnActor<AMeleWeapon>(
+		ItemDef->PickupClass.LoadSynchronous(), // the actor class to spawn
+		GetOwner()->GetActorLocation(),          // where to spawn it
+		GetOwner()->GetActorRotation(),
+		SpawnParams
+	);
+
+	RemoveItem(&Slot);
 }

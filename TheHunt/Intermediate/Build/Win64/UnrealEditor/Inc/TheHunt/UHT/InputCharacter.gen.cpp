@@ -17,6 +17,8 @@ ENGINE_API UClass* Z_Construct_UClass_ACharacter();
 ENGINE_API UClass* Z_Construct_UClass_UCameraComponent_NoRegister();
 ENHANCEDINPUT_API UClass* Z_Construct_UClass_UInputAction_NoRegister();
 ENHANCEDINPUT_API UClass* Z_Construct_UClass_UInputMappingContext_NoRegister();
+GAMEPLAYABILITIES_API UClass* Z_Construct_UClass_UAbilitySystemComponent_NoRegister();
+GAMEPLAYABILITIES_API UClass* Z_Construct_UClass_UAbilitySystemInterface_NoRegister();
 THEHUNT_API UClass* Z_Construct_UClass_AInputCharacter();
 THEHUNT_API UClass* Z_Construct_UClass_AInputCharacter_NoRegister();
 THEHUNT_API UClass* Z_Construct_UClass_UInventoryWidget_NoRegister();
@@ -115,6 +117,12 @@ struct Z_Construct_UClass_AInputCharacter_Statics
 		{ "Category", "Inventory" },
 		{ "ModuleRelativePath", "InputPlayer/InputCharacter.h" },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_AbilitySystemComponent_MetaData[] = {
+		{ "AllowPrivateAccess", "TRUE" },
+		{ "Category", "GAS" },
+		{ "EditInline", "true" },
+		{ "ModuleRelativePath", "InputPlayer/InputCharacter.h" },
+	};
 #endif // WITH_METADATA
 
 // ********** Begin Class AInputCharacter constinit property declarations **************************
@@ -129,9 +137,11 @@ struct Z_Construct_UClass_AInputCharacter_Statics
 	static const UECodeGen_Private::FClassPropertyParams NewProp_InventoryWidgetClass;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_InventoryWidget;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_InventoryAction;
+	static const UECodeGen_Private::FObjectPropertyParams NewProp_AbilitySystemComponent;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 // ********** End Class AInputCharacter constinit property declarations ****************************
 	static UObject* (*const DependentSingletons[])();
+	static const UECodeGen_Private::FImplementedInterfaceParams InterfaceParams[];
 	static constexpr FCppClassTypeInfoStatic StaticCppClassTypeInfo = {
 		TCppClassTypeTraits<AInputCharacter>::IsAbstract,
 	};
@@ -150,6 +160,7 @@ const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_AInputCharacter
 const UECodeGen_Private::FClassPropertyParams Z_Construct_UClass_AInputCharacter_Statics::NewProp_InventoryWidgetClass = { "InventoryWidgetClass", nullptr, (EPropertyFlags)0x0024080000010001, UECodeGen_Private::EPropertyGenFlags::Class, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AInputCharacter, InventoryWidgetClass), Z_Construct_UClass_UClass_NoRegister, Z_Construct_UClass_UInventoryWidget_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_InventoryWidgetClass_MetaData), NewProp_InventoryWidgetClass_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AInputCharacter_Statics::NewProp_InventoryWidget = { "InventoryWidget", nullptr, (EPropertyFlags)0x0124080000080008, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AInputCharacter, InventoryWidget), Z_Construct_UClass_UInventoryWidget_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_InventoryWidget_MetaData), NewProp_InventoryWidget_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AInputCharacter_Statics::NewProp_InventoryAction = { "InventoryAction", nullptr, (EPropertyFlags)0x0020080000010001, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AInputCharacter, InventoryAction), Z_Construct_UClass_UInputAction_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_InventoryAction_MetaData), NewProp_InventoryAction_MetaData) };
+const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AInputCharacter_Statics::NewProp_AbilitySystemComponent = { "AbilitySystemComponent", nullptr, (EPropertyFlags)0x002008000008001d, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AInputCharacter, AbilitySystemComponent), Z_Construct_UClass_UAbilitySystemComponent_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_AbilitySystemComponent_MetaData), NewProp_AbilitySystemComponent_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AInputCharacter_Statics::PropPointers[] = {
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AInputCharacter_Statics::NewProp_Camera,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AInputCharacter_Statics::NewProp_InputMapping,
@@ -162,6 +173,7 @@ const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AInputCha
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AInputCharacter_Statics::NewProp_InventoryWidgetClass,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AInputCharacter_Statics::NewProp_InventoryWidget,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AInputCharacter_Statics::NewProp_InventoryAction,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AInputCharacter_Statics::NewProp_AbilitySystemComponent,
 };
 static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_AInputCharacter_Statics::PropPointers) < 2048);
 // ********** End Class AInputCharacter Property Definitions ***************************************
@@ -170,6 +182,9 @@ UObject* (*const Z_Construct_UClass_AInputCharacter_Statics::DependentSingletons
 	(UObject* (*)())Z_Construct_UPackage__Script_TheHunt,
 };
 static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_AInputCharacter_Statics::DependentSingletons) < 16);
+const UECodeGen_Private::FImplementedInterfaceParams Z_Construct_UClass_AInputCharacter_Statics::InterfaceParams[] = {
+	{ Z_Construct_UClass_UAbilitySystemInterface_NoRegister, (int32)VTABLE_OFFSET(AInputCharacter, IAbilitySystemInterface), false },  // 2722098046
+};
 const UECodeGen_Private::FClassParams Z_Construct_UClass_AInputCharacter_Statics::ClassParams = {
 	&AInputCharacter::StaticClass,
 	"Game",
@@ -177,11 +192,11 @@ const UECodeGen_Private::FClassParams Z_Construct_UClass_AInputCharacter_Statics
 	DependentSingletons,
 	nullptr,
 	Z_Construct_UClass_AInputCharacter_Statics::PropPointers,
-	nullptr,
+	InterfaceParams,
 	UE_ARRAY_COUNT(DependentSingletons),
 	0,
 	UE_ARRAY_COUNT(Z_Construct_UClass_AInputCharacter_Statics::PropPointers),
-	0,
+	UE_ARRAY_COUNT(InterfaceParams),
 	0x009000A4u,
 	METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UClass_AInputCharacter_Statics::Class_MetaDataParams), Z_Construct_UClass_AInputCharacter_Statics::Class_MetaDataParams)
 };
@@ -204,10 +219,10 @@ AInputCharacter::~AInputCharacter() {}
 struct Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h__Script_TheHunt_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_AInputCharacter, AInputCharacter::StaticClass, TEXT("AInputCharacter"), &Z_Registration_Info_UClass_AInputCharacter, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AInputCharacter), 706646177U) },
+		{ Z_Construct_UClass_AInputCharacter, AInputCharacter::StaticClass, TEXT("AInputCharacter"), &Z_Registration_Info_UClass_AInputCharacter, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AInputCharacter), 1416233347U) },
 	};
 }; // Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h__Script_TheHunt_Statics 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h__Script_TheHunt_2740280557{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h__Script_TheHunt_2107765407{
 	TEXT("/Script/TheHunt"),
 	Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h__Script_TheHunt_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_InputPlayer_InputCharacter_h__Script_TheHunt_Statics::ClassInfo),
 	nullptr, 0,

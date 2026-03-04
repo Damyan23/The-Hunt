@@ -5,10 +5,11 @@
 #include "InputActionValue.h"
 #include "Inventory/UI/InventoryWidget.h"
 #include  "Inventory/InventorySubsystem.h"
+#include "AbilitySystemInterface.h"
 #include "InputCharacter.generated.h"
 
 UCLASS()
-class THEHUNT_API AInputCharacter : public ACharacter
+class THEHUNT_API AInputCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -68,4 +69,13 @@ protected:
 	void Jump();
 	void Interact();
 	void ToggleInventory();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS", meta = (AllowPrivateAccess = true))
+	class UAbilitySystemComponent* AbilitySystemComponent;
+
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override
+	{
+		return AbilitySystemComponent;
+	}
+
 };
