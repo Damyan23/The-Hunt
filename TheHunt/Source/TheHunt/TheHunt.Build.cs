@@ -24,7 +24,7 @@ public class TheHunt : ModuleRules
             "GameplayTasks"
         });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"TheHunt",

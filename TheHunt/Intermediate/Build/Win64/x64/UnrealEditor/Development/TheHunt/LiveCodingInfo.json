@@ -2,12 +2,14 @@
 	"RemapUnityFiles": 
 	{
 		"Module.TheHunt.cpp.obj": [
+			"BaseCharacter.gen.cpp.obj",
+			"EnemyAIController.gen.cpp.obj",
+			"EnemyCharacter.gen.cpp.obj",
 			"EnvQueryContext_Target.gen.cpp.obj",
 			"HorrorCharacter.gen.cpp.obj",
 			"HorrorGameMode.gen.cpp.obj",
 			"HorrorPlayerController.gen.cpp.obj",
 			"HorrorUI.gen.cpp.obj",
-			"InputCharacter.gen.cpp.obj",
 			"InventoryComponent.gen.cpp.obj",
 			"InventorySlot.gen.cpp.obj",
 			"InventorySlotWidget.gen.cpp.obj",
@@ -16,6 +18,7 @@
 			"ItemDefinition.gen.cpp.obj",
 			"ItemEffect.gen.cpp.obj",
 			"MeleWeapon.gen.cpp.obj",
+			"PlayerCharacter.gen.cpp.obj",
 			"ShooterAIController.gen.cpp.obj",
 			"ShooterBulletCounterUI.gen.cpp.obj",
 			"ShooterCharacter.gen.cpp.obj",
@@ -35,7 +38,11 @@
 			"TheHuntGameMode.gen.cpp.obj",
 			"TheHuntPlayerController.gen.cpp.obj",
 			"PerModuleInline.gen.cpp.obj",
+			"InventoryComponent.cpp.obj",
 			"InventorySubsystem.cpp.obj",
+			"InventorySlotWidget.cpp.obj",
+			"InventoryWidget.cpp.obj",
+			"ItemDefinition.cpp.obj",
 			"ItemEffect.cpp.obj",
 			"MeleWeapon.cpp.obj",
 			"TheHunt.cpp.obj",
@@ -61,11 +68,10 @@
 			"ShooterProjectile.cpp.obj",
 			"ShooterWeapon.cpp.obj",
 			"ShooterWeaponHolder.cpp.obj",
-			"InputCharacter.cpp.obj",
-			"InventoryComponent.cpp.obj",
-			"InventorySlotWidget.cpp.obj",
-			"InventoryWidget.cpp.obj",
-			"ItemDefinition.cpp.obj"
+			"BaseCharacter.cpp.obj",
+			"EnemyAIController.cpp.obj",
+			"EnemyCharacter.cpp.obj",
+			"PlayerCharacter.cpp.obj"
 		]
 	}
 }

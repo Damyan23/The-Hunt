@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TheHuntModuleRules")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Development")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b2aac92af27dc3ae2f93965a099ee4f3a8592040")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2fd2992b9a8b1c7eb049ac925581294bd630a536")]
 [assembly: System.Reflection.AssemblyProductAttribute("TheHuntModuleRules")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TheHuntModuleRules")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

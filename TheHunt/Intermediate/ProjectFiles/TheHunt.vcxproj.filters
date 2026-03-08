@@ -130,13 +130,34 @@
     <Filter Include="Source\TheHunt">
       <UniqueIdentifier>{99AEC70A-E365-3A09-B157-85B2F1C99328}</UniqueIdentifier>
     </Filter>
+    <ClCompile Include="..\..\Source\TheHunt\BaseCharacter.cpp">
+      <Filter>Source\TheHunt</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\BaseCharacter.h">
+      <Filter>Source\TheHunt</Filter>
+    </ClInclude>
+    <Filter Include="Source\TheHunt\Enemy">
+      <UniqueIdentifier>{7319552A-4CE5-318E-9407-1F141FE5DB5E}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\TheHunt\Enemy\EnemyAIController.cpp">
+      <Filter>Source\TheHunt\Enemy</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Enemy\EnemyAIController.h">
+      <Filter>Source\TheHunt\Enemy</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\TheHunt\Enemy\EnemyCharacter.cpp">
+      <Filter>Source\TheHunt\Enemy</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Enemy\EnemyCharacter.h">
+      <Filter>Source\TheHunt\Enemy</Filter>
+    </ClInclude>
     <Filter Include="Source\TheHunt\InputPlayer">
       <UniqueIdentifier>{EA467616-794A-37D5-98BE-640F0B9F3E21}</UniqueIdentifier>
     </Filter>
-    <ClCompile Include="..\..\Source\TheHunt\InputPlayer\InputCharacter.cpp">
+    <ClCompile Include="..\..\Source\TheHunt\InputPlayer\PlayerCharacter.cpp">
       <Filter>Source\TheHunt\InputPlayer</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\Source\TheHunt\InputPlayer\InputCharacter.h">
+    <ClInclude Include="..\..\Source\TheHunt\InputPlayer\PlayerCharacter.h">
       <Filter>Source\TheHunt\InputPlayer</Filter>
     </ClInclude>
     <Filter Include="Source\TheHunt\Inventory">
