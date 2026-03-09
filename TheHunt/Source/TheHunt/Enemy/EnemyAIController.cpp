@@ -114,6 +114,7 @@ void AEnemyAIController::UpdateAttackState()
 	{
 		Enemy->CurrentState = EEnemyState::Chase;
 		Enemy->CombatState = EEnemyCombatState::None;
+		bStrafeDirectionSet = false;
 	}
 
 	switch (Enemy->CombatState)
@@ -121,7 +122,9 @@ void AEnemyAIController::UpdateAttackState()
 		case EEnemyCombatState::None: break;
 		case EEnemyCombatState::Strafe: Strafe(); break;
 		case EEnemyCombatState::Attacking: Attack(); break;
-		case EEnemyCombatState::Blocking: break;
+		case EEnemyCombatState::Blocking: 
+			bStrafeDirectionSet = false;
+			break;
 		default: break;
 	}
 }
@@ -130,28 +133,95 @@ void AEnemyAIController::Strafe()
 {
 	if (!Enemy || !TargetPlayer) return;
 
-	// Decide correct strafe direction. Raycast behind the player in two directions - forwards direction and minus forward direction.
-	// If there is a wall or smth within one of the directions decide to use the other one. Constantly raycast if it finds a wall swap directions.
-	// If in both directions there is a wall return and decide to attack or block.
-
 	FVector ToEnemy = Enemy->GetActorLocation() - TargetPlayer->GetActorLocation();
 
-	FVector ForwardDirection = ToEnemy.GetSafeNormal();
-	FVector StrafeDirection = FVector::CrossProduct(ForwardDirection, FVector::UpVector).GetSafeNormal();
+	if (!bStrafeDirectionSet)
+	{
+		CurrentStrafeDirection = GetStrafeDirection(ToEnemy);
+		CurrentStrafeDirection.Z = 0.f; // flatten to horizontal plane
+		CurrentStrafeDirection = CurrentStrafeDirection.GetSafeNormal();
+		UE_LOG(LogTemp, Warning, TEXT("Strafe direction set to: %s"), *CurrentStrafeDirection.ToString());
+		bStrafeDirectionSet = true;
+	}
+
+	StrafeDirectionTimer += GetWorld()->DeltaTimeSeconds;
+	if (StrafeDirectionTimer >= StrafeDirectionCheckInterval)
+	{
+		StrafeDirectionTimer = 0.0f;
+		CurrentStrafeDirection = GetStrafeDirection(ToEnemy); // recheck for walls
+	}
+
+	if (CurrentStrafeDirection.Equals(FVector::Zero()))
+	{
+		Enemy->CombatState = EEnemyCombatState::None;
+		return;
+	}
 
 	float Distance = ToEnemy.Size();
+	FVector MoveDirection = CurrentStrafeDirection;
 
 	if (Distance < StrafeRange)
+		MoveDirection += ToEnemy.GetSafeNormal();
+	else if (Distance > StrafeRange)
+		MoveDirection -= ToEnemy.GetSafeNormal();
+
+	
+	UE_LOG(LogTemp, Warning, TEXT("Move direction: %s, Distance: %f, AttackRange: %f"),
+		*MoveDirection.ToString(), Distance, AttackRange);
+
+	Enemy->AddMovementInput(MoveDirection.GetSafeNormal(), StrafeMoveSpeed * GetWorld()->DeltaTimeSeconds);
+}
+
+
+FVector AEnemyAIController::GetStrafeDirection(const FVector &ToEnemy) const
+{
+	FVector ForwardDirection = ToEnemy.GetSafeNormal();
+	FVector LeftDirection = FVector::CrossProduct(ForwardDirection, FVector::UpVector).GetSafeNormal();
+	FVector RightDirection = -LeftDirection;
+
+	FHitResult HitResultLeft;
+	FHitResult HitResultRight;
+
+	FVector Start = Enemy->GetActorLocation();
+	FVector EndLeft = Start + LeftDirection * 100;
+	FVector EndRight = Start + RightDirection * 100;
+
+	bool bHitLeft = GetWorld()->LineTraceSingleByChannel(
+		HitResultLeft,
+		Start,
+		EndLeft,
+		ECC_Visibility
+	);
+
+	bool bHitRight = GetWorld()->LineTraceSingleByChannel(
+		HitResultRight,
+		Start,
+		EndRight,
+		ECC_Visibility
+	);
+
+
+	int32 Random = FMath::RandRange(0, 1);
+
+	if (bHitLeft && !bHitRight)
 	{
-		StrafeDirection += ToEnemy.GetSafeNormal();
+		return RightDirection;
 	}
-	else
+	else if (!bHitLeft && bHitRight)
 	{
-		StrafeDirection -= ToEnemy.GetSafeNormal();
+		return LeftDirection;
+	}
+	else if (bHitLeft && bHitRight)
+	{
+		return FVector::Zero();
 	}
 
-	Enemy->AddMovementInput(StrafeDirection, StrafeMoveSpeed * GetWorld()->DeltaTimeSeconds);
+	if (Random == 0) return LeftDirection;
+	else if (Random == 1) return RightDirection;
+
+	return FVector::Zero();
 }
+
 
 void AEnemyAIController::Attack()
 {

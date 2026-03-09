@@ -473,6 +473,10 @@ struct Z_Construct_UClass_AEnemyAIController_Statics
 		{ "Category", "AI" },
 		{ "ModuleRelativePath", "Enemy/EnemyAIController.h" },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_StrafeDirectionCheckInterval_MetaData[] = {
+		{ "Category", "AI" },
+		{ "ModuleRelativePath", "Enemy/EnemyAIController.h" },
+	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_SightConfig_MetaData[] = {
 		{ "Category", "EnemyAIController" },
 #if !UE_BUILD_SHIPPING
@@ -495,6 +499,7 @@ struct Z_Construct_UClass_AEnemyAIController_Statics
 	static const UECodeGen_Private::FFloatPropertyParams NewProp_AttackRange;
 	static const UECodeGen_Private::FFloatPropertyParams NewProp_StrafeMoveSpeed;
 	static const UECodeGen_Private::FFloatPropertyParams NewProp_StrafeRange;
+	static const UECodeGen_Private::FFloatPropertyParams NewProp_StrafeDirectionCheckInterval;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_SightConfig;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_HearingConfig;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
@@ -537,6 +542,7 @@ const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AEnemyAIContro
 const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_AttackRange = { "AttackRange", nullptr, (EPropertyFlags)0x0020080000010001, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, AttackRange), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_AttackRange_MetaData), NewProp_AttackRange_MetaData) };
 const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_StrafeMoveSpeed = { "StrafeMoveSpeed", nullptr, (EPropertyFlags)0x0020080000010001, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, StrafeMoveSpeed), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_StrafeMoveSpeed_MetaData), NewProp_StrafeMoveSpeed_MetaData) };
 const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_StrafeRange = { "StrafeRange", nullptr, (EPropertyFlags)0x0020080000010001, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, StrafeRange), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_StrafeRange_MetaData), NewProp_StrafeRange_MetaData) };
+const UECodeGen_Private::FFloatPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_StrafeDirectionCheckInterval = { "StrafeDirectionCheckInterval", nullptr, (EPropertyFlags)0x0020080000010001, UECodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, StrafeDirectionCheckInterval), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_StrafeDirectionCheckInterval_MetaData), NewProp_StrafeDirectionCheckInterval_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_SightConfig = { "SightConfig", nullptr, (EPropertyFlags)0x0124080000020001, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, SightConfig), Z_Construct_UClass_UAISenseConfig_Sight_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_SightConfig_MetaData), NewProp_SightConfig_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_HearingConfig = { "HearingConfig", nullptr, (EPropertyFlags)0x0124080000020001, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, HearingConfig), Z_Construct_UClass_UAISenseConfig_Hearing_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_HearingConfig_MetaData), NewProp_HearingConfig_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AEnemyAIController_Statics::PropPointers[] = {
@@ -545,6 +551,7 @@ const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AEnemyAIC
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_AttackRange,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_StrafeMoveSpeed,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_StrafeRange,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_StrafeDirectionCheckInterval,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_SightConfig,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_HearingConfig,
 };
@@ -591,10 +598,10 @@ AEnemyAIController::~AEnemyAIController() {}
 struct Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_AEnemyAIController, AEnemyAIController::StaticClass, TEXT("AEnemyAIController"), &Z_Registration_Info_UClass_AEnemyAIController, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AEnemyAIController), 3890885556U) },
+		{ Z_Construct_UClass_AEnemyAIController, AEnemyAIController::StaticClass, TEXT("AEnemyAIController"), &Z_Registration_Info_UClass_AEnemyAIController, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AEnemyAIController), 16361114U) },
 	};
 }; // Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_Statics 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_1910116174{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_2696025379{
 	TEXT("/Script/TheHunt"),
 	Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_Statics::ClassInfo),
 	nullptr, 0,

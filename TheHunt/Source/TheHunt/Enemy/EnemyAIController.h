@@ -43,6 +43,11 @@ protected:
 	float StrafeMoveSpeed = 1000.f;
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	float StrafeRange = 150.f;
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	float StrafeDirectionCheckInterval = 1.f;
+	FVector CurrentStrafeDirection;
+	bool bStrafeDirectionSet;
+	float StrafeDirectionTimer = 0.0f;
 
 // ============================================================
 // State Update
@@ -63,6 +68,7 @@ protected:
 	void UpdateAttackState();
 	UFUNCTION()
 	void Strafe();
+	FVector GetStrafeDirection(const FVector& ToEnemy) const;
 	UFUNCTION()
 	void Attack();
 	UFUNCTION()

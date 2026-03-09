@@ -3,6 +3,7 @@
 	{
 		"Module.TheHunt.cpp.obj": [
 			"BaseCharacter.gen.cpp.obj",
+			"EnemyAIController.gen.cpp.obj",
 			"EnemyCharacter.gen.cpp.obj",
 			"EnvQueryContext_Target.gen.cpp.obj",
 			"HorrorCharacter.gen.cpp.obj",
@@ -37,6 +38,10 @@
 			"TheHuntGameMode.gen.cpp.obj",
 			"TheHuntPlayerController.gen.cpp.obj",
 			"PerModuleInline.gen.cpp.obj",
+			"BaseCharacter.cpp.obj",
+			"EnemyAIController.cpp.obj",
+			"EnemyCharacter.cpp.obj",
+			"PlayerCharacter.cpp.obj",
 			"InventoryComponent.cpp.obj",
 			"InventorySubsystem.cpp.obj",
 			"InventorySlotWidget.cpp.obj",
@@ -66,10 +71,7 @@
 			"ShooterPickup.cpp.obj",
 			"ShooterProjectile.cpp.obj",
 			"ShooterWeapon.cpp.obj",
-			"ShooterWeaponHolder.cpp.obj",
-			"BaseCharacter.cpp.obj",
-			"EnemyCharacter.cpp.obj",
-			"PlayerCharacter.cpp.obj"
+			"ShooterWeaponHolder.cpp.obj"
 		]
 	}
 }

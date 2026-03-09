@@ -38,6 +38,9 @@
 			"TheHuntGameMode.gen.cpp.obj",
 			"TheHuntPlayerController.gen.cpp.obj",
 			"PerModuleInline.gen.cpp.obj",
+			"BaseCharacter.cpp.obj",
+			"EnemyCharacter.cpp.obj",
+			"PlayerCharacter.cpp.obj",
 			"InventoryComponent.cpp.obj",
 			"InventorySubsystem.cpp.obj",
 			"InventorySlotWidget.cpp.obj",
@@ -68,10 +71,7 @@
 			"ShooterProjectile.cpp.obj",
 			"ShooterWeapon.cpp.obj",
 			"ShooterWeaponHolder.cpp.obj",
-			"BaseCharacter.cpp.obj",
-			"EnemyAIController.cpp.obj",
-			"EnemyCharacter.cpp.obj",
-			"PlayerCharacter.cpp.obj"
+			"EnemyAIController.cpp.obj"
 		]
 	}
 }
