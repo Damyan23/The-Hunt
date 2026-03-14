@@ -22,9 +22,12 @@ struct FAIStimulus;
 #define FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h_18_RPC_WRAPPERS_NO_PURE_DECLS \
 	DECLARE_FUNCTION(execOnAlertTimerExpired); \
 	DECLARE_FUNCTION(execOnPerceptionUpdated); \
+	DECLARE_FUNCTION(execStopBlock); \
+	DECLARE_FUNCTION(execStartBlock); \
 	DECLARE_FUNCTION(execBlock); \
 	DECLARE_FUNCTION(execAttack); \
 	DECLARE_FUNCTION(execStrafe); \
+	DECLARE_FUNCTION(execMakeCombatDecision); \
 	DECLARE_FUNCTION(execUpdateAttackState); \
 	DECLARE_FUNCTION(execUpdatePatrolState); \
 	DECLARE_FUNCTION(execUpdateAlertState); \

@@ -3,6 +3,7 @@
 
 #include "Enemy/EnemyAIController.h"
 
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -28,7 +29,11 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	Enemy = Cast<AEnemyCharacter>(GetPawn());
+	AnimInstance = Enemy->GetMesh()->GetAnimInstance();
 	PerceptionComponent->RequestStimuliListenerUpdate();
+	DefaultMoveSpeed = Enemy->GetCharacterMovement()->MaxWalkSpeed;
+
+	DecisionTimer = FMath::FRandRange(MinDecisionTime, MaxDecisionTime);
 }
 
 
@@ -68,12 +73,11 @@ void AEnemyAIController::UpdateChaseState()
 
 	float Distance = Enemy->GetDistanceTo(TargetPlayer);
 	FVector ToEnemy = Enemy->GetActorLocation() - TargetPlayer->GetActorLocation();
-	FVector TargetLocation = TargetPlayer->GetActorLocation() + ToEnemy.GetSafeNormal() * AttackRange;
+	FVector TargetLocation = TargetPlayer->GetActorLocation() + ToEnemy.GetSafeNormal() * StoppingRange;
 
-	if (FMath::IsNearlyEqual(Distance, AttackRange, 40.f))
+	if (FMath::IsNearlyEqual(Distance, StoppingRange, 40.f))
 	{
 		Enemy->CurrentState = EEnemyState::Attack;
-		Enemy->CombatState = EEnemyCombatState::Strafe;
 	}
 	else
 	{
@@ -95,7 +99,7 @@ void AEnemyAIController::UpdatePatrolState()
 	CurrentTarget = Target;
 	float Distance = Enemy->GetDistanceTo(Target);
 
-	if (Distance < AttackRange + 40.f)
+	if (Distance < StoppingRange + 40.f)
 	{
 		CurrentPatrolIndex = (CurrentPatrolIndex + 1) % Enemy->PatrolPoints.Num();
 	}
@@ -105,28 +109,80 @@ void AEnemyAIController::UpdatePatrolState()
 
 void AEnemyAIController::UpdateAttackState()
 {
-	if (!Enemy || !TargetPlayer) return;
+	if (!Enemy || !TargetPlayer || !AnimInstance) return;
 
-	float Distance = Enemy->GetDistanceTo(TargetPlayer);
-	CurrentTarget = TargetPlayer;
-
-	if (Distance > AttackRange  + 40.f)
+	// if we're waiting for block montage to finish before transitioning
+	if (PendingCombatState != EEnemyCombatState::None)
 	{
-		Enemy->CurrentState = EEnemyState::Chase;
-		Enemy->CombatState = EEnemyCombatState::None;
-		bStrafeDirectionSet = false;
+		if (!AnimInstance->Montage_IsPlaying(BlockMontage))
+		{
+			Enemy->CombatState = PendingCombatState;
+			PendingCombatState = EEnemyCombatState::None;
+		}
+		return; // wait it out
+	}
+
+	// only tick decision timer when in block hold section or not attacking
+	bool bInBlockHold = AnimInstance->Montage_IsPlaying(BlockMontage)
+		&& AnimInstance->Montage_GetCurrentSection() == FName("BlockHold");
+
+	if (bInBlockHold || (!bBlock && !bIsAttacking))
+	{
+		DecisionTimer -= GetWorld()->DeltaTimeSeconds;
+		if (DecisionTimer <= 0.f)
+			MakeCombatDecision();
 	}
 
 	switch (Enemy->CombatState)
 	{
-		case EEnemyCombatState::None: break;
-		case EEnemyCombatState::Strafe: Strafe(); break;
+		case EEnemyCombatState::None:      break;
+		case EEnemyCombatState::Strafe:    Strafe(); break;
 		case EEnemyCombatState::Attacking: Attack(); break;
-		case EEnemyCombatState::Blocking: 
-			bStrafeDirectionSet = false;
-			break;
+		case EEnemyCombatState::Blocking:  Block();  break;
 		default: break;
 	}
+}
+
+void AEnemyAIController::MakeCombatDecision()
+{
+	if (AnimInstance->Montage_IsPlaying(AttackMontage))
+		return;
+
+	float Distance = Enemy->GetDistanceTo(TargetPlayer);
+
+	float AttackWeight = 0.4f;
+	float StrafeWeight = 0.4f;
+	float BlockWeight = 0.2f;
+
+	if (Distance < AttackRange)
+		AttackWeight += 0.3f;
+	else
+		StrafeWeight += 0.3f;
+
+	float Total = AttackWeight + StrafeWeight + BlockWeight;
+	float Roll = FMath::FRandRange(0.f, Total);
+
+	EEnemyCombatState NewState;
+	if (Roll < AttackWeight)
+		NewState = EEnemyCombatState::Attacking;
+	else if (Roll < AttackWeight + StrafeWeight)
+		NewState = EEnemyCombatState::Strafe;
+	else
+		NewState = EEnemyCombatState::Blocking;
+
+	// if currently blocking and switching to something else, stop block first
+	if (bBlock && NewState != EEnemyCombatState::Blocking)
+	{
+		StopBlock();
+		PendingCombatState = NewState; // store what we want to do next
+		// don't set CombatState yet
+	}
+	else
+	{
+		Enemy->CombatState = NewState;
+	}
+
+	DecisionTimer = FMath::FRandRange(MinDecisionTime, MaxDecisionTime);
 }
 
 void AEnemyAIController::Strafe()
@@ -166,9 +222,10 @@ void AEnemyAIController::Strafe()
 		MoveDirection -= ToEnemy.GetSafeNormal();
 
 	
-	UE_LOG(LogTemp, Warning, TEXT("Move direction: %s, Distance: %f, AttackRange: %f"),
-		*MoveDirection.ToString(), Distance, AttackRange);
+	UE_LOG(LogTemp, Warning, TEXT("Move direction: %s, Distance: %f, StoppingRange: %f"),
+		*MoveDirection.ToString(), Distance, StoppingRange);
 
+	Enemy->GetCharacterMovement()->MaxWalkSpeed = StrafeMoveSpeed;
 	Enemy->AddMovementInput(MoveDirection.GetSafeNormal(), StrafeMoveSpeed * GetWorld()->DeltaTimeSeconds);
 }
 
@@ -225,11 +282,55 @@ FVector AEnemyAIController::GetStrafeDirection(const FVector &ToEnemy) const
 
 void AEnemyAIController::Attack()
 {
+	if (!Enemy || !TargetPlayer) return;
+	float Distance = Enemy->GetDistanceTo(TargetPlayer);
 
+	if (Distance > AttackRange + 80)
+	{
+		bIsAttacking = true;
+		FVector MoveDirection = (Enemy->GetActorLocation() - TargetPlayer->GetActorLocation()).GetSafeNormal();
+		FVector TargetLocation = TargetPlayer->GetActorLocation() + MoveDirection * AttackRange;
+		MoveToLocation(TargetLocation);
+		return;
+	}
+
+	if (AnimInstance && AttackMontage && !AnimInstance->Montage_IsPlaying(AttackMontage))
+	{
+		StopMovement();
+		AnimInstance->Montage_Play(AttackMontage);
+		bIsAttacking = false; // unlock only after montage starts
+	}
 }
 
 void AEnemyAIController::Block()
 {
+	if (!bBlock)
+	{
+		StartBlock();
+		bBlock = true;
+	}
+
+	float Distance = Enemy->GetDistanceTo(TargetPlayer);
+	if (Distance > StoppingRange + 40.f)
+	{
+		StopBlock();
+		Enemy->CombatState = EEnemyCombatState::None;
+	}
+}
+
+void AEnemyAIController::StartBlock()
+{
+	if (!AnimInstance || !BlockMontage) return;
+	UE_LOG(LogTemp, Warning, TEXT("KUR"));
+	AnimInstance->Montage_Play(BlockMontage);
+}
+
+void AEnemyAIController::StopBlock()
+{
+	if (!AnimInstance || !BlockMontage) return;
+
+	AnimInstance->Montage_Stop(0.2f, BlockMontage);
+	bBlock = false;
 }
 
 void AEnemyAIController::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)

@@ -1,0 +1,18 @@
+[18528:22508:0314/134738.412:WARNING:chrome_main_delegate.cc(745)] This is Chrome version 128.0.6613.138 (not a warning)
+[18528:24660:0314/134738.500:ERROR:google_update_settings.cc(265)] Failed opening key Software\Chromium to set usagestats; result: 5
+[18528:22508:0314/134738.563:WARNING:account_consistency_mode_manager.cc(77)] Desktop Identity Consistency cannot be enabled as no OAuth client ID and client secret have been configured.
+[18528:22508:0314/134744.141:ERROR:device_event_log_impl.cc(196)] [13:47:43.843] USB: usb_service_win.cc:105 SetupDiGetDeviceProperty({{A45C254E-DF1C-4EFD-8020-67D146A850E0}, 6}) failed: Element not found. (0x490)
+[27276:12552:0314/134744.475:WARNING:frame_impl.cc(430)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-8D270BC6FEF23A95458904869F8025DC will be ignored
+[18528:22508:0314/140504.206:ERROR:device_event_log_impl.cc(196)] [14:05:04.091] USB: usb_service_win.cc:105 SetupDiGetDeviceProperty({{A45C254E-DF1C-4EFD-8020-67D146A850E0}, 6}) failed: Element not found. (0x490)
+[18528:22508:0314/154417.266:ERROR:device_event_log_impl.cc(196)] [15:44:17.259] USB: usb_service_win.cc:105 SetupDiGetDeviceProperty({{A45C254E-DF1C-4EFD-8020-67D146A850E0}, 6}) failed: Element not found. (0x490)
+[18528:24660:0314/155238.748:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[38572:12240:0314/155238.749:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[18528:24660:0314/155238.944:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[38572:40028:0314/155238.953:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[18528:24660:0314/155238.997:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[38572:40028:0314/155238.998:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[18528:24660:0314/155239.027:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[38572:40028:0314/155239.034:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[18528:24660:0314/155239.199:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[38572:40028:0314/155239.209:WARNING:dns_config_service_win.cc(605)] Failed to read DnsConfig.
+[18528:22508:0314/164936.337:WARNING:pref_notifier_impl.cc(41)] Pref observer for media_router.cast_allow_all_ips found at shutdown.

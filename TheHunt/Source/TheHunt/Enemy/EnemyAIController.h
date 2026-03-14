@@ -38,9 +38,11 @@ protected:
 // AI Settings
 // ============================================================
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
-	float AttackRange = 200.f;
+	float StoppingRange = 200.f;
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
-	float StrafeMoveSpeed = 1000.f;
+	float AttackRange = 50.f;
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	float StrafeMoveSpeed = 20.;
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	float StrafeRange = 150.f;
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
@@ -48,6 +50,23 @@ protected:
 	FVector CurrentStrafeDirection;
 	bool bStrafeDirectionSet;
 	float StrafeDirectionTimer = 0.0f;
+	float DefaultMoveSpeed;
+	float DecisionTimer = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	float MinDecisionTime = 0.5f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	float MaxDecisionTime = 2.0f;
+// ============================================================
+// Animation Settings
+// ============================================================
+	UPROPERTY()
+	TObjectPtr<UAnimInstance> AnimInstance;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> AttackMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> BlockMontage;
 
 // ============================================================
 // State Update
@@ -67,12 +86,23 @@ protected:
 	UFUNCTION()
 	void UpdateAttackState();
 	UFUNCTION()
+	void MakeCombatDecision();
+	UFUNCTION()
 	void Strafe();
 	FVector GetStrafeDirection(const FVector& ToEnemy) const;
 	UFUNCTION()
 	void Attack();
+	bool bIsAttacking;
 	UFUNCTION()
 	void Block();
+	bool bBlock;
+	bool bBlockExiting;
+	EEnemyCombatState PendingCombatState;
+	UFUNCTION()
+	void StartBlock();
+	UFUNCTION()
+	void StopBlock();
+
 
 
 // ============================================================
