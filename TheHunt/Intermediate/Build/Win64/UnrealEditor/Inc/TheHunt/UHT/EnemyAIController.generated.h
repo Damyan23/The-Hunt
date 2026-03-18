@@ -16,10 +16,12 @@
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 class AActor;
+struct FAbilityEndedData;
 struct FAIStimulus;
 
 // ********** Begin Class AEnemyAIController *******************************************************
 #define FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h_18_RPC_WRAPPERS_NO_PURE_DECLS \
+	DECLARE_FUNCTION(execOnAbilityEnded); \
 	DECLARE_FUNCTION(execOnAlertTimerExpired); \
 	DECLARE_FUNCTION(execOnPerceptionUpdated); \
 	DECLARE_FUNCTION(execStopBlock); \

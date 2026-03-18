@@ -1,8 +1,12 @@
 {
 	"RemapUnityFiles": 
 	{
-		"Module.TheHunt.cpp.obj": [
+		"Module.TheHunt.1.cpp.obj": [
+			"BaseAttributeSet.gen.cpp.obj",
 			"BaseCharacter.gen.cpp.obj",
+			"BasicAttackAbility.gen.cpp.obj",
+			"DissableHitbox.gen.cpp.obj",
+			"EnableHitbox.gen.cpp.obj",
 			"EnemyAIController.gen.cpp.obj",
 			"EnemyCharacter.gen.cpp.obj",
 			"EnvQueryContext_Target.gen.cpp.obj",
@@ -23,7 +27,9 @@
 			"ShooterBulletCounterUI.gen.cpp.obj",
 			"ShooterCharacter.gen.cpp.obj",
 			"ShooterGameMode.gen.cpp.obj",
-			"ShooterNPC.gen.cpp.obj",
+			"ShooterNPC.gen.cpp.obj"
+		],
+		"Module.TheHunt.2.cpp.obj": [
 			"ShooterNPCSpawner.gen.cpp.obj",
 			"ShooterPickup.gen.cpp.obj",
 			"ShooterPlayerController.gen.cpp.obj",
@@ -32,15 +38,13 @@
 			"ShooterUI.gen.cpp.obj",
 			"ShooterWeapon.gen.cpp.obj",
 			"ShooterWeaponHolder.gen.cpp.obj",
+			"SwordActor.gen.cpp.obj",
 			"TheHunt.init.gen.cpp.obj",
 			"TheHuntCameraManager.gen.cpp.obj",
 			"TheHuntCharacter.gen.cpp.obj",
 			"TheHuntGameMode.gen.cpp.obj",
 			"TheHuntPlayerController.gen.cpp.obj",
 			"PerModuleInline.gen.cpp.obj",
-			"BaseCharacter.cpp.obj",
-			"EnemyCharacter.cpp.obj",
-			"PlayerCharacter.cpp.obj",
 			"InventoryComponent.cpp.obj",
 			"InventorySubsystem.cpp.obj",
 			"InventorySlotWidget.cpp.obj",
@@ -64,14 +68,24 @@
 			"ShooterStateTreeUtility.cpp.obj",
 			"ShooterCharacter.cpp.obj",
 			"ShooterGameMode.cpp.obj",
+			"DissableHitbox.cpp.obj",
+			"EnableHitbox.cpp.obj",
+			"EnemyAIController.cpp.obj",
+			"EnemyCharacter.cpp.obj",
+			"BaseAttributeSet.cpp.obj",
+			"BaseCharacter.cpp.obj",
+			"BasicAttackAbility.cpp.obj",
+			"PlayerCharacter.cpp.obj",
+			"SwordActor.cpp.obj"
+		],
+		"Module.TheHunt.3.cpp.obj": [
 			"ShooterPlayerController.cpp.obj",
 			"ShooterBulletCounterUI.cpp.obj",
 			"ShooterUI.cpp.obj",
 			"ShooterPickup.cpp.obj",
 			"ShooterProjectile.cpp.obj",
 			"ShooterWeapon.cpp.obj",
-			"ShooterWeaponHolder.cpp.obj",
-			"EnemyAIController.cpp.obj"
+			"ShooterWeaponHolder.cpp.obj"
 		]
 	}
 }

@@ -7,3 +7,5 @@ AEnemyCharacter::AEnemyCharacter()
 {
 
 }
+
+		

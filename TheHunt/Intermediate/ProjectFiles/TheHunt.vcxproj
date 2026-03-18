@@ -572,12 +572,18 @@
     <None Include="..\..\shadertoolsconfig.json"/>
     <None Include="..\..\Source\TheHunt.Target.cs"/>
     <None Include="..\..\Source\TheHuntEditor.Target.cs"/>
-    <ClCompile Include="..\..\Source\TheHunt\BaseCharacter.cpp">
+    <ClCompile Include="..\..\Source\TheHunt\Animations\Notifies\DissableHitbox.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
       <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
     </ClCompile>
-    <ClInclude Include="..\..\Source\TheHunt\BaseCharacter.h"/>
+    <ClInclude Include="..\..\Source\TheHunt\Animations\Notifies\DissableHitbox.h"/>
+    <ClCompile Include="..\..\Source\TheHunt\Animations\Notifies\EnableHitbox.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
+      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Animations\Notifies\EnableHitbox.h"/>
     <ClCompile Include="..\..\Source\TheHunt\Enemy\EnemyAIController.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
@@ -590,6 +596,24 @@
       <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
     </ClCompile>
     <ClInclude Include="..\..\Source\TheHunt\Enemy\EnemyCharacter.h"/>
+    <ClCompile Include="..\..\Source\TheHunt\GameplayAbilitySystem\BaseAttributeSet.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
+      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\GameplayAbilitySystem\BaseAttributeSet.h"/>
+    <ClCompile Include="..\..\Source\TheHunt\GameplayAbilitySystem\BaseCharacter.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
+      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\GameplayAbilitySystem\BaseCharacter.h"/>
+    <ClCompile Include="..\..\Source\TheHunt\GameplayAbilitySystem\BasicAttackAbility.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
+      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\GameplayAbilitySystem\BasicAttackAbility.h"/>
     <ClCompile Include="..\..\Source\TheHunt\InputPlayer\PlayerCharacter.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
@@ -639,6 +663,12 @@
       <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
     </ClCompile>
     <ClInclude Include="..\..\Source\TheHunt\Items\Weapon\MeleWeapon.h"/>
+    <ClCompile Include="..\..\Source\TheHunt\SwordActor.cpp">
+      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
+      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\SwordActor.h"/>
     <None Include="..\..\Source\TheHunt\TheHunt.Build.cs"/>
     <ClCompile Include="..\..\Source\TheHunt\TheHunt.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>

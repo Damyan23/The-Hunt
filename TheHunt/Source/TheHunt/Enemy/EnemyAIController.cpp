@@ -1,9 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Enemy/EnemyAIController.h"
 
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameplayAbilitySystem/BasicAttackAbility.h"
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -32,6 +33,9 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 	AnimInstance = Enemy->GetMesh()->GetAnimInstance();
 	PerceptionComponent->RequestStimuliListenerUpdate();
 	DefaultMoveSpeed = Enemy->GetCharacterMovement()->MaxWalkSpeed;
+
+	ASC = Enemy->GetAbilitySystemComponent();
+	ASC->OnAbilityEnded.AddUObject(this, &AEnemyAIController::OnAbilityEnded);
 
 	DecisionTimer = FMath::FRandRange(MinDecisionTime, MaxDecisionTime);
 }
@@ -70,6 +74,8 @@ void AEnemyAIController::UpdateCurrentState()
 void AEnemyAIController::UpdateChaseState()
 {
 	if (!TargetPlayer || !GetPawn()) return;
+	Enemy->GetCharacterMovement()->MaxWalkSpeed = DefaultMoveSpeed;
+
 
 	float Distance = Enemy->GetDistanceTo(TargetPlayer);
 	FVector ToEnemy = Enemy->GetActorLocation() - TargetPlayer->GetActorLocation();
@@ -109,9 +115,8 @@ void AEnemyAIController::UpdatePatrolState()
 
 void AEnemyAIController::UpdateAttackState()
 {
-	if (!Enemy || !TargetPlayer || !AnimInstance) return;
+	if (!Enemy || !TargetPlayer || !AnimInstance || !ASC) return;
 
-	// if we're waiting for block montage to finish before transitioning
 	if (PendingCombatState != EEnemyCombatState::None)
 	{
 		if (!AnimInstance->Montage_IsPlaying(BlockMontage))
@@ -119,14 +124,19 @@ void AEnemyAIController::UpdateAttackState()
 			Enemy->CombatState = PendingCombatState;
 			PendingCombatState = EEnemyCombatState::None;
 		}
-		return; // wait it out
+		return;
 	}
 
-	// only tick decision timer when in block hold section or not attacking
-	bool bInBlockHold = AnimInstance->Montage_IsPlaying(BlockMontage)
-		&& AnimInstance->Montage_GetCurrentSection() == FName("BlockHold");
+	bool bInBlockEnter = AnimInstance->Montage_IsPlaying(BlockMontage)
+		&& AnimInstance->Montage_GetCurrentSection(BlockMontage) == FName("BlockEnter");
 
-	if (bInBlockHold || (!bBlock && !bIsAttacking))
+	bool bInBlockHold = AnimInstance->Montage_IsPlaying(BlockMontage)
+		&& AnimInstance->Montage_GetCurrentSection(BlockMontage) == FName("BlockHold");
+
+	bool bIsAttackingNow = ASC->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Attacking"));
+
+	if (bInBlockHold || (!bBlock && !bIsAttackingNow))
 	{
 		DecisionTimer -= GetWorld()->DeltaTimeSeconds;
 		if (DecisionTimer <= 0.f)
@@ -145,10 +155,13 @@ void AEnemyAIController::UpdateAttackState()
 
 void AEnemyAIController::MakeCombatDecision()
 {
-	if (AnimInstance->Montage_IsPlaying(AttackMontage))
+	if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking")))
 		return;
 
 	float Distance = Enemy->GetDistanceTo(TargetPlayer);
+	float Stamina = ASC->GetNumericAttribute(UBaseAttributeSet::GetStaminaAttribute());
+	float MaxStamina = ASC->GetNumericAttribute(UBaseAttributeSet::GetMaxStaminaAttribute());
+	float StaminaPct = MaxStamina > 0.f ? Stamina / MaxStamina : 0.f;
 
 	float AttackWeight = 0.4f;
 	float StrafeWeight = 0.4f;
@@ -158,6 +171,23 @@ void AEnemyAIController::MakeCombatDecision()
 		AttackWeight += 0.3f;
 	else
 		StrafeWeight += 0.3f;
+
+	// Low stamina — shift weight away from attacking
+	if (StaminaPct < 0.3f)
+	{
+		AttackWeight *= 0.2f;   // heavily discourage attacking
+		StrafeWeight += 0.3f;   // prefer to create distance
+		BlockWeight += 0.2f;    // or turtle up
+	}
+	else if (StaminaPct < 0.6f)
+	{
+		AttackWeight *= 0.6f;   // slightly discourage attacking
+		StrafeWeight += 0.1f;
+	}
+
+	// No stamina at all — never attack
+	if (Stamina <= 0.f)
+		AttackWeight = 0.f;
 
 	float Total = AttackWeight + StrafeWeight + BlockWeight;
 	float Roll = FMath::FRandRange(0.f, Total);
@@ -170,12 +200,19 @@ void AEnemyAIController::MakeCombatDecision()
 	else
 		NewState = EEnemyCombatState::Blocking;
 
-	// if currently blocking and switching to something else, stop block first
-	if (bBlock && NewState != EEnemyCombatState::Blocking)
+	if (bBlock)
 	{
-		StopBlock();
-		PendingCombatState = NewState; // store what we want to do next
-		// don't set CombatState yet
+		if (NewState == EEnemyCombatState::Blocking)
+		{
+			DecisionTimer = FMath::FRandRange(MinDecisionTime, MaxDecisionTime);
+			return;
+		}
+		else
+		{
+			StopBlock();
+			PendingCombatState = NewState;
+			Enemy->CombatState = EEnemyCombatState::None;
+		}
 	}
 	else
 	{
@@ -184,7 +221,6 @@ void AEnemyAIController::MakeCombatDecision()
 
 	DecisionTimer = FMath::FRandRange(MinDecisionTime, MaxDecisionTime);
 }
-
 void AEnemyAIController::Strafe()
 {
 	if (!Enemy || !TargetPlayer) return;
@@ -196,7 +232,6 @@ void AEnemyAIController::Strafe()
 		CurrentStrafeDirection = GetStrafeDirection(ToEnemy);
 		CurrentStrafeDirection.Z = 0.f; // flatten to horizontal plane
 		CurrentStrafeDirection = CurrentStrafeDirection.GetSafeNormal();
-		UE_LOG(LogTemp, Warning, TEXT("Strafe direction set to: %s"), *CurrentStrafeDirection.ToString());
 		bStrafeDirectionSet = true;
 	}
 
@@ -220,10 +255,6 @@ void AEnemyAIController::Strafe()
 		MoveDirection += ToEnemy.GetSafeNormal();
 	else if (Distance > StrafeRange)
 		MoveDirection -= ToEnemy.GetSafeNormal();
-
-	
-	UE_LOG(LogTemp, Warning, TEXT("Move direction: %s, Distance: %f, StoppingRange: %f"),
-		*MoveDirection.ToString(), Distance, StoppingRange);
 
 	Enemy->GetCharacterMovement()->MaxWalkSpeed = StrafeMoveSpeed;
 	Enemy->AddMovementInput(MoveDirection.GetSafeNormal(), StrafeMoveSpeed * GetWorld()->DeltaTimeSeconds);
@@ -282,24 +313,25 @@ FVector AEnemyAIController::GetStrafeDirection(const FVector &ToEnemy) const
 
 void AEnemyAIController::Attack()
 {
-	if (!Enemy || !TargetPlayer) return;
+	if (!Enemy || !TargetPlayer || !ASC) return;
+
 	float Distance = Enemy->GetDistanceTo(TargetPlayer);
 
 	if (Distance > AttackRange + 80)
 	{
-		bIsAttacking = true;
 		FVector MoveDirection = (Enemy->GetActorLocation() - TargetPlayer->GetActorLocation()).GetSafeNormal();
 		FVector TargetLocation = TargetPlayer->GetActorLocation() + MoveDirection * AttackRange;
 		MoveToLocation(TargetLocation);
 		return;
 	}
 
-	if (AnimInstance && AttackMontage && !AnimInstance->Montage_IsPlaying(AttackMontage))
-	{
-		StopMovement();
-		AnimInstance->Montage_Play(AttackMontage);
-		bIsAttacking = false; // unlock only after montage starts
-	}
+	if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking")))
+		return; // already attacking
+
+	StopMovement();
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash")));
+	ASC->TryActivateAbilitiesByTag(TagContainer);
 }
 
 void AEnemyAIController::Block()
@@ -310,24 +342,37 @@ void AEnemyAIController::Block()
 		bBlock = true;
 	}
 
-	float Distance = Enemy->GetDistanceTo(TargetPlayer);
+
+	/**float Distance = Enemy->GetDistanceTo(TargetPlayer);
 	if (Distance > StoppingRange + 40.f)
 	{
 		StopBlock();
 		Enemy->CombatState = EEnemyCombatState::None;
 	}
+	*/
 }
 
 void AEnemyAIController::StartBlock()
 {
 	if (!AnimInstance || !BlockMontage) return;
-	UE_LOG(LogTemp, Warning, TEXT("KUR"));
+	// Force-clear any stale state before playing
+	if (AnimInstance->Montage_IsPlaying(BlockMontage))
+		return; // already playing, don't restart it
+
 	AnimInstance->Montage_Play(BlockMontage);
+
+	float Duration = AnimInstance->Montage_Play(BlockMontage);
+	// Duration == 0 means it failed to play
+	if (Duration == 0.f)
+	{
+		UE_LOG(LogTemp, Error, TEXT("BlockMontage FAILED to play — check slot conflicts or asset ref"));
+	}
 }
 
 void AEnemyAIController::StopBlock()
 {
 	if (!AnimInstance || !BlockMontage) return;
+	FDebug::DumpStackTraceToLog(ELogVerbosity::Warning);
 
 	AnimInstance->Montage_Stop(0.2f, BlockMontage);
 	bBlock = false;
@@ -373,4 +418,9 @@ void AEnemyAIController::OnAlertTimerExpired()
 		TargetPlayer = nullptr;
 		Enemy->CurrentState = EEnemyState::Patrol;
 	}
+}
+
+void AEnemyAIController::OnAbilityEnded(const FAbilityEndedData& AbilityEndedData)
+{
+	Enemy->CombatState = EEnemyCombatState::None;
 }

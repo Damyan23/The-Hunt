@@ -103,8 +103,6 @@ protected:
 	UFUNCTION()
 	void StopBlock();
 
-
-
 // ============================================================
 // Perception
 // ============================================================
@@ -120,5 +118,14 @@ protected:
 	UFUNCTION()
 	void OnAlertTimerExpired();
 	FTimerHandle AlertTimerHandle;
+
+// ============================================================
+// ASC
+// ============================================================
+	UPROPERTY()
+	TObjectPtr<UAbilitySystemComponent> ASC;
+	UFUNCTION()
+	void OnAbilityEnded(const FAbilityEndedData& AbilityEndedData);
 };
+
 

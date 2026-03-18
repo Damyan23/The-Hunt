@@ -6,6 +6,7 @@
 
 #include "UObject/GeneratedCppIncludes.h"
 #include "Enemy/EnemyAIController.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "Perception/AIPerceptionTypes.h"
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
@@ -21,6 +22,8 @@ ENGINE_API UClass* Z_Construct_UClass_AActor_NoRegister();
 ENGINE_API UClass* Z_Construct_UClass_APawn_NoRegister();
 ENGINE_API UClass* Z_Construct_UClass_UAnimInstance_NoRegister();
 ENGINE_API UClass* Z_Construct_UClass_UAnimMontage_NoRegister();
+GAMEPLAYABILITIES_API UClass* Z_Construct_UClass_UAbilitySystemComponent_NoRegister();
+GAMEPLAYABILITIES_API UScriptStruct* Z_Construct_UScriptStruct_FAbilityEndedData();
 THEHUNT_API UClass* Z_Construct_UClass_AEnemyAIController();
 THEHUNT_API UClass* Z_Construct_UClass_AEnemyAIController_NoRegister();
 THEHUNT_API UClass* Z_Construct_UClass_AEnemyCharacter_NoRegister();
@@ -131,6 +134,60 @@ DEFINE_FUNCTION(AEnemyAIController::execMakeCombatDecision)
 	P_NATIVE_END;
 }
 // ********** End Class AEnemyAIController Function MakeCombatDecision *****************************
+
+// ********** Begin Class AEnemyAIController Function OnAbilityEnded *******************************
+struct Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics
+{
+	struct EnemyAIController_eventOnAbilityEnded_Parms
+	{
+		FAbilityEndedData AbilityEndedData;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[] = {
+		{ "ModuleRelativePath", "Enemy/EnemyAIController.h" },
+	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_AbilityEndedData_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function OnAbilityEnded constinit property declarations ************************
+	static const UECodeGen_Private::FStructPropertyParams NewProp_AbilityEndedData;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function OnAbilityEnded constinit property declarations **************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function OnAbilityEnded Property Definitions ***********************************
+const UECodeGen_Private::FStructPropertyParams Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::NewProp_AbilityEndedData = { "AbilityEndedData", nullptr, (EPropertyFlags)0x0010000008000182, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(EnemyAIController_eventOnAbilityEnded_Parms, AbilityEndedData), Z_Construct_UScriptStruct_FAbilityEndedData, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_AbilityEndedData_MetaData), NewProp_AbilityEndedData_MetaData) }; // 1883230945
+const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::NewProp_AbilityEndedData,
+};
+static_assert(UE_ARRAY_COUNT(Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::PropPointers) < 2048);
+// ********** End Function OnAbilityEnded Property Definitions *************************************
+const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::FuncParams = { { (UObject*(*)())Z_Construct_UClass_AEnemyAIController, nullptr, "OnAbilityEnded", 	Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::PropPointers, 
+	UE_ARRAY_COUNT(Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::PropPointers), 
+sizeof(Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::EnemyAIController_eventOnAbilityEnded_Parms),
+RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x00480401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::Function_MetaDataParams), Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::Function_MetaDataParams)},  };
+static_assert(sizeof(Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::EnemyAIController_eventOnAbilityEnded_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded()
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded_Statics::FuncParams);
+	}
+	return ReturnFunction;
+}
+DEFINE_FUNCTION(AEnemyAIController::execOnAbilityEnded)
+{
+	P_GET_STRUCT_REF(FAbilityEndedData,Z_Param_Out_AbilityEndedData);
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	P_THIS->OnAbilityEnded(Z_Param_Out_AbilityEndedData);
+	P_NATIVE_END;
+}
+// ********** End Class AEnemyAIController Function OnAbilityEnded *********************************
 
 // ********** Begin Class AEnemyAIController Function OnAlertTimerExpired **************************
 struct Z_Construct_UFunction_AEnemyAIController_OnAlertTimerExpired_Statics
@@ -627,6 +684,16 @@ struct Z_Construct_UClass_AEnemyAIController_Statics
 		{ "Category", "EnemyAIController" },
 		{ "ModuleRelativePath", "Enemy/EnemyAIController.h" },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_ASC_MetaData[] = {
+#if !UE_BUILD_SHIPPING
+		{ "Comment", "// ============================================================\n// ASC\n// ============================================================\n" },
+#endif
+		{ "EditInline", "true" },
+		{ "ModuleRelativePath", "Enemy/EnemyAIController.h" },
+#if !UE_BUILD_SHIPPING
+		{ "ToolTip", "ASC" },
+#endif
+	};
 #endif // WITH_METADATA
 
 // ********** Begin Class AEnemyAIController constinit property declarations ***********************
@@ -644,12 +711,14 @@ struct Z_Construct_UClass_AEnemyAIController_Statics
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_BlockMontage;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_SightConfig;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_HearingConfig;
+	static const UECodeGen_Private::FObjectPropertyParams NewProp_ASC;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 // ********** End Class AEnemyAIController constinit property declarations *************************
 	static constexpr UE::CodeGen::FClassNativeFunction Funcs[] = {
 		{ .NameUTF8 = UTF8TEXT("Attack"), .Pointer = &AEnemyAIController::execAttack },
 		{ .NameUTF8 = UTF8TEXT("Block"), .Pointer = &AEnemyAIController::execBlock },
 		{ .NameUTF8 = UTF8TEXT("MakeCombatDecision"), .Pointer = &AEnemyAIController::execMakeCombatDecision },
+		{ .NameUTF8 = UTF8TEXT("OnAbilityEnded"), .Pointer = &AEnemyAIController::execOnAbilityEnded },
 		{ .NameUTF8 = UTF8TEXT("OnAlertTimerExpired"), .Pointer = &AEnemyAIController::execOnAlertTimerExpired },
 		{ .NameUTF8 = UTF8TEXT("OnPerceptionUpdated"), .Pointer = &AEnemyAIController::execOnPerceptionUpdated },
 		{ .NameUTF8 = UTF8TEXT("StartBlock"), .Pointer = &AEnemyAIController::execStartBlock },
@@ -666,6 +735,7 @@ struct Z_Construct_UClass_AEnemyAIController_Statics
 		{ &Z_Construct_UFunction_AEnemyAIController_Attack, "Attack" }, // 1270148366
 		{ &Z_Construct_UFunction_AEnemyAIController_Block, "Block" }, // 224030542
 		{ &Z_Construct_UFunction_AEnemyAIController_MakeCombatDecision, "MakeCombatDecision" }, // 929999390
+		{ &Z_Construct_UFunction_AEnemyAIController_OnAbilityEnded, "OnAbilityEnded" }, // 217688749
 		{ &Z_Construct_UFunction_AEnemyAIController_OnAlertTimerExpired, "OnAlertTimerExpired" }, // 2371598013
 		{ &Z_Construct_UFunction_AEnemyAIController_OnPerceptionUpdated, "OnPerceptionUpdated" }, // 3291875434
 		{ &Z_Construct_UFunction_AEnemyAIController_StartBlock, "StartBlock" }, // 499566046
@@ -699,6 +769,7 @@ const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AEnemyAIContro
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_BlockMontage = { "BlockMontage", nullptr, (EPropertyFlags)0x0124080000010001, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, BlockMontage), Z_Construct_UClass_UAnimMontage_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_BlockMontage_MetaData), NewProp_BlockMontage_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_SightConfig = { "SightConfig", nullptr, (EPropertyFlags)0x0124080000020001, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, SightConfig), Z_Construct_UClass_UAISenseConfig_Sight_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_SightConfig_MetaData), NewProp_SightConfig_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_HearingConfig = { "HearingConfig", nullptr, (EPropertyFlags)0x0124080000020001, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, HearingConfig), Z_Construct_UClass_UAISenseConfig_Hearing_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_HearingConfig_MetaData), NewProp_HearingConfig_MetaData) };
+const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AEnemyAIController_Statics::NewProp_ASC = { "ASC", nullptr, (EPropertyFlags)0x0124080000080008, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AEnemyAIController, ASC), Z_Construct_UClass_UAbilitySystemComponent_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ASC_MetaData), NewProp_ASC_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AEnemyAIController_Statics::PropPointers[] = {
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_TargetPlayer,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_Enemy,
@@ -714,6 +785,7 @@ const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AEnemyAIC
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_BlockMontage,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_SightConfig,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_HearingConfig,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AEnemyAIController_Statics::NewProp_ASC,
 };
 static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_AEnemyAIController_Statics::PropPointers) < 2048);
 // ********** End Class AEnemyAIController Property Definitions ************************************
@@ -758,10 +830,10 @@ AEnemyAIController::~AEnemyAIController() {}
 struct Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_AEnemyAIController, AEnemyAIController::StaticClass, TEXT("AEnemyAIController"), &Z_Registration_Info_UClass_AEnemyAIController, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AEnemyAIController), 1340701500U) },
+		{ Z_Construct_UClass_AEnemyAIController, AEnemyAIController::StaticClass, TEXT("AEnemyAIController"), &Z_Registration_Info_UClass_AEnemyAIController, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AEnemyAIController), 2191551973U) },
 	};
 }; // Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_Statics 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_913649800{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_3021436820{
 	TEXT("/Script/TheHunt"),
 	Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Enemy_EnemyAIController_h__Script_TheHunt_Statics::ClassInfo),
 	nullptr, 0,

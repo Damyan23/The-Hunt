@@ -130,11 +130,23 @@
     <Filter Include="Source\TheHunt">
       <UniqueIdentifier>{99AEC70A-E365-3A09-B157-85B2F1C99328}</UniqueIdentifier>
     </Filter>
-    <ClCompile Include="..\..\Source\TheHunt\BaseCharacter.cpp">
-      <Filter>Source\TheHunt</Filter>
+    <Filter Include="Source\TheHunt\Animations">
+      <UniqueIdentifier>{169B5AD3-5522-30BD-84F4-5AFD0FAE7121}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\TheHunt\Animations\Notifies">
+      <UniqueIdentifier>{C65C453D-2B98-39CC-8789-9EEA14CB029F}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\TheHunt\Animations\Notifies\DissableHitbox.cpp">
+      <Filter>Source\TheHunt\Animations\Notifies</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\Source\TheHunt\BaseCharacter.h">
-      <Filter>Source\TheHunt</Filter>
+    <ClInclude Include="..\..\Source\TheHunt\Animations\Notifies\DissableHitbox.h">
+      <Filter>Source\TheHunt\Animations\Notifies</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\TheHunt\Animations\Notifies\EnableHitbox.cpp">
+      <Filter>Source\TheHunt\Animations\Notifies</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\Animations\Notifies\EnableHitbox.h">
+      <Filter>Source\TheHunt\Animations\Notifies</Filter>
     </ClInclude>
     <Filter Include="Source\TheHunt\Enemy">
       <UniqueIdentifier>{7319552A-4CE5-318E-9407-1F141FE5DB5E}</UniqueIdentifier>
@@ -150,6 +162,27 @@
     </ClCompile>
     <ClInclude Include="..\..\Source\TheHunt\Enemy\EnemyCharacter.h">
       <Filter>Source\TheHunt\Enemy</Filter>
+    </ClInclude>
+    <Filter Include="Source\TheHunt\GameplayAbilitySystem">
+      <UniqueIdentifier>{89AA6186-F8CC-330B-92B7-8F0E346B1A33}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\TheHunt\GameplayAbilitySystem\BaseAttributeSet.cpp">
+      <Filter>Source\TheHunt\GameplayAbilitySystem</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\GameplayAbilitySystem\BaseAttributeSet.h">
+      <Filter>Source\TheHunt\GameplayAbilitySystem</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\TheHunt\GameplayAbilitySystem\BaseCharacter.cpp">
+      <Filter>Source\TheHunt\GameplayAbilitySystem</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\GameplayAbilitySystem\BaseCharacter.h">
+      <Filter>Source\TheHunt\GameplayAbilitySystem</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\TheHunt\GameplayAbilitySystem\BasicAttackAbility.cpp">
+      <Filter>Source\TheHunt\GameplayAbilitySystem</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\GameplayAbilitySystem\BasicAttackAbility.h">
+      <Filter>Source\TheHunt\GameplayAbilitySystem</Filter>
     </ClInclude>
     <Filter Include="Source\TheHunt\InputPlayer">
       <UniqueIdentifier>{EA467616-794A-37D5-98BE-640F0B9F3E21}</UniqueIdentifier>
@@ -216,6 +249,12 @@
     </ClCompile>
     <ClInclude Include="..\..\Source\TheHunt\Items\Weapon\MeleWeapon.h">
       <Filter>Source\TheHunt\Items\Weapon</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\Source\TheHunt\SwordActor.cpp">
+      <Filter>Source\TheHunt</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\SwordActor.h">
+      <Filter>Source\TheHunt</Filter>
     </ClInclude>
     <None Include="..\..\Source\TheHunt\TheHunt.Build.cs">
       <Filter>Source\TheHunt</Filter>

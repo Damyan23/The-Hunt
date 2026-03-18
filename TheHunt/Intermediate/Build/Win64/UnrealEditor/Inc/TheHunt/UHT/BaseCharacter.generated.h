@@ -4,7 +4,7 @@
 	DO NOT modify this manually! Edit the corresponding .h files instead!
 ===========================================================================*/
 
-// IWYU pragma: private, include "BaseCharacter.h"
+// IWYU pragma: private, include "GameplayAbilitySystem/BaseCharacter.h"
 
 #ifdef THEHUNT_BaseCharacter_generated_h
 #error "BaseCharacter.generated.h already included, missing '#pragma once' in BaseCharacter.h"
@@ -17,10 +17,14 @@
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 // ********** Begin Class ABaseCharacter ***********************************************************
+#define FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h_20_RPC_WRAPPERS_NO_PURE_DECLS \
+	DECLARE_FUNCTION(execAttachWeapon);
+
+
 struct Z_Construct_UClass_ABaseCharacter_Statics;
 THEHUNT_API UClass* Z_Construct_UClass_ABaseCharacter_NoRegister();
 
-#define FID_TheHunt_Source_TheHunt_BaseCharacter_h_18_INCLASS_NO_PURE_DECLS \
+#define FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h_20_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesABaseCharacter(); \
 	friend struct ::Z_Construct_UClass_ABaseCharacter_Statics; \
@@ -32,7 +36,7 @@ public: \
 	virtual UObject* _getUObject() const override { return const_cast<ABaseCharacter*>(this); }
 
 
-#define FID_TheHunt_Source_TheHunt_BaseCharacter_h_18_ENHANCED_CONSTRUCTORS \
+#define FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h_20_ENHANCED_CONSTRUCTORS \
 	/** Deleted move- and copy-constructors, should never be used */ \
 	ABaseCharacter(ABaseCharacter&&) = delete; \
 	ABaseCharacter(const ABaseCharacter&) = delete; \
@@ -42,12 +46,13 @@ public: \
 	NO_API virtual ~ABaseCharacter();
 
 
-#define FID_TheHunt_Source_TheHunt_BaseCharacter_h_15_PROLOG
-#define FID_TheHunt_Source_TheHunt_BaseCharacter_h_18_GENERATED_BODY \
+#define FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h_17_PROLOG
+#define FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h_20_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_TheHunt_Source_TheHunt_BaseCharacter_h_18_INCLASS_NO_PURE_DECLS \
-	FID_TheHunt_Source_TheHunt_BaseCharacter_h_18_ENHANCED_CONSTRUCTORS \
+	FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h_20_RPC_WRAPPERS_NO_PURE_DECLS \
+	FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h_20_INCLASS_NO_PURE_DECLS \
+	FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h_20_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
@@ -57,6 +62,6 @@ class ABaseCharacter;
 // ********** End Class ABaseCharacter *************************************************************
 
 #undef CURRENT_FILE_ID
-#define CURRENT_FILE_ID FID_TheHunt_Source_TheHunt_BaseCharacter_h
+#define CURRENT_FILE_ID FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

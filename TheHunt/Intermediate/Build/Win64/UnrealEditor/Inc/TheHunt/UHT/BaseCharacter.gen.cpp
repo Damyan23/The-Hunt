@@ -5,7 +5,7 @@
 ===========================================================================*/
 
 #include "UObject/GeneratedCppIncludes.h"
-#include "BaseCharacter.h"
+#include "GameplayAbilitySystem/BaseCharacter.h"
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 static_assert(!UE_WITH_CONSTINIT_UOBJECT, "This generated code can only be compiled with !UE_WITH_CONSTINIT_OBJECT");
@@ -20,8 +20,44 @@ GAMEPLAYABILITIES_API UClass* Z_Construct_UClass_UAttributeSet_NoRegister();
 GAMEPLAYABILITIES_API UClass* Z_Construct_UClass_UGameplayAbility_NoRegister();
 THEHUNT_API UClass* Z_Construct_UClass_ABaseCharacter();
 THEHUNT_API UClass* Z_Construct_UClass_ABaseCharacter_NoRegister();
+THEHUNT_API UClass* Z_Construct_UClass_UBaseAttributeSet_NoRegister();
 UPackage* Z_Construct_UPackage__Script_TheHunt();
 // ********** End Cross Module References **********************************************************
+
+// ********** Begin Class ABaseCharacter Function AttachWeapon *************************************
+struct Z_Construct_UFunction_ABaseCharacter_AttachWeapon_Statics
+{
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Function_MetaDataParams[] = {
+		{ "ModuleRelativePath", "GameplayAbilitySystem/BaseCharacter.h" },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function AttachWeapon constinit property declarations **************************
+// ********** End Function AttachWeapon constinit property declarations ****************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+const UECodeGen_Private::FFunctionParams Z_Construct_UFunction_ABaseCharacter_AttachWeapon_Statics::FuncParams = { { (UObject*(*)())Z_Construct_UClass_ABaseCharacter, nullptr, "AttachWeapon", 	nullptr, 
+	0, 
+0,
+RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x00020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(Z_Construct_UFunction_ABaseCharacter_AttachWeapon_Statics::Function_MetaDataParams), Z_Construct_UFunction_ABaseCharacter_AttachWeapon_Statics::Function_MetaDataParams)},  };
+UFunction* Z_Construct_UFunction_ABaseCharacter_AttachWeapon()
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, Z_Construct_UFunction_ABaseCharacter_AttachWeapon_Statics::FuncParams);
+	}
+	return ReturnFunction;
+}
+DEFINE_FUNCTION(ABaseCharacter::execAttachWeapon)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	P_THIS->AttachWeapon();
+	P_NATIVE_END;
+}
+// ********** End Class ABaseCharacter Function AttachWeapon ***************************************
 
 // ********** Begin Class ABaseCharacter ***********************************************************
 FClassRegistrationInfo Z_Registration_Info_UClass_ABaseCharacter;
@@ -61,33 +97,46 @@ struct Z_Construct_UClass_ABaseCharacter_Statics
 		{ "Comment", "/**\n * \n */" },
 #endif
 		{ "HideCategories", "Navigation" },
-		{ "IncludePath", "BaseCharacter.h" },
-		{ "ModuleRelativePath", "BaseCharacter.h" },
+		{ "IncludePath", "GameplayAbilitySystem/BaseCharacter.h" },
+		{ "ModuleRelativePath", "GameplayAbilitySystem/BaseCharacter.h" },
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_AbilitySystemComponent_MetaData[] = {
-		{ "Category", "BaseCharacter" },
+		{ "Category", "AbilitySystem" },
 		{ "EditInline", "true" },
-		{ "ModuleRelativePath", "BaseCharacter.h" },
+		{ "ModuleRelativePath", "GameplayAbilitySystem/BaseCharacter.h" },
+	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_BaseAttributes_MetaData[] = {
+		{ "Category", "AbilitySystem" },
+		{ "EditInline", "true" },
+		{ "ModuleRelativePath", "GameplayAbilitySystem/BaseCharacter.h" },
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_AttributeSet_MetaData[] = {
 		{ "Category", "BaseCharacter" },
 		{ "EditInline", "true" },
-		{ "ModuleRelativePath", "BaseCharacter.h" },
+		{ "ModuleRelativePath", "GameplayAbilitySystem/BaseCharacter.h" },
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_DefaultAbilities_MetaData[] = {
 		{ "Category", "Abilities" },
-		{ "ModuleRelativePath", "BaseCharacter.h" },
+		{ "ModuleRelativePath", "GameplayAbilitySystem/BaseCharacter.h" },
 	};
 #endif // WITH_METADATA
 
 // ********** Begin Class ABaseCharacter constinit property declarations ***************************
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_AbilitySystemComponent;
+	static const UECodeGen_Private::FObjectPropertyParams NewProp_BaseAttributes;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_AttributeSet;
 	static const UECodeGen_Private::FClassPropertyParams NewProp_DefaultAbilities_Inner;
 	static const UECodeGen_Private::FArrayPropertyParams NewProp_DefaultAbilities;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 // ********** End Class ABaseCharacter constinit property declarations *****************************
+	static constexpr UE::CodeGen::FClassNativeFunction Funcs[] = {
+		{ .NameUTF8 = UTF8TEXT("AttachWeapon"), .Pointer = &ABaseCharacter::execAttachWeapon },
+	};
 	static UObject* (*const DependentSingletons[])();
+	static constexpr FClassFunctionLinkInfo FuncInfo[] = {
+		{ &Z_Construct_UFunction_ABaseCharacter_AttachWeapon, "AttachWeapon" }, // 4142151108
+	};
+	static_assert(UE_ARRAY_COUNT(FuncInfo) < 2048);
 	static const UECodeGen_Private::FImplementedInterfaceParams InterfaceParams[];
 	static constexpr FCppClassTypeInfoStatic StaticCppClassTypeInfo = {
 		TCppClassTypeTraits<ABaseCharacter>::IsAbstract,
@@ -96,12 +145,14 @@ struct Z_Construct_UClass_ABaseCharacter_Statics
 }; // struct Z_Construct_UClass_ABaseCharacter_Statics
 
 // ********** Begin Class ABaseCharacter Property Definitions **************************************
-const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_ABaseCharacter_Statics::NewProp_AbilitySystemComponent = { "AbilitySystemComponent", nullptr, (EPropertyFlags)0x01140000000a0009, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ABaseCharacter, AbilitySystemComponent), Z_Construct_UClass_UAbilitySystemComponent_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_AbilitySystemComponent_MetaData), NewProp_AbilitySystemComponent_MetaData) };
+const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_ABaseCharacter_Statics::NewProp_AbilitySystemComponent = { "AbilitySystemComponent", nullptr, (EPropertyFlags)0x01140000000a001d, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ABaseCharacter, AbilitySystemComponent), Z_Construct_UClass_UAbilitySystemComponent_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_AbilitySystemComponent_MetaData), NewProp_AbilitySystemComponent_MetaData) };
+const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_ABaseCharacter_Statics::NewProp_BaseAttributes = { "BaseAttributes", nullptr, (EPropertyFlags)0x01140000000a001d, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ABaseCharacter, BaseAttributes), Z_Construct_UClass_UBaseAttributeSet_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_BaseAttributes_MetaData), NewProp_BaseAttributes_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_ABaseCharacter_Statics::NewProp_AttributeSet = { "AttributeSet", nullptr, (EPropertyFlags)0x01140000000a0009, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ABaseCharacter, AttributeSet), Z_Construct_UClass_UAttributeSet_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_AttributeSet_MetaData), NewProp_AttributeSet_MetaData) };
 const UECodeGen_Private::FClassPropertyParams Z_Construct_UClass_ABaseCharacter_Statics::NewProp_DefaultAbilities_Inner = { "DefaultAbilities", nullptr, (EPropertyFlags)0x0004000000000000, UECodeGen_Private::EPropertyGenFlags::Class, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, 0, Z_Construct_UClass_UClass_NoRegister, Z_Construct_UClass_UGameplayAbility_NoRegister, METADATA_PARAMS(0, nullptr) };
 const UECodeGen_Private::FArrayPropertyParams Z_Construct_UClass_ABaseCharacter_Statics::NewProp_DefaultAbilities = { "DefaultAbilities", nullptr, (EPropertyFlags)0x0014000000010001, UECodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(ABaseCharacter, DefaultAbilities), EArrayPropertyFlags::None, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_DefaultAbilities_MetaData), NewProp_DefaultAbilities_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_ABaseCharacter_Statics::PropPointers[] = {
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ABaseCharacter_Statics::NewProp_AbilitySystemComponent,
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ABaseCharacter_Statics::NewProp_BaseAttributes,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ABaseCharacter_Statics::NewProp_AttributeSet,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ABaseCharacter_Statics::NewProp_DefaultAbilities_Inner,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_ABaseCharacter_Statics::NewProp_DefaultAbilities,
@@ -121,11 +172,11 @@ const UECodeGen_Private::FClassParams Z_Construct_UClass_ABaseCharacter_Statics:
 	"Game",
 	&StaticCppClassTypeInfo,
 	DependentSingletons,
-	nullptr,
+	FuncInfo,
 	Z_Construct_UClass_ABaseCharacter_Statics::PropPointers,
 	InterfaceParams,
 	UE_ARRAY_COUNT(DependentSingletons),
-	0,
+	UE_ARRAY_COUNT(FuncInfo),
 	UE_ARRAY_COUNT(Z_Construct_UClass_ABaseCharacter_Statics::PropPointers),
 	UE_ARRAY_COUNT(InterfaceParams),
 	0x009000A4u,
@@ -133,6 +184,8 @@ const UECodeGen_Private::FClassParams Z_Construct_UClass_ABaseCharacter_Statics:
 };
 void ABaseCharacter::StaticRegisterNativesABaseCharacter()
 {
+	UClass* Class = ABaseCharacter::StaticClass();
+	FNativeFunctionRegistrar::RegisterFunctions(Class, MakeConstArrayView(Z_Construct_UClass_ABaseCharacter_Statics::Funcs));
 }
 UClass* Z_Construct_UClass_ABaseCharacter()
 {
@@ -147,15 +200,15 @@ ABaseCharacter::~ABaseCharacter() {}
 // ********** End Class ABaseCharacter *************************************************************
 
 // ********** Begin Registration *******************************************************************
-struct Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_BaseCharacter_h__Script_TheHunt_Statics
+struct Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h__Script_TheHunt_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_ABaseCharacter, ABaseCharacter::StaticClass, TEXT("ABaseCharacter"), &Z_Registration_Info_UClass_ABaseCharacter, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ABaseCharacter), 3193300348U) },
+		{ Z_Construct_UClass_ABaseCharacter, ABaseCharacter::StaticClass, TEXT("ABaseCharacter"), &Z_Registration_Info_UClass_ABaseCharacter, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(ABaseCharacter), 2207010591U) },
 	};
-}; // Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_BaseCharacter_h__Script_TheHunt_Statics 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_BaseCharacter_h__Script_TheHunt_2376923835{
+}; // Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h__Script_TheHunt_Statics 
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h__Script_TheHunt_3700068567{
 	TEXT("/Script/TheHunt"),
-	Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_BaseCharacter_h__Script_TheHunt_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_BaseCharacter_h__Script_TheHunt_Statics::ClassInfo),
+	Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h__Script_TheHunt_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BaseCharacter_h__Script_TheHunt_Statics::ClassInfo),
 	nullptr, 0,
 	nullptr, 0,
 };

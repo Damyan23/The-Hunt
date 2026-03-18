@@ -1,15 +1,5 @@
-2026/03/14-19:00:31.825 9a54 Reusing MANIFEST F:\Projects\The-Hunt\TheHunt\Saved\webcache_6613\Default\Local Storage\leveldb/MANIFEST-000001
-2026/03/14-19:00:31.831 9a54 Recovering log #271
-2026/03/14-19:00:31.833 9a54 Reusing old log F:\Projects\The-Hunt\TheHunt\Saved\webcache_6613\Default\Local Storage\leveldb/000271.log 
-2026/03/14-19:01:35.847 54e4 Level-0 table #275: started
-2026/03/14-19:01:35.850 54e4 Level-0 table #275: 70468 bytes OK
-2026/03/14-19:01:35.852 54e4 Delete type=0 #271
-2026/03/14-19:01:35.853 54e4 Compacting 4@0 + 1@1 files
-2026/03/14-19:01:35.860 54e4 Generated table #276@0: 8 keys, 59362 bytes
-2026/03/14-19:01:35.860 54e4 Compacted 4@0 + 1@1 files => 59362 bytes
-2026/03/14-19:01:35.864 54e4 compacted to: files[ 0 1 1 0 0 0 0 ]
-2026/03/14-19:01:35.865 54e4 Delete type=2 #263
-2026/03/14-19:01:35.865 54e4 Delete type=2 #265
-2026/03/14-19:01:35.865 54e4 Delete type=2 #268
-2026/03/14-19:01:35.865 54e4 Delete type=2 #272
-2026/03/14-19:01:35.865 54e4 Delete type=2 #275
+2026/03/18-17:57:08.111 874c Reusing MANIFEST F:\Projects\The-Hunt\TheHunt\Saved\webcache_6613\Default\Local Storage\leveldb/MANIFEST-000001
+2026/03/18-17:57:08.117 874c Recovering log #345
+2026/03/18-17:57:08.117 874c Level-0 table #348: started
+2026/03/18-17:57:08.122 874c Level-0 table #348: 70396 bytes OK
+2026/03/18-17:57:08.125 874c Delete type=0 #345

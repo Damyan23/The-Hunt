@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "BaseCharacter.h"
+#include "GameplayAbilitySystem/BaseCharacter.h"
 #include "InputActionValue.h"
 #include "Inventory/UI/InventoryWidget.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"

@@ -1,6 +1,14 @@
-2026/03/14-18:33:38.451 b3a8 Reusing MANIFEST F:\Projects\The-Hunt\TheHunt\Saved\webcache_6613\Default\Local Storage\leveldb/MANIFEST-000001
-2026/03/14-18:33:38.456 b3a8 Recovering log #269
-2026/03/14-18:33:38.458 b3a8 Reusing old log F:\Projects\The-Hunt\TheHunt\Saved\webcache_6613\Default\Local Storage\leveldb/000269.log 
-2026/03/14-19:00:10.220 6468 Level-0 table #272: started
-2026/03/14-19:00:10.224 6468 Level-0 table #272: 70481 bytes OK
-2026/03/14-19:00:10.226 6468 Delete type=0 #269
+2026/03/18-17:52:25.037 56e8 Reusing MANIFEST F:\Projects\The-Hunt\TheHunt\Saved\webcache_6613\Default\Local Storage\leveldb/MANIFEST-000001
+2026/03/18-17:52:25.042 56e8 Recovering log #342
+2026/03/18-17:52:25.042 56e8 Level-0 table #344: started
+2026/03/18-17:52:25.047 56e8 Level-0 table #344: 70381 bytes OK
+2026/03/18-17:52:25.050 56e8 Delete type=0 #342
+2026/03/18-17:52:25.052 3cd8 Compacting 4@0 + 1@1 files
+2026/03/18-17:52:25.057 3cd8 Generated table #346@0: 8 keys, 59306 bytes
+2026/03/18-17:52:25.057 3cd8 Compacted 4@0 + 1@1 files => 59306 bytes
+2026/03/18-17:52:25.058 3cd8 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/03/18-17:52:25.058 3cd8 Delete type=2 #334
+2026/03/18-17:52:25.059 3cd8 Delete type=2 #336
+2026/03/18-17:52:25.059 3cd8 Delete type=2 #338
+2026/03/18-17:52:25.059 3cd8 Delete type=2 #341
+2026/03/18-17:52:25.059 3cd8 Delete type=2 #344
