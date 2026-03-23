@@ -1,10 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "BaseCharacter.h"
-
 #include "AbilitySystemComponent.h"
-#include "SwordActor.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -19,20 +17,24 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::AttachWeapon()
 {
     if (Weapon) return;
-
-    USkeletalMeshComponent* MeshComp = GetMesh();
-    if (!MeshComp || !MeshComp->GetSkeletalMeshAsset()) return; // silently skip if no mesh
-    if (!MeshComp->DoesSocketExist(FName("Sword_joint"))) return; // skip if no socket
+    if (!WeaponClass) return;
 
     FActorSpawnParameters Params;
     Params.Owner = this;
-    Weapon = GetWorld()->SpawnActor<ASwordActor>(ASwordActor::StaticClass(), Params);
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-    if (Weapon)
+    Weapon = GetWorld()->SpawnActor<AMeleeWeapon>(WeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+    if (!Weapon) return;
+
+    Weapon->AttachToComponent(
+        GetRootComponent(),
+        FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+    if (USceneComponent* Root = Weapon->GetRootComponent())
     {
-        Weapon->AttachToComponent(MeshComp,
-            FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-            FName("Sword_joint"));
+        Root->SetRelativeLocation(Weapon->AttachOffset.GetLocation());
+        Root->SetRelativeRotation(Weapon->AttachOffset.GetRotation());
+        // Scale is preserved from the Blueprint CDO — don't override it
     }
 }
 
@@ -56,7 +58,6 @@ void ABaseCharacter::PostInitializeComponents()
     AbilitySystemComponent->InitAbilityActorInfo(this, this);
     GrantDefaultAbilities();
     AttachWeapon();
-
 }
 
 void ABaseCharacter::InitializeAttributes()

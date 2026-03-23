@@ -509,6 +509,7 @@
     <None Include="..\..\Config\DefaultEditorPerProjectUserSettings.ini"/>
     <None Include="..\..\Config\DefaultEngine.ini"/>
     <None Include="..\..\Config\DefaultGame.ini"/>
+    <None Include="..\..\Config\DefaultGameplayTags.ini"/>
     <None Include="..\..\Config\DefaultInput.ini"/>
     <None Include="..\..\Plugins\VisualStudioTools\Config\FilterPlugin.ini"/>
     <ClCompile Include="..\..\Plugins\VisualStudioTools\Source\VisualStudioBlueprintDebuggerHelper\Private\VisualStudioBlueprintDebuggerHelperModule.cpp">
@@ -657,18 +658,12 @@
       <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
     </ClCompile>
     <ClInclude Include="..\..\Source\TheHunt\Items\ItemEffect.h"/>
-    <ClCompile Include="..\..\Source\TheHunt\Items\Weapon\MeleWeapon.cpp">
+    <ClCompile Include="..\..\Source\TheHunt\Items\Weapon\MeleeWeapon.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
       <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
     </ClCompile>
-    <ClInclude Include="..\..\Source\TheHunt\Items\Weapon\MeleWeapon.h"/>
-    <ClCompile Include="..\..\Source\TheHunt\SwordActor.cpp">
-      <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>$(ClCompile_ForcedIncludeFiles_2)</ForcedIncludeFiles>
-      <AdditionalOptions>$(ClCompile_AdditionalOptions_1)</AdditionalOptions>
-    </ClCompile>
-    <ClInclude Include="..\..\Source\TheHunt\SwordActor.h"/>
+    <ClInclude Include="..\..\Source\TheHunt\Items\Weapon\MeleeWeapon.h"/>
     <None Include="..\..\Source\TheHunt\TheHunt.Build.cs"/>
     <ClCompile Include="..\..\Source\TheHunt\TheHunt.cpp">
       <AdditionalIncludeDirectories>$(ClCompile_AdditionalIncludeDirectories_2)</AdditionalIncludeDirectories>

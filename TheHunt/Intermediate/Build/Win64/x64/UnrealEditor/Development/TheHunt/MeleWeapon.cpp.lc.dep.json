@@ -1,0 +1,17 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\items\\weapon\\meleweapon.cpp",
+        "ProvidedModule": "",
+        "PCH": "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\x64\\thehunteditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.h.pch",
+        "Includes": [
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\thehunt\\definitions.thehunt.h",
+            "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\items\\weapon\\meleweapon.h",
+            "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\items\\itemdefinition.h",
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\itemdefinition.generated.h",
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\meleweapon.generated.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

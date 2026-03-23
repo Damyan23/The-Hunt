@@ -8,7 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "DrawDebugHelpers.h"
 #include "AbilitySystemComponent.h"
-#include "Items/Weapon/MeleWeapon.h"
+#include "Items/Weapon/MeleeWeapon.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
@@ -16,34 +16,35 @@
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	StimuliSource = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("StimuliSource"));
 	StimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	StimuliSource->RegisterForSense(TSubclassOf<UAISense_Hearing>());
 
-
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
 }
+
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// ... rest of your BeginPlay code
 	if (InventoryWidgetClass)
 	{
 		InventoryWidget = CreateWidget<UInventoryWidget>(GetWorld(), InventoryWidgetClass);
 		InventoryWidget->InventoryComponent = FindComponentByClass<UInventoryComponent>();
 		InventoryWidget->SetupUI();
 		InventoryWidget->AddToViewport();
-		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed); // hidden by default
+		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
 
 	PC = GetWorld()->GetFirstPlayerController();
+	AttachWeapon();
 }
 
 // Called every frame
@@ -150,11 +151,9 @@ void APlayerCharacter::Interact()
 		{
 			if (IsValid(Hit.GetActor()) && Hit.GetActor() != this)
 			{
-				AMeleWeapon* Pickup = Cast<AMeleWeapon>(Hit.GetActor());
-				if (Pickup)
+				if (AMeleeWeapon* Pickup = Cast<AMeleeWeapon>(Hit.GetActor()))
 				{
-					UItemDefinition* ItemDef = Pickup->ItemDefinition.LoadSynchronous();
-					if (ItemDef)
+					if (UItemDefinition* ItemDef = Pickup->ItemDefinition)
 					{
 						GetWorld()->GetGameInstance()->GetSubsystem<UInventorySubsystem>()->AddItemToActor(this, ItemDef);
 						Pickup->Destroy();

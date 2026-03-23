@@ -18,6 +18,9 @@
     <None Include="..\..\Config\DefaultGame.ini">
       <Filter>Config</Filter>
     </None>
+    <None Include="..\..\Config\DefaultGameplayTags.ini">
+      <Filter>Config</Filter>
+    </None>
     <None Include="..\..\Config\DefaultInput.ini">
       <Filter>Config</Filter>
     </None>
@@ -244,17 +247,11 @@
     <Filter Include="Source\TheHunt\Items\Weapon">
       <UniqueIdentifier>{5B0E29D2-18B2-3B84-A8AB-5C6400DB9175}</UniqueIdentifier>
     </Filter>
-    <ClCompile Include="..\..\Source\TheHunt\Items\Weapon\MeleWeapon.cpp">
+    <ClCompile Include="..\..\Source\TheHunt\Items\Weapon\MeleeWeapon.cpp">
       <Filter>Source\TheHunt\Items\Weapon</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\Source\TheHunt\Items\Weapon\MeleWeapon.h">
+    <ClInclude Include="..\..\Source\TheHunt\Items\Weapon\MeleeWeapon.h">
       <Filter>Source\TheHunt\Items\Weapon</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\Source\TheHunt\SwordActor.cpp">
-      <Filter>Source\TheHunt</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\Source\TheHunt\SwordActor.h">
-      <Filter>Source\TheHunt</Filter>
     </ClInclude>
     <None Include="..\..\Source\TheHunt\TheHunt.Build.cs">
       <Filter>Source\TheHunt</Filter>

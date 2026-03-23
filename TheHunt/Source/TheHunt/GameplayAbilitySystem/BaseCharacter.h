@@ -7,8 +7,8 @@
 #include "AbilitySystemInterface.h"
 #include "AttributeSet.h"
 #include "BaseAttributeSet.h"
-#include "SwordActor.h"
 #include "Abilities/GameplayAbility.h"
+#include "Items/Weapon/MeleeWeapon.h"
 #include "BaseCharacter.generated.h"
 
 /**
@@ -41,7 +41,10 @@ protected:
 public:
 	UFUNCTION()
 	void AttachWeapon();
-	TObjectPtr<ASwordActor> Weapon;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+	TSubclassOf<AMeleeWeapon> WeaponClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon");
+	TObjectPtr<AMeleeWeapon> Weapon;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AbilitySystem")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	 

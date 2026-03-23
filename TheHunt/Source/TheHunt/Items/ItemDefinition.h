@@ -1,5 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "GameplayEffect.h"
 #include "Engine/DataAsset.h"
 #include "Engine/Texture2D.h"
 #include "ItemDefinition.generated.h"
@@ -17,8 +18,8 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Item")
     TSoftObjectPtr<UTexture2D> ItemIcon;
 
-    UPROPERTY(EditAnywhere, Category = "Item")
-    TArray<TSubclassOf<class UItemEffect>> Effects;
+    UPROPERTY(EditDefaultsOnly, Category = "Combat")
+    TSubclassOf<UGameplayEffect> DamageEffect;
 
     UPROPERTY(EditDefaultsOnly, Category = "Item")
     TSoftClassPtr<AActor> PickupClass;

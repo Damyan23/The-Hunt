@@ -1,5 +1,0 @@
-[35300:35760:0318/163447.370:WARNING:chrome_main_delegate.cc(745)] This is Chrome version 128.0.6613.138 (not a warning)
-[35300:19924:0318/163447.425:ERROR:google_update_settings.cc(265)] Failed opening key Software\Chromium to set usagestats; result: 5
-[35300:35760:0318/163447.449:WARNING:account_consistency_mode_manager.cc(77)] Desktop Identity Consistency cannot be enabled as no OAuth client ID and client secret have been configured.
-[25152:11152:0318/163450.772:WARNING:frame_impl.cc(430)] virtual CefFrameImpl::SendProcessMessage sent to detached frame 5-DC55FA6C69DEE002D2D9290D82096394 will be ignored
-[35300:35760:0318/163454.419:ERROR:device_event_log_impl.cc(196)] [16:34:54.086] USB: usb_service_win.cc:105 SetupDiGetDeviceProperty({{A45C254E-DF1C-4EFD-8020-67D146A850E0}, 6}) failed: Element not found. (0x490)
