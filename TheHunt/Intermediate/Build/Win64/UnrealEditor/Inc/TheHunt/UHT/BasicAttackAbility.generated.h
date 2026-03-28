@@ -15,9 +15,11 @@
 #include "UObject/ScriptMacros.h"
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
+class UAnimMontage;
 
 // ********** Begin Class UBasicAttackAbility ******************************************************
 #define FID_TheHunt_Source_TheHunt_GameplayAbilitySystem_BasicAttackAbility_h_16_RPC_WRAPPERS_NO_PURE_DECLS \
+	DECLARE_FUNCTION(execOnMontageEnded); \
 	DECLARE_FUNCTION(execOnMontageCompleted);
 
 

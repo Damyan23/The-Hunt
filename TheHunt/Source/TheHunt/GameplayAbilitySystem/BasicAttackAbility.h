@@ -40,4 +40,9 @@ public:
     // The effect applied to the hit target
     UPROPERTY(EditDefaultsOnly, Category = "Attack")
     TSubclassOf<UGameplayEffect> DamageEffect;
+    UPROPERTY(EditDefaultsOnly, Category = "Attack")
+    TSubclassOf<UGameplayEffect> StaggerEffect;
+
+    UFUNCTION()
+    void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

@@ -16,8 +16,9 @@ void EmptyLinkFunctionForGeneratedCodeMeleeWeapon() {}
 COREUOBJECT_API UScriptStruct* Z_Construct_UScriptStruct_FTransform();
 ENGINE_API UClass* Z_Construct_UClass_AActor();
 ENGINE_API UClass* Z_Construct_UClass_AActor_NoRegister();
+ENGINE_API UClass* Z_Construct_UClass_UCapsuleComponent_NoRegister();
 ENGINE_API UClass* Z_Construct_UClass_UPrimitiveComponent_NoRegister();
-ENGINE_API UClass* Z_Construct_UClass_UStaticMeshComponent_NoRegister();
+ENGINE_API UClass* Z_Construct_UClass_USkeletalMeshComponent_NoRegister();
 ENGINE_API UScriptStruct* Z_Construct_UScriptStruct_FHitResult();
 THEHUNT_API UClass* Z_Construct_UClass_AMeleeWeapon();
 THEHUNT_API UClass* Z_Construct_UClass_AMeleeWeapon_NoRegister();
@@ -152,6 +153,11 @@ struct Z_Construct_UClass_AMeleeWeapon_Statics
 		{ "IncludePath", "Items/Weapon/MeleeWeapon.h" },
 		{ "ModuleRelativePath", "Items/Weapon/MeleeWeapon.h" },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Capsule_MetaData[] = {
+		{ "Category", "MeleeWeapon" },
+		{ "EditInline", "true" },
+		{ "ModuleRelativePath", "Items/Weapon/MeleeWeapon.h" },
+	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_WeaponMesh_MetaData[] = {
 		{ "Category", "MeleeWeapon" },
 		{ "EditInline", "true" },
@@ -172,6 +178,7 @@ struct Z_Construct_UClass_AMeleeWeapon_Statics
 #endif // WITH_METADATA
 
 // ********** Begin Class AMeleeWeapon constinit property declarations *****************************
+	static const UECodeGen_Private::FObjectPropertyParams NewProp_Capsule;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_WeaponMesh;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_ItemDefinition;
 	static const UECodeGen_Private::FStructPropertyParams NewProp_AttachOffset;
@@ -193,11 +200,13 @@ struct Z_Construct_UClass_AMeleeWeapon_Statics
 }; // struct Z_Construct_UClass_AMeleeWeapon_Statics
 
 // ********** Begin Class AMeleeWeapon Property Definitions ****************************************
-const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_WeaponMesh = { "WeaponMesh", nullptr, (EPropertyFlags)0x01140000000b000d, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMeleeWeapon, WeaponMesh), Z_Construct_UClass_UStaticMeshComponent_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_WeaponMesh_MetaData), NewProp_WeaponMesh_MetaData) };
+const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_Capsule = { "Capsule", nullptr, (EPropertyFlags)0x00100000000a000d, UECodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMeleeWeapon, Capsule), Z_Construct_UClass_UCapsuleComponent_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Capsule_MetaData), NewProp_Capsule_MetaData) };
+const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_WeaponMesh = { "WeaponMesh", nullptr, (EPropertyFlags)0x01140000000a000d, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMeleeWeapon, WeaponMesh), Z_Construct_UClass_USkeletalMeshComponent_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_WeaponMesh_MetaData), NewProp_WeaponMesh_MetaData) };
 const UECodeGen_Private::FObjectPropertyParams Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_ItemDefinition = { "ItemDefinition", nullptr, (EPropertyFlags)0x0114000000010001, UECodeGen_Private::EPropertyGenFlags::Object | UECodeGen_Private::EPropertyGenFlags::ObjectPtr, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMeleeWeapon, ItemDefinition), Z_Construct_UClass_UItemDefinition_NoRegister, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_ItemDefinition_MetaData), NewProp_ItemDefinition_MetaData) };
 const UECodeGen_Private::FStructPropertyParams Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_AttachOffset = { "AttachOffset", nullptr, (EPropertyFlags)0x0010000000010001, UECodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMeleeWeapon, AttachOffset), Z_Construct_UScriptStruct_FTransform, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_AttachOffset_MetaData), NewProp_AttachOffset_MetaData) };
 const UECodeGen_Private::FNamePropertyParams Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_AttachSocketName = { "AttachSocketName", nullptr, (EPropertyFlags)0x0010000000010001, UECodeGen_Private::EPropertyGenFlags::Name, RF_Public|RF_Transient|RF_MarkAsNative, nullptr, nullptr, 1, STRUCT_OFFSET(AMeleeWeapon, AttachSocketName), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_AttachSocketName_MetaData), NewProp_AttachSocketName_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_AMeleeWeapon_Statics::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_Capsule,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_WeaponMesh,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_ItemDefinition,
 	(const UECodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_AMeleeWeapon_Statics::NewProp_AttachOffset,
@@ -246,10 +255,10 @@ AMeleeWeapon::~AMeleeWeapon() {}
 struct Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h__Script_TheHunt_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_AMeleeWeapon, AMeleeWeapon::StaticClass, TEXT("AMeleeWeapon"), &Z_Registration_Info_UClass_AMeleeWeapon, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AMeleeWeapon), 3789025422U) },
+		{ Z_Construct_UClass_AMeleeWeapon, AMeleeWeapon::StaticClass, TEXT("AMeleeWeapon"), &Z_Registration_Info_UClass_AMeleeWeapon, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(AMeleeWeapon), 2821087866U) },
 	};
 }; // Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h__Script_TheHunt_Statics 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h__Script_TheHunt_117941760{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h__Script_TheHunt_3188271606{
 	TEXT("/Script/TheHunt"),
 	Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h__Script_TheHunt_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h__Script_TheHunt_Statics::ClassInfo),
 	nullptr, 0,

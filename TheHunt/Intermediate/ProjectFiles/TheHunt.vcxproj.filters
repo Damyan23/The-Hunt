@@ -169,6 +169,15 @@
     <Filter Include="Source\TheHunt\GameplayAbilitySystem">
       <UniqueIdentifier>{89AA6186-F8CC-330B-92B7-8F0E346B1A33}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\TheHunt\GameplayAbilitySystem\Abilities">
+      <UniqueIdentifier>{440BD2E6-47AB-3938-9E17-BC12F15D928F}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\TheHunt\GameplayAbilitySystem\Abilities\BasicBlockingAbility.cpp">
+      <Filter>Source\TheHunt\GameplayAbilitySystem\Abilities</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\Source\TheHunt\GameplayAbilitySystem\Abilities\BasicBlockingAbility.h">
+      <Filter>Source\TheHunt\GameplayAbilitySystem\Abilities</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\Source\TheHunt\GameplayAbilitySystem\BaseAttributeSet.cpp">
       <Filter>Source\TheHunt\GameplayAbilitySystem</Filter>
     </ClCompile>

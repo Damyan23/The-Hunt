@@ -23,7 +23,7 @@ public:
 
     void ClearSlot()
     {
-        ItemDefinition = nullptr;
+        ItemDefinition = nullptr;   
         bIsOccupied = false;
     }
 };

@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "GameplayAbilitySystem/BaseCharacter.h"
 #include "InputActionValue.h"
+#include "Components/PostProcessComponent.h"
 #include "Inventory/UI/InventoryWidget.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "PlayerCharacter.generated.h"
@@ -23,6 +24,8 @@ class THEHUNT_API APlayerCharacter : public ABaseCharacter
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSource;
 
 protected:
+	virtual void AttachWeapon() override;
+
 	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* InputMapping;
 
@@ -37,6 +40,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* InteractAction;
+	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* AttackAction;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	float InteractionSphereRadius = 50.f;
@@ -51,6 +56,21 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* InventoryAction;
+
+	UPROPERTY(VisibleAnywhere)
+	UPostProcessComponent* PostProcessComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	UMaterialInterface* HitVignetteMaterial;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* HitVignetteMID;
+
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
+	void ShowHitVignette();
+
+	UPROPERTY(EditDefaultsOnly, Category="Effects")
+	FTimerHandle HitVignetteTimer;
 
 public:
 	// Sets default values for this character's properties
@@ -71,6 +91,7 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Jump();
+	void Attack();
 	void Interact();
 	void ToggleInventory();
 };

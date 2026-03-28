@@ -13,6 +13,38 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
 
+void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	Super::OnHealthChanged(Data);
+
+	ShowHitVignette();
+}
+
+void APlayerCharacter::ShowHitVignette()
+{
+	if (!HitVignetteMID) return;
+
+	// Set intensity to full
+	HitVignetteMID->SetScalarParameterValue(FName("HitIntensity"), 1.0f);
+
+	// Fade it out over time
+	GetWorldTimerManager().SetTimer(HitVignetteTimer, [this]()
+		{
+			float CurrentIntensity;
+			HitVignetteMID->GetScalarParameterValue(FName("HitIntensity"), CurrentIntensity);
+
+			if (CurrentIntensity > 0.f)
+			{
+				HitVignetteMID->SetScalarParameterValue(
+					FName("HitIntensity"), CurrentIntensity - 0.05f);
+			}
+			else
+			{
+				GetWorldTimerManager().ClearTimer(HitVignetteTimer);
+			}
+		}, 0.016f, true); // runs every frame roughly
+}
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -25,6 +57,9 @@ APlayerCharacter::APlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
+
+	PostProcessComponent = CreateDefaultSubobject<UPostProcessComponent>(TEXT("PostProcess"));
+	PostProcessComponent->SetupAttachment(RootComponent);
 }
 
 
@@ -45,13 +80,42 @@ void APlayerCharacter::BeginPlay()
 
 	PC = GetWorld()->GetFirstPlayerController();
 	AttachWeapon();
+
+	if (HitVignetteMaterial)
+	{
+		HitVignetteMID = UMaterialInstanceDynamic::Create(HitVignetteMaterial, this);
+		PostProcessComponent->AddOrUpdateBlendable(HitVignetteMID);
+	}
+}
+
+void APlayerCharacter::AttachWeapon()
+{
+	if (Weapon) return;
+	if (!WeaponClass) return;
+
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	Weapon = GetWorld()->SpawnActor<AMeleeWeapon>(WeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
+	if (!Weapon) return;
+
+	Weapon->AttachToComponent(
+		RootComponent,
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	if (USceneComponent* Root = Weapon->GetRootComponent())
+	{
+		Root->SetRelativeLocation(Weapon->AttachOffset.GetLocation());
+		Root->SetRelativeRotation(Weapon->AttachOffset.GetRotation());
+		// Scale is preserved from the Blueprint CDO — don't override it
+	}
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -77,6 +141,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
 		Input->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
 		Input->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+		Input->BindAction(AttackAction, ETriggerEvent::Started, this, &APlayerCharacter::Attack);
 	}
 }
 
@@ -112,6 +177,16 @@ void APlayerCharacter::Look(const FInputActionValue& Value)
 void APlayerCharacter::Jump()
 {
 	ACharacter::Jump();
+}
+
+void APlayerCharacter::Attack()
+{
+	if (AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking")))
+		return; // already attacking
+
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash")));
+	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
 }
 
 void APlayerCharacter::Interact()
@@ -181,6 +256,4 @@ void APlayerCharacter::ToggleInventory()
 		PC->SetInputMode(FInputModeGameAndUI());
 	}
 }
-
-
 

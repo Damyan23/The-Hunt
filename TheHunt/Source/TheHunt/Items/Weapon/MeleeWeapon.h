@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Actor.h"
 #include "TheHunt/Items/ItemDefinition.h"
@@ -17,6 +18,9 @@ public:
 	// Sets default values for this actor's properties
 	AMeleeWeapon();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UCapsuleComponent* Capsule;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -24,8 +28,8 @@ protected:
 	
 
 public:	
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<UStaticMeshComponent> WeaponMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USkeletalMeshComponent> WeaponMesh;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -33,9 +37,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
 	TObjectPtr<UItemDefinition> ItemDefinition;;
 
+	
 	void EnableHitbox() const;
 	void DisableHitbox() const;	
-
+	
 	UFUNCTION()
 	void OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,

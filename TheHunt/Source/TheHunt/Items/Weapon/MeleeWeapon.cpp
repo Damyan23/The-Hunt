@@ -3,6 +3,7 @@
 
 #include "Items/Weapon/MeleeWeapon.h"
 #include "GameplayAbilitySystem/BaseCharacter.h"
+#include "GameplayAbilitySystem/BasicAttackAbility.h"
 
 // Sets default values
 AMeleeWeapon::AMeleeWeapon()
@@ -10,10 +11,15 @@ AMeleeWeapon::AMeleeWeapon()
     PrimaryActorTick.bCanEverTick = true;
 
     // Explicitly set root first
-    WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
+    WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
     SetRootComponent(WeaponMesh);
-    WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    WeaponMesh->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
+
+    Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollider"));
+    Capsule->SetupAttachment(WeaponMesh, FName("Cylinder"));  // attach to the bone
+    Capsule->SetGenerateOverlapEvents(true);
+    Capsule->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
+
+    DisableHitbox();
 }
 
 // Called when the game starts or when spawned
@@ -30,35 +36,49 @@ void AMeleeWeapon::Tick(float DeltaTime)
 
 void AMeleeWeapon::EnableHitbox() const
 {
-    WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    UE_LOG(LogTemp, Warning, TEXT("Hitbox enabled"));
+    Capsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void AMeleeWeapon::DisableHitbox() const
 {
-    WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    UE_LOG(LogTemp, Warning, TEXT("Hitbox disabled"));
+    Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
+
 
 void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
     const ABaseCharacter* Attacker = Cast<ABaseCharacter>(GetOwner());
-    const ABaseCharacter* Target = Cast<ABaseCharacter>(OtherActor);
+    ABaseCharacter* Target = Cast<ABaseCharacter>(OtherActor);
+
+    // Ignore if invalid, same actor, or target is not player controlled
     if (!Target || !Attacker || Target == Attacker) return;
 
-    if (!ItemDefinition || !ItemDefinition->DamageEffect) return;
+    if (!Target->IsPlayerControlled() && !Attacker->IsPlayerControlled()) return; // only damage the player
 
-    UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
     UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
+    if (!AttackerASC) return;
 
-    if (TargetASC && AttackerASC)
+    UBasicAttackAbility* AttackAbility = nullptr;
+    for (const FGameplayAbilitySpec& Spec : AttackerASC->GetActivatableAbilities())
     {
-        FGameplayEffectContextHandle Context = AttackerASC->MakeEffectContext();
-        Context.AddSourceObject(Attacker);
-        FGameplayEffectSpecHandle Spec = AttackerASC->MakeOutgoingSpec(
-            ItemDefinition->DamageEffect, 1.f, Context);
-        AttackerASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), TargetASC);
+        AttackAbility = Cast<UBasicAttackAbility>(Spec.Ability);
+        if (AttackAbility) break;
     }
 
+    if (!AttackAbility || !AttackAbility->DamageEffect) return;
+    UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
+    if (!TargetASC) return;
+    FGameplayEffectContextHandle Context = AttackerASC->MakeEffectContext();
+    Context.AddSourceObject(Attacker);
+    FGameplayEffectSpecHandle SpecDamage = AttackerASC->MakeOutgoingSpec(
+        AttackAbility->DamageEffect, 1.f, Context);
+    FGameplayEffectSpecHandle SpecStagger = AttackerASC->MakeOutgoingSpec(
+        AttackAbility->StaggerEffect, 1.f, Context);
+    AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecDamage.Data.Get(), TargetASC);
+    AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecStagger.Data.Get(), TargetASC);
     DisableHitbox();
 }

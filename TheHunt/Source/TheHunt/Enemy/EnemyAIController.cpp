@@ -61,6 +61,9 @@ void AEnemyAIController::UpdateCurrentState()
 {
 	if (!Enemy) return;
 
+	if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Stunned")))
+		return;
+
 	switch (Enemy->CurrentState)
 	{
 		case EEnemyState::Patrol: UpdatePatrolState(); break;
@@ -119,7 +122,8 @@ void AEnemyAIController::UpdateAttackState()
 
 	if (PendingCombatState != EEnemyCombatState::None)
 	{
-		if (!AnimInstance->Montage_IsPlaying(BlockMontage))
+		// Wait until blocking tag is gone (means exit animation finished)
+		if (!ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Blocking")))
 		{
 			Enemy->CombatState = PendingCombatState;
 			PendingCombatState = EEnemyCombatState::None;
@@ -336,7 +340,7 @@ void AEnemyAIController::Attack()
 
 void AEnemyAIController::Block()
 {
-	if (!bBlock)
+	if (!bBlock)		
 	{
 		StartBlock();
 		bBlock = true;
@@ -354,27 +358,22 @@ void AEnemyAIController::Block()
 
 void AEnemyAIController::StartBlock()
 {
-	if (!AnimInstance || !BlockMontage) return;
-	// Force-clear any stale state before playing
-	if (AnimInstance->Montage_IsPlaying(BlockMontage))
-		return; // already playing, don't restart it
+	if (!ASC || bBlock) return;
 
-	AnimInstance->Montage_Play(BlockMontage);
-
-	float Duration = AnimInstance->Montage_Play(BlockMontage);
-	// Duration == 0 means it failed to play
-	if (Duration == 0.f)
-	{
-		UE_LOG(LogTemp, Error, TEXT("BlockMontage FAILED to play — check slot conflicts or asset ref"));
-	}
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(FGameplayTag::RequestGameplayTag("Ability.Block"));
+	ASC->TryActivateAbilitiesByTag(TagContainer);
+	bBlock = true;
 }
 
 void AEnemyAIController::StopBlock()
 {
-	if (!AnimInstance || !BlockMontage) return;
-	FDebug::DumpStackTraceToLog(ELogVerbosity::Warning);
+	if (!ASC || !bBlock) return;
 
-	AnimInstance->Montage_Stop(0.2f, BlockMontage);
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(FGameplayTag::RequestGameplayTag("Ability.Block"));
+	ASC->CancelAbilities(&TagContainer);
+
 	bBlock = false;
 }
 

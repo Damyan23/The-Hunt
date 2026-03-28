@@ -3,7 +3,9 @@
 
 #include "GameplayAbilitySystem/BasicAttackAbility.h"
 
-UBasicAttackAbility::UBasicAttackAbility()
+#include "InputPlayer/PlayerCharacter.h"
+
+	UBasicAttackAbility::UBasicAttackAbility()
 {
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
@@ -14,29 +16,39 @@ UBasicAttackAbility::UBasicAttackAbility()
 	{
 		Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-		ApplyCost(Handle, ActorInfo, ActivationInfo);
+		//ApplyCost(Handle, ActorInfo, ActivationInfo);
+        CommitAbility(Handle, ActorInfo, ActivationInfo);
 
-		if (AttackMontage)
-		{
-			if (UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance())
-			{
-				AnimInstance->Montage_Play(AttackMontage);
-				UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-					this,
-					FName("Attack"),
-					AttackMontage
-				);
+        if (AttackMontage)
+        {
+            UAnimInstance* AnimInstance = nullptr;
+            APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
 
-				Task->OnCompleted.AddDynamic(this, &UBasicAttackAbility::OnMontageCompleted);
-				Task->OnInterrupted.AddDynamic(this, &UBasicAttackAbility::OnMontageCompleted);
-				Task->OnCancelled.AddDynamic(this, &UBasicAttackAbility::OnMontageCompleted);
-				Task->ReadyForActivation();
-			}
-		}
-		else
-		{
-			EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
-		}
+            if (Player && Player->Weapon)
+                AnimInstance = Player->Weapon->WeaponMesh->GetAnimInstance();
+            else
+                AnimInstance = ActorInfo->GetAnimInstance();
+
+            if (AnimInstance)
+            {
+                float MontageDuration = AnimInstance->Montage_Play(AttackMontage);
+
+                if (MontageDuration > 0.0f)
+                {
+                    FOnMontageEnded EndDelegate;
+                    EndDelegate.BindUObject(this, &UBasicAttackAbility::OnMontageEnded);
+                    AnimInstance->Montage_SetEndDelegate(EndDelegate, AttackMontage);
+                }
+                else
+                {
+                    EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+                }
+            }
+            else
+            {
+                EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+            }
+        }
 	}
 
 	void UBasicAttackAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
@@ -51,4 +63,9 @@ UBasicAttackAbility::UBasicAttackAbility()
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 	}
 
+    void UBasicAttackAbility::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Montage ended - Interrupted: %s"), bInterrupted ? TEXT("Yes") : TEXT("No"));
+        EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+    }
 

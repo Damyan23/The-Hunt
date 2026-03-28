@@ -22,7 +22,7 @@ public:
 	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS_BASIC(UBaseAttributeSet, Health);
 
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(BlueprintReadWrite, Category = "Attributes")
 	FGameplayAttributeData MaxHealth;
 	ATTRIBUTE_ACCESSORS_BASIC(UBaseAttributeSet, MaxHealth);
 
@@ -30,7 +30,15 @@ public:
 	FGameplayAttributeData Stamina;
 	ATTRIBUTE_ACCESSORS_BASIC(UBaseAttributeSet, Stamina);
 
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(BlueprintReadWrite, Category = "Attributes")
 	FGameplayAttributeData MaxStamina;
 	ATTRIBUTE_ACCESSORS_BASIC(UBaseAttributeSet, MaxStamina);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData Stagger;
+	ATTRIBUTE_ACCESSORS_BASIC(UBaseAttributeSet, Stagger);
+
+	UPROPERTY(BlueprintReadWrite, Category = "Attributes")
+	FGameplayAttributeData MaxStagger;
+	ATTRIBUTE_ACCESSORS_BASIC(UBaseAttributeSet, MaxStagger);
 };

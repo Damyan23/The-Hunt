@@ -2,6 +2,7 @@
 #include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/BaseAttributeSet.gen.cpp"
 #include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/BaseCharacter.gen.cpp"
 #include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/BasicAttackAbility.gen.cpp"
+#include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/BasicBlockingAbility.gen.cpp"
 #include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/DissableHitbox.gen.cpp"
 #include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/EnableHitbox.gen.cpp"
 #include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/EnemyAIController.gen.cpp"
@@ -23,4 +24,3 @@
 #include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/ShooterAIController.gen.cpp"
 #include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/ShooterBulletCounterUI.gen.cpp"
 #include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/ShooterCharacter.gen.cpp"
-#include "F:/Projects/The-Hunt/TheHunt/Intermediate/Build/Win64/UnrealEditor/Inc/TheHunt/UHT/ShooterGameMode.gen.cpp"

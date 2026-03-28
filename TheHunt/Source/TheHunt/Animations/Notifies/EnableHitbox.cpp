@@ -9,7 +9,18 @@ void UEnableHitbox::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* 
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
-	ABaseCharacter* Character = Cast<ABaseCharacter>(MeshComp->GetOwner());
+	AActor* Owner = MeshComp->GetOwner();
+
+	// If the mesh belongs to the weapon, walk up to the weapon's owner (the character)
+	ABaseCharacter* Character = Cast<ABaseCharacter>(Owner);
+	if (!Character)
+	{
+		if (Owner)
+		{
+			Character = Cast<ABaseCharacter>(Owner->GetOwner());
+		}
+	}
+
 	if (Character && Character->Weapon)
 	{
 		Character->Weapon->EnableHitbox();

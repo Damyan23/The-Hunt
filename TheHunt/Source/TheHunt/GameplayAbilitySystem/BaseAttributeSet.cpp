@@ -9,5 +9,7 @@ UBaseAttributeSet::UBaseAttributeSet()
 	MaxHealth = 100.0f;
 	Stamina = 100.0f;
 	MaxStamina = 100.0f;
+	Stagger = 0.0f;
+	MaxStagger = 30.0f;
 }
 

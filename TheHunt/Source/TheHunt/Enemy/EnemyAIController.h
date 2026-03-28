@@ -96,7 +96,7 @@ protected:
 	UFUNCTION()
 	void Block();
 	bool bBlock;
-	bool bBlockExiting;
+	bool bBlockExiting;	
 	EEnemyCombatState PendingCombatState;
 	UFUNCTION()
 	void StartBlock();

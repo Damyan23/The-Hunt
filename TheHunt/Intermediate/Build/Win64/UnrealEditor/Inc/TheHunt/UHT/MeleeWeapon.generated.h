@@ -20,14 +20,14 @@ class UPrimitiveComponent;
 struct FHitResult;
 
 // ********** Begin Class AMeleeWeapon *************************************************************
-#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_14_RPC_WRAPPERS_NO_PURE_DECLS \
+#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_15_RPC_WRAPPERS_NO_PURE_DECLS \
 	DECLARE_FUNCTION(execOnSwordHit);
 
 
 struct Z_Construct_UClass_AMeleeWeapon_Statics;
 THEHUNT_API UClass* Z_Construct_UClass_AMeleeWeapon_NoRegister();
 
-#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_14_INCLASS_NO_PURE_DECLS \
+#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_15_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesAMeleeWeapon(); \
 	friend struct ::Z_Construct_UClass_AMeleeWeapon_Statics; \
@@ -38,7 +38,7 @@ public: \
 	DECLARE_SERIALIZER(AMeleeWeapon)
 
 
-#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_14_ENHANCED_CONSTRUCTORS \
+#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_15_ENHANCED_CONSTRUCTORS \
 	/** Deleted move- and copy-constructors, should never be used */ \
 	AMeleeWeapon(AMeleeWeapon&&) = delete; \
 	AMeleeWeapon(const AMeleeWeapon&) = delete; \
@@ -48,13 +48,13 @@ public: \
 	NO_API virtual ~AMeleeWeapon();
 
 
-#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_11_PROLOG
-#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_14_GENERATED_BODY \
+#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_12_PROLOG
+#define FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_15_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_14_RPC_WRAPPERS_NO_PURE_DECLS \
-	FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_14_INCLASS_NO_PURE_DECLS \
-	FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_14_ENHANCED_CONSTRUCTORS \
+	FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_15_RPC_WRAPPERS_NO_PURE_DECLS \
+	FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_15_INCLASS_NO_PURE_DECLS \
+	FID_TheHunt_Source_TheHunt_Items_Weapon_MeleeWeapon_h_15_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 

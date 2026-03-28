@@ -38,9 +38,10 @@ protected:
 	void InitializeAttributes();
 	void GrantDefaultAbilities();
 
-public:
 	UFUNCTION()
-	void AttachWeapon();
+	virtual void AttachWeapon();
+
+public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AMeleeWeapon> WeaponClass;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon");
@@ -58,6 +59,23 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
+	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
+	TSubclassOf<UGameplayEffect> StaminaRegen;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> GettingHitMontage;
+	UPROPERTY(EditDefaultsOnly, Category="Animation")
+	TObjectPtr<UAnimMontage> StaggerMontage;
+	UPROPERTY(EditDefaultsOnly, Category="Stagger")
+	float StunDuration = 1.5f;
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	TSubclassOf<UGameplayEffect> StaggerResetEffect;
 
 	virtual void Die();
+
+protected:
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
+	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
+
+	virtual void OnGuardBroken();
 };

@@ -37,6 +37,9 @@ class THEHUNT_API AEnemyCharacter : public ABaseCharacter
 
 	AEnemyCharacter();
 
+protected:
+    virtual void BeginPlay() override;
+
 public:
     UPROPERTY(VisibleAnywhere, Category = "AI")
     EEnemyState CurrentState = EEnemyState::Idle;
