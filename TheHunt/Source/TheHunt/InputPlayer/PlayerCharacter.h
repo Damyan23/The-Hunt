@@ -72,6 +72,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Effects")
 	FTimerHandle HitVignetteTimer;
 
+
 public:
 	// Sets default values for this character's properties
 	APlayerCharacter();

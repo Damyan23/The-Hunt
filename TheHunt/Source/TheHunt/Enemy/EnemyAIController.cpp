@@ -319,6 +319,9 @@ void AEnemyAIController::Attack()
 {
 	if (!Enemy || !TargetPlayer || !ASC) return;
 
+	if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking")))
+		return; // already attacking
+
 	float Distance = Enemy->GetDistanceTo(TargetPlayer);
 
 	if (Distance > AttackRange + 80)
@@ -328,9 +331,6 @@ void AEnemyAIController::Attack()
 		MoveToLocation(TargetLocation);
 		return;
 	}
-
-	if (ASC->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking")))
-		return; // already attacking
 
 	StopMovement();
 	FGameplayTagContainer TagContainer;

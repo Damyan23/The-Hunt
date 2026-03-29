@@ -51,6 +51,8 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
+    if (!OtherActor) return;
+
     const ABaseCharacter* Attacker = Cast<ABaseCharacter>(GetOwner());
     ABaseCharacter* Target = Cast<ABaseCharacter>(OtherActor);
 

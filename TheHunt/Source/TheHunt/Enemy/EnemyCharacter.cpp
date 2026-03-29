@@ -3,6 +3,8 @@
 
 #include "EnemyCharacter.h"
 
+#include "EnemyAIController.h"
+
 AEnemyCharacter::AEnemyCharacter()
 {
 
@@ -28,5 +30,35 @@ void AEnemyCharacter::BeginPlay()
         Weapon->WeaponMesh->SetVisibility(false);
     }
 }
+
+void AEnemyCharacter::OnDeath()
+{
+    Super::OnDeath();
+
+    if (AEnemyAIController* AIController = Cast<AEnemyAIController>(GetController()))
+        AIController->StopMovement();
+
+    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    AbilitySystemComponent->CancelAllAbilities();
+
+    if (DeathMontage)
+    {
+        UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+        float Duration = AnimInstance->Montage_Play(DeathMontage);
+
+        FTimerHandle DestroyTimer;
+        GetWorldTimerManager().SetTimer(DestroyTimer, [this]()
+            {
+                Destroy();
+            }, Duration + FreezeAfterDeathDuration, false);
+
+        DetachFromControllerPendingDestroy();
+    }
+    else
+    {
+        Destroy();
+    }
+}
+
 
 		

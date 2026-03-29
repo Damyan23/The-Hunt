@@ -41,6 +41,8 @@ protected:
 	UFUNCTION()
 	virtual void AttachWeapon();
 
+	bool IsDead = false;
+
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AMeleeWeapon> WeaponClass;
@@ -64,6 +66,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	TObjectPtr<UAnimMontage> GettingHitMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> DeathMontage;
+
 	UPROPERTY(EditDefaultsOnly, Category="Animation")
 	TObjectPtr<UAnimMontage> StaggerMontage;
 	UPROPERTY(EditDefaultsOnly, Category="Stagger")
@@ -75,7 +80,9 @@ public:
 
 protected:
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
-	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
+	virtual void OnDeath();
 
+	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
 	virtual void OnGuardBroken();
+
 };

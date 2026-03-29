@@ -35,10 +35,15 @@ class THEHUNT_API AEnemyCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 
-	AEnemyCharacter();
+    AEnemyCharacter();
 
 protected:
     virtual void BeginPlay() override;
+
+    virtual void OnDeath() override;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Dying")
+    float FreezeAfterDeathDuration = 10.0f;
 
 public:
     UPROPERTY(VisibleAnywhere, Category = "AI")

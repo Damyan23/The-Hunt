@@ -286,6 +286,8 @@
             "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\inputplayer\\playercharacter.h",
             "c:\\program files\\ue_5.7\\engine\\plugins\\enhancedinput\\source\\enhancedinput\\public\\inputactionvalue.h",
             "c:\\program files\\ue_5.7\\engine\\plugins\\enhancedinput\\intermediate\\build\\win64\\unrealeditor\\inc\\enhancedinput\\uht\\inputactionvalue.generated.h",
+            "c:\\program files\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\components\\postprocesscomponent.h",
+            "c:\\program files\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\postprocesscomponent.generated.h",
             "c:\\program files\\ue_5.7\\engine\\source\\runtime\\aimodule\\classes\\perception\\aiperceptionstimulisourcecomponent.h",
             "c:\\program files\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\aimodule\\uht\\aiperceptionstimulisourcecomponent.generated.h",
             "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\playercharacter.generated.h",
@@ -294,12 +296,7 @@
             "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shooteraicontroller.generated.h",
             "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shooterbulletcounterui.gen.cpp",
             "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\variant_shooter\\ui\\shooterbulletcounterui.h",
-            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shooterbulletcounterui.generated.h",
-            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shootercharacter.gen.cpp",
-            "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\variant_shooter\\shootercharacter.h",
-            "f:\\projects\\the-hunt\\thehunt\\source\\thehunt\\variant_shooter\\weapons\\shooterweaponholder.h",
-            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shooterweaponholder.generated.h",
-            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shootercharacter.generated.h"
+            "f:\\projects\\the-hunt\\thehunt\\intermediate\\build\\win64\\unrealeditor\\inc\\thehunt\\uht\\shooterbulletcounterui.generated.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []

@@ -81,7 +81,16 @@
     }
 
     void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
-    {
+    {  
+        if (IsDead) return;
+
+        if (Data.NewValue <= 0.f)
+        {
+            IsDead = true;
+            OnDeath();
+            return;
+        }
+
         if (Data.NewValue < Data.OldValue) // took damage
         {
             if (GettingHitMontage)
@@ -93,12 +102,16 @@
 
                 UE_LOG(LogTemp, Warning, TEXT("Current Section: %s"), *AnimInstance->Montage_GetCurrentSection(CurrentMontage).ToString());
 
-                if (AnimInstance->Montage_GetCurrentSection(CurrentMontage) == FName("Cancelable")) 
+                if (AnimInstance->Montage_GetCurrentSection(CurrentMontage) != FName("Non Cancelable")) 
                 {
                     GetMesh()->GetAnimInstance()->Montage_Play(GettingHitMontage);
                 };
             }
         }
+    }
+
+    void ABaseCharacter::OnDeath()
+    {
     }
 
     void ABaseCharacter::OnStaggerChanged(const FOnAttributeChangeData& Data)
@@ -125,6 +138,8 @@
 
     void ABaseCharacter::OnGuardBroken()
     {
+        Weapon->DisableHitbox();
+
         FGameplayTagContainer BlockTag;
         BlockTag.AddTag(FGameplayTag::RequestGameplayTag("Ability.Block"));
         AbilitySystemComponent->CancelAbilities(&BlockTag);
