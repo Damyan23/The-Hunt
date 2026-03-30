@@ -41,6 +41,7 @@ protected:
 	UFUNCTION()
 	virtual void AttachWeapon();
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
 	bool IsDead = false;
 
 public:
@@ -81,6 +82,8 @@ public:
 protected:
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 	virtual void OnDeath();
+	UFUNCTION(BlueprintImplementableEvent, Category = "UI")
+	void OnHealthUpdated(float CurrentHealth, float MaxHealth);
 
 	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
 	virtual void OnGuardBroken();

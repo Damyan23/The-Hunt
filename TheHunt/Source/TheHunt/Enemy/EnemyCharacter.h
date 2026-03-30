@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/WidgetComponent.h"
 #include "GameplayAbilitySystem/BaseCharacter.h"
 #include "EnemyCharacter.generated.h"
 

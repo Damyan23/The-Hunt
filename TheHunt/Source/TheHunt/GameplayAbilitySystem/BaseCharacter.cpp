@@ -84,6 +84,9 @@
     {  
         if (IsDead) return;
 
+        OnHealthUpdated(Data.NewValue, AbilitySystemComponent->GetNumericAttribute(
+            UBaseAttributeSet::GetMaxHealthAttribute()));
+
         if (Data.NewValue <= 0.f)
         {
             IsDead = true;

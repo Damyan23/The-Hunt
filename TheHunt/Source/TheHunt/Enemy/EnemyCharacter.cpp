@@ -29,6 +29,12 @@ void AEnemyCharacter::BeginPlay()
 
         Weapon->WeaponMesh->SetVisibility(false);
     }
+
+    float CurrentHealth = AbilitySystemComponent->GetNumericAttribute(
+        UBaseAttributeSet::GetHealthAttribute());
+    float MaxHealth = AbilitySystemComponent->GetNumericAttribute(
+        UBaseAttributeSet::GetMaxHealthAttribute());
+    OnHealthUpdated(CurrentHealth, MaxHealth);
 }
 
 void AEnemyCharacter::OnDeath()
