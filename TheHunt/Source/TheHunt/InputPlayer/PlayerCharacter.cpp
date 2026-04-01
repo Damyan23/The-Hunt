@@ -142,7 +142,24 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		Input->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
 		Input->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
 		Input->BindAction(AttackAction, ETriggerEvent::Started, this, &APlayerCharacter::Attack);
+
+		Input->BindAction(BlockAction, ETriggerEvent::Started, this, &APlayerCharacter::StartBlock);
+		Input->BindAction(BlockAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopBlock);
+
+		Input->BindAction(DashAction, ETriggerEvent::Started, this, &APlayerCharacter::Dash);
 	}
+}
+
+void APlayerCharacter::UseWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
+{
+	if (Weapon)
+	{
+		Weapon->Destroy();
+		Weapon = nullptr;
+	}
+
+	WeaponClass = NewWeaponClass;
+	AttachWeapon();
 }
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
@@ -187,6 +204,23 @@ void APlayerCharacter::Attack()
 	FGameplayTagContainer TagContainer;
 	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash")));
 	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
+}
+
+void APlayerCharacter::StartBlock()
+{
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Block")));
+	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
+}
+
+void APlayerCharacter::StopBlock()
+{
+	UE_LOG(LogTemp, Warning, TEXT("StopBlock called"));
+	if (!AbilitySystemComponent) return;
+
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Block")));
+	AbilitySystemComponent->CancelAbilities(&TagContainer);
 }
 
 void APlayerCharacter::Interact()
@@ -255,5 +289,12 @@ void APlayerCharacter::ToggleInventory()
 		PC->SetShowMouseCursor(true);
 		PC->SetInputMode(FInputModeGameAndUI());
 	}
+}
+
+void APlayerCharacter::Dash()
+{
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Movement.Normal.Dash")));
+	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
 }
 

@@ -42,6 +42,10 @@ protected:
 	class UInputAction* InteractAction;
 	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* AttackAction;
+	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* BlockAction;
+	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
+	class UInputAction* DashAction;
 
 	UPROPERTY(EditAnywhere, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	float InteractionSphereRadius = 50.f;
@@ -87,12 +91,16 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void UseWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass);
 
 protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Jump();
 	void Attack();
+	void StartBlock();
+	void StopBlock();
 	void Interact();
 	void ToggleInventory();
+	void Dash();
 };

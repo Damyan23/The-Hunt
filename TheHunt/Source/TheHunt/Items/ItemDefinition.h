@@ -5,6 +5,8 @@
 #include "Engine/Texture2D.h"
 #include "ItemDefinition.generated.h"
 
+class AMeleeWeapon;
+
 UCLASS(BlueprintType)
 class THEHUNT_API UItemDefinition : public UPrimaryDataAsset
 {
@@ -21,6 +23,6 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Combat")
     TSubclassOf<UGameplayEffect> DamageEffect;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Item")
-    TSoftClassPtr<AActor> PickupClass;
+    UPROPERTY(EditDefaultsOnly, Category = "Combat")
+    TSubclassOf<AMeleeWeapon> WeaponClass;
 };

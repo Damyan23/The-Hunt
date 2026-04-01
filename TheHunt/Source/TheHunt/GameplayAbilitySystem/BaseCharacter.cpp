@@ -125,13 +125,17 @@
         float MaxStagger = AbilitySystemComponent->GetNumericAttribute(
             UBaseAttributeSet::GetMaxStaggerAttribute());
 
-        UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-        UAnimMontage* CurrentMontage = AnimInstance->GetCurrentActiveMontage();
-
         if (Data.NewValue >= MaxStagger)
         {
             OnGuardBroken();
+            return; // return here so we don't try to jump section after guard is broken
         }
+
+        UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+        if (!AnimInstance) return;
+
+        UAnimMontage* CurrentMontage = AnimInstance->GetCurrentActiveMontage();
+        if (!CurrentMontage) return; // guard against null montage
 
         if (AnimInstance->Montage_GetCurrentSection(CurrentMontage) == FName("BlockHold"))
         {

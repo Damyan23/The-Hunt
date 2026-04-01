@@ -5,6 +5,7 @@
 
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayAbilitySystem/BasicAttackAbility.h"
+#include "GameplayAbilitySystem/Abilities/BasicBlockingAbility.h"
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -370,11 +371,30 @@ void AEnemyAIController::StopBlock()
 {
 	if (!ASC || !bBlock) return;
 
-	FGameplayTagContainer TagContainer;
-	TagContainer.AddTag(FGameplayTag::RequestGameplayTag("Ability.Block"));
-	ASC->CancelAbilities(&TagContainer);
-
 	bBlock = false;
+
+	// Find the active blocking ability and request a graceful exit
+	FGameplayTagContainer BlockTag;
+	BlockTag.AddTag(FGameplayTag::RequestGameplayTag("Ability.Block"));
+
+	TArray<FGameplayAbilitySpec*> MatchingSpecs;
+	ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(BlockTag, MatchingSpecs);
+
+	for (FGameplayAbilitySpec* Spec : MatchingSpecs)
+	{
+		if (Spec->IsActive())
+		{
+			UBasicBlockingAbility* BlockAbility = Cast<UBasicBlockingAbility>(Spec->GetPrimaryInstance());
+			if (BlockAbility)
+			{
+				BlockAbility->RequestBlockExit();
+				return;
+			}
+		}
+	}
+
+	// Fallback: no active ability found, force cancel
+	ASC->CancelAbilities(&BlockTag);
 }
 
 void AEnemyAIController::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -421,5 +441,19 @@ void AEnemyAIController::OnAlertTimerExpired()
 
 void AEnemyAIController::OnAbilityEnded(const FAbilityEndedData& AbilityEndedData)
 {
+	// If the blocking ability ended (e.g. guard broken), reset block state
+	if (AbilityEndedData.AbilityThatEnded->IsValidLowLevel())
+	{
+		if (AbilityEndedData.AbilityThatEnded->IsA<UBasicBlockingAbility>())
+		{
+			bBlock = false;
+			PendingCombatState = EEnemyCombatState::None;
+		}
+	}
+
+	// Don't reset combat state if we're still playing the block exit animation
+	if (BlockMontage && AnimInstance && AnimInstance->Montage_IsPlaying(BlockMontage))
+		return;
+
 	Enemy->CombatState = EEnemyCombatState::None;
 }

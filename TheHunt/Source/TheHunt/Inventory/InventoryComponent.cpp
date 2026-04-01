@@ -4,6 +4,7 @@
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/InventorySubsystem.h"
 #include "InventorySlot.h"
+#include "InputPlayer/PlayerCharacter.h"
 #include "Items/Weapon/MeleeWeapon.h"
 
 // Sets default values for this component's properties
@@ -68,15 +69,8 @@ void UInventoryComponent::UseItem(const int32 Index)
 
 	if (!ItemDef) return;
 
-
-	// spawn the pickup actor back in the world
-	FActorSpawnParameters SpawnParams;
-	AMeleeWeapon* SpawnedItem = GetWorld()->SpawnActor<AMeleeWeapon>(
-		ItemDef->PickupClass.LoadSynchronous(), // the actor class to spawn
-		GetOwner()->GetActorLocation(),          // where to spawn it
-		GetOwner()->GetActorRotation(),
-		SpawnParams
-	);
+	APlayerCharacter* Player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	Player->UseWeapon(ItemDef->WeaponClass);
 
 	RemoveItem(&Slot);
 }
