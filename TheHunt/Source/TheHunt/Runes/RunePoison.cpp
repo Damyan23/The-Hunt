@@ -10,9 +10,8 @@ void URunePoison::OnHit(ABaseCharacter* Attacker, ABaseCharacter* Target, int8 H
     // Apply poison GE to target using attacker's ASC
     UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
     UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
-    if (!AttackerASC || !TargetASC) return;
 
-    UE_LOG (LogTemp, Warning, TEXT("Kurr"));
+    if (!AttackerASC || !TargetASC) return;
 
     FGameplayEffectSpecHandle Spec = AttackerASC->MakeOutgoingSpec(
         PoisonEffect, 1.f, AttackerASC->MakeEffectContext());

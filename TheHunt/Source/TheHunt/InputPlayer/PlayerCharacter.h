@@ -18,9 +18,6 @@ class THEHUNT_API APlayerCharacter : public ABaseCharacter
 	APlayerController* PC;
 
 	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USkeletalMeshComponent> ArmsMesh;
-
-	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSource;
 
 protected:

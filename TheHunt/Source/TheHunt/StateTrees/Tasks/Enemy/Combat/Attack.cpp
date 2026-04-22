@@ -38,6 +38,18 @@ EStateTreeRunStatus FAttack::Tick(FStateTreeExecutionContext& Context, const flo
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 
+    // If enemy got staggered during attack, fail immediately
+    if (InstanceData.AbilitySystemComponent->HasMatchingGameplayTag(
+        FGameplayTag::RequestGameplayTag("State.Staggered")))
+    {
+        // Cancel the attack ability
+        FGameplayTagContainer TagContainer;
+        TagContainer.AddTag(FGameplayTag::RequestGameplayTag("Ability.Attack.Slash"));
+        InstanceData.AbilitySystemComponent->CancelAbilities(&TagContainer);
+
+        return EStateTreeRunStatus::Failed;
+    }
+
     if (InstanceData.bAbilityEnded)
         return EStateTreeRunStatus::Succeeded;
 

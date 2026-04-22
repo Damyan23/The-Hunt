@@ -27,6 +27,8 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void PostInitializeComponents() override;
 
 public:	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
@@ -60,7 +62,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Attachment")
 	FName AttachSocketName = "Hand_R_Socket";
 
-	UPROPERTY(EditDefaultsOnly, Category = "Runes")
+	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Runes")
 	TArray<TObjectPtr<URuneBase>> Runes;
 
 	// Time-stop helpers

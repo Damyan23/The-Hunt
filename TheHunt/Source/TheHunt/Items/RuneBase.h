@@ -11,14 +11,14 @@
 /**
  * 
  */
-UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced)
+UCLASS(BlueprintType, Blueprintable, EditInlineNew, DefaultToInstanced)
 class THEHUNT_API URuneBase : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 	
 public:
 	UPROPERTY(EditDefaultsOnly, Category="Rune")
-	FText RuneName;
+	FText RuneDescription;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Rune")
 	TSoftObjectPtr<UTexture2D> RuneIcon;

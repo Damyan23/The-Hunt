@@ -35,6 +35,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Output)
 	float MaxStagger;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Output)
+	FGameplayTagContainer TagContainer;
+
 	void OnHealthChanged(const FOnAttributeChangeData& Data);
 	void OnStaminaChanged(const FOnAttributeChangeData& Data);
 	void OnStaggerChanged(const FOnAttributeChangeData& Data);

@@ -37,6 +37,7 @@ void UCombatStats::TreeStart(FStateTreeExecutionContext& Context)
 void UCombatStats::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	Super::Tick(Context, DeltaTime);
+    TagContainer = ASC->GetOwnedGameplayTags();
 }
 
 void UCombatStats::OnHealthChanged(const FOnAttributeChangeData& Data)

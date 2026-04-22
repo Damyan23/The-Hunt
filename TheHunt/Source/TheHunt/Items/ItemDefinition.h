@@ -26,7 +26,10 @@ public:
     EItemType ItemType = EItemType::Weapon;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-    FName ItemID;
+    FName ItemName;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    FText ItemDescription;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     TSoftObjectPtr<UTexture2D> ItemIcon;

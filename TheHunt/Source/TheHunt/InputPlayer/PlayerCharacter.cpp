@@ -1,4 +1,4 @@
-#include "PlayerCharacter.h"
+﻿#include "PlayerCharacter.h"
 #include "PlayerCharacter.h"
 #include <string>
 #include "EnhancedInputSubsystems.h"
@@ -16,6 +16,7 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
@@ -59,8 +60,18 @@ APlayerCharacter::APlayerCharacter()
 	StimuliSource->RegisterForSense(TSubclassOf<UAISense_Hearing>());
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
-	Camera->SetupAttachment(RootComponent);
-	Camera->bUsePawnControlRotation = true;
+
+	Camera->SetupAttachment(GetMesh(), "Head_Bone");
+	Camera->SetUsingAbsoluteScale(true);
+
+	// Mesh follows controller rotation fully
+	bUseControllerRotationYaw = true;
+	bUseControllerRotationPitch = true;
+	bUseControllerRotationRoll = false;
+
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+
+	Camera->bUsePawnControlRotation = false;
 
 	PostProcessComponent = CreateDefaultSubobject<UPostProcessComponent>(TEXT("PostProcess"));
 	PostProcessComponent->SetupAttachment(RootComponent);
@@ -107,14 +118,16 @@ void APlayerCharacter::AttachWeapon()
 	if (!Weapon) return;
 
 	Weapon->AttachToComponent(
-	RootComponent,FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	GetMesh(),FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Socket_Weapon_R");
 
+	/*
 	if (USceneComponent* Root = Weapon->GetRootComponent())
 	{
 		Root->SetRelativeLocation(Weapon->AttachOffset.GetLocation());
 		Root->SetRelativeRotation(Weapon->AttachOffset.GetRotation());
-		// Scale is preserved from the Blueprint CDO � don't override it
+		// Scale is preserved from the Blueprint CDO — don't override it
 	}
+	*/
 }
 
 // Called every frame
@@ -293,7 +306,7 @@ void APlayerCharacter::Interact()
 	{
 		for (const FHitResult& Hit : HitResults)
 		{
-			if (IsValid(Hit.GetActor()) && Hit.GetActor() != this)
+			if (IsValid(Hit.GetActor()) && Hit.GetActor() != this && Hit.GetActor() != Weapon)
 			{
 				if (AMeleeWeapon* Pickup = Cast<AMeleeWeapon>(Hit.GetActor()))
 				{

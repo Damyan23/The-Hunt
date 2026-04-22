@@ -29,6 +29,23 @@ struct FStaggerInstandeData
 
 	UPROPERTY()
 	bool bPlayingExit = false;
+
+	float ExitElapsedTime = 0.f;
+
+	UPROPERTY(EditAnywhere, Category = "Stagger")
+	TObjectPtr<UAnimMontage> BlockReactionMontage;
+	bool bBlockReactionDone = false;
+
+	UPROPERTY(EditAnywhere, Category = "Stagger")
+	float PostStaggerDelay = 0.5f;
+
+	bool bWaitingPostDelay = false;
+	float PostDelayElapsed = 0.f;
+
+	UPROPERTY(EditAnywhere, Category = "Stagger")
+	TObjectPtr<UAnimMontage> StaggerExitMontage;
+
+	float StaggerExitDuration = 0;
 };
 
 USTRUCT(meta = (DisplayName = "Stagger", Category = "Enemy"))

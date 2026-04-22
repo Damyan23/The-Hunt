@@ -13,6 +13,16 @@ void UInventoryWidget::NativeConstruct()
     SetUserFocus(GetOwningPlayer());
 }
 
+void UInventoryWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+    Super::NativeTick(MyGeometry, InDeltaTime);
+
+    if (HoveredSlotIndex == -1 && WeaponDescription->IsVisible())
+    {
+        WeaponDescription->SetVisibility(ESlateVisibility::Hidden);
+    }
+}
+
 void UInventoryWidget::SetupUI()
 {
     if (!InventoryComponent || !WrapBox) return;
@@ -89,6 +99,19 @@ void UInventoryWidget::OnSlotClicked(const int32 Index)
 void UInventoryWidget::OnSlotHovered(const int32 Index)
 {
     HoveredSlotIndex = Index;
+    if (Index >= 0)
+    {
+        FInventorySlot& HoveredSlot = InventoryComponent->Slots[Index];
+        if (TObjectPtr<UItemDefinition> ItemDef = HoveredSlot.ItemDefinition)
+        {
+            switch (ItemDef->ItemType)
+            {
+            case EItemType::Weapon:
+                WeaponDescription->SetVisibility(ESlateVisibility::Visible);
+                WeaponDescription->SetDescription(InventoryComponent->GetHoveredSlotItemDefinition(Index));
+            }
+        }
+    }
 
     SetUserFocus(GetOwningPlayer());
 }

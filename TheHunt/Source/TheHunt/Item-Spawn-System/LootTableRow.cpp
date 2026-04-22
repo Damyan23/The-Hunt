@@ -7,11 +7,11 @@ void FLootTableRow::OnDataTableChanged(const UDataTable* InDataTable, const FNam
 {
 	Super::OnDataTableChanged(InDataTable, InRowName);
 
-	if (ItemDefinition && InRowName != ItemDefinition->ItemID)
+	if (ItemDefinition && InRowName != ItemDefinition->ItemName)
 	{
 		FDataTableEditorUtils::RenameRow(
 			const_cast<UDataTable*>(InDataTable),
 			InRowName,
-			ItemDefinition->ItemID);
+			ItemDefinition->ItemName);
 	}
 }

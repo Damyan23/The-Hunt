@@ -45,7 +45,7 @@ void UInventoryComponent::AddItem(UItemDefinition* Item)
 		if (Slots[i].bIsOccupied) continue;
 
 		Slots[i].AddItem(Item);
-		UE_LOG(LogTemp, Warning, TEXT("Item added to inventory"), *Item->ItemID.ToString());
+
 		OnSlotUpdated.Broadcast(i, Slots[i].ItemDefinition->ItemIcon.LoadSynchronous());
 		break;
 	}

@@ -1,46 +1,107 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "StateTrees/Tasks/Enemy/Stagger.h"
-
 #include "StateTreeExecutionContext.h"
 
 EStateTreeRunStatus FStagger::EnterState(FStateTreeExecutionContext& Context,
     const FStateTreeTransitionResult& Transition) const
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+
     InstanceData.ElapsedTime = 0.f;
+    InstanceData.bPlayingExit = false;
+    InstanceData.bBlockReactionDone = false;
+    InstanceData.ExitElapsedTime = 0.f;
+
+    if (InstanceData.StaggerExitMontage)
+    {
+        InstanceData.StaggerExitDuration = InstanceData.StaggerExitMontage->GetPlayLength();
+    }
+    else
+    {
+        InstanceData.StaggerExitDuration = 0.f;
+    }
 
     if (InstanceData.Character)
     {
-        InstanceData.Character->PlayAnimMontage(InstanceData.StaggerMontage);
         InstanceData.Character->BaseAttributes->SetStagger(0);
-        InstanceData.AbilitySystemComponent->AddLooseGameplayTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("State.Staggered")));
+
+        if (InstanceData.BlockReactionMontage)
+        {
+            InstanceData.Character->PlayAnimMontage(InstanceData.BlockReactionMontage);
+        }
+        else
+        {
+            InstanceData.bBlockReactionDone = true;
+
+            if (InstanceData.StaggerMontage)
+            {
+                InstanceData.Character->PlayAnimMontage(InstanceData.StaggerMontage);
+            }
+        }
     }
+
     return EStateTreeRunStatus::Running;
 }
 
 EStateTreeRunStatus FStagger::Tick(FStateTreeExecutionContext& Context, float DeltaTime) const
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-    if (!InstanceData.Character) return EStateTreeRunStatus::Failed;
+
+    if (!InstanceData.Character)
+        return EStateTreeRunStatus::Failed;
 
     UAnimInstance* AnimInstance = InstanceData.Character->GetMesh()->GetAnimInstance();
+    if (!AnimInstance)
+        return EStateTreeRunStatus::Failed;
 
-    InstanceData.ElapsedTime += DeltaTime;
-
-    if (!InstanceData.bPlayingExit && InstanceData.ElapsedTime >= InstanceData.StaggerDuration)
+    // -------------------------
+    // Phase 1 — Block reaction
+    // -------------------------
+    if (!InstanceData.bBlockReactionDone)
     {
-        // Jump to exit section
-        AnimInstance->Montage_JumpToSection(FName("StaggerExit"), InstanceData.StaggerMontage);
-        AnimInstance->Montage_SetPlayRate(AnimInstance->GetCurrentActiveMontage(),0.8f);
-        InstanceData.bPlayingExit = true;
+        if (!InstanceData.BlockReactionMontage ||
+            !AnimInstance->Montage_IsPlaying(InstanceData.BlockReactionMontage))
+        {
+            InstanceData.bBlockReactionDone = true;
+            InstanceData.ElapsedTime = 0.f;
+
+            if (InstanceData.StaggerMontage)
+            {
+                InstanceData.Character->PlayAnimMontage(InstanceData.StaggerMontage);
+            }
+        }
+
+        return EStateTreeRunStatus::Running;
     }
 
-    // Wait for exit section to finish
-    if (InstanceData.bPlayingExit && !AnimInstance->Montage_IsPlaying(InstanceData.StaggerMontage))
+    // -------------------------
+    // Phase 2 — Stagger hold
+    // -------------------------
+    InstanceData.ElapsedTime += DeltaTime;
+
+    const float ExitStartTime = FMath::Max(
+        0.f,
+        InstanceData.StaggerDuration - InstanceData.StaggerExitDuration
+    );
+
+    if (!InstanceData.bPlayingExit &&
+        InstanceData.StaggerExitMontage &&
+        InstanceData.ElapsedTime >= ExitStartTime)
     {
-        InstanceData.AbilitySystemComponent->RemoveLooseGameplayTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("State.Staggered")));
+        InstanceData.bPlayingExit = true;
+        InstanceData.Character->PlayAnimMontage(InstanceData.StaggerExitMontage);
+    }
+
+    // -------------------------
+    // Phase 3 — End stagger
+    // -------------------------
+    if (InstanceData.ElapsedTime >= InstanceData.StaggerDuration)
+    {
+        InstanceData.AbilitySystemComponent->RemoveLooseGameplayTags(
+            FGameplayTagContainer(
+                FGameplayTag::RequestGameplayTag("State.Staggered")
+            )
+        );
+
         return EStateTreeRunStatus::Succeeded;
     }
 

@@ -30,7 +30,24 @@ AMeleeWeapon::AMeleeWeapon()
 void AMeleeWeapon::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
+void AMeleeWeapon::OnConstruction(const FTransform& Transform)
+{
+    Super::OnConstruction(Transform);
+}
+
+void AMeleeWeapon::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+
+    if (Runes.IsEmpty())
+    {
+        // Only fill if blueprint didn't set any
+        Runes.Add(NewObject<URuneBase>(this));
+        Runes.Add(NewObject<URuneBase>(this));
+        Runes.Add(NewObject<URuneBase>(this));
+    }
 }
 
 // Called every frame
@@ -69,13 +86,20 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
     ABaseCharacter* Target = Cast<ABaseCharacter>(OtherActor);
 
     if (!Target || !Attacker || Target == Attacker) return;
-
     if (!Target->IsPlayerControlled() && !Attacker->IsPlayerControlled()) return;
 
     UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
     UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
 
     if (!AttackerASC || !TargetASC) return;
+
+    // Get attack ability early since we need it in multiple places
+    UBasicAttackAbility* AttackAbility = nullptr;
+    for (const FGameplayAbilitySpec& Spec : AttackerASC->GetActivatableAbilities())
+    {
+        AttackAbility = Cast<UBasicAttackAbility>(Spec.Ability);
+        if (AttackAbility) break;
+    }
 
     /*
      * ==========================
@@ -93,18 +117,31 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
                 FGameplayTag::RequestGameplayTag("State.Parryable")))
             {
                 UE_LOG(LogTemp, Warning, TEXT("PARRY SUCCESS"));
-
                 AttackerASC->AddLooseGameplayTag(
                     FGameplayTag::RequestGameplayTag("State.Staggered"));
-
                 DisableAttackHitbox();
                 return;
             }
         }
 
+        // Apply stagger to blocker even though damage is blocked
+        if (AttackAbility && AttackAbility->StaggerEffect)
+        {
+            FGameplayEffectContextHandle Context = AttackerASC->MakeEffectContext();
+            Context.AddSourceObject(Attacker);
+            FGameplayEffectSpecHandle SpecStagger = AttackerASC->MakeOutgoingSpec(
+                AttackAbility->StaggerEffect, 1.f, Context);
+            AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecStagger.Data.Get(), TargetASC);
+        }
+
         DisableAttackHitbox();
         return;
     }
+
+    // Don't deal damage if attacker is blocking
+    if (AttackerASC->HasMatchingGameplayTag(
+        FGameplayTag::RequestGameplayTag("State.Blocking")))
+        return;
 
     ApplyTimeStop(0.08, 0.2);
 
@@ -113,10 +150,17 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
      * RUNES ONHIT
      * ==========================
      */
-    for (int i = 0; i < Runes.Num(); i++)
+    if (Runes.Num() > 0)
     {
-        if (!Runes[i]) continue;
-        Runes[i]->OnHit(Attacker, Target, 0);
+        for (int i = 0; i < Runes.Num(); i++)
+        {
+            if (!Runes[i]) continue;
+            if (AttackerASC->HasMatchingGameplayTag(
+                FGameplayTag::RequestGameplayTag("State.Attacking")))
+            {
+                Runes[i]->OnHit(Attacker, Target, 0);
+            }
+        }
     }
 
     /*
@@ -124,40 +168,19 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
      * NORMAL DAMAGE
      * ==========================
      */
-    UBasicAttackAbility* AttackAbility = nullptr;
-
-    for (const FGameplayAbilitySpec& Spec : AttackerASC->GetActivatableAbilities())
-    {
-        AttackAbility = Cast<UBasicAttackAbility>(Spec.Ability);
-
-        if (AttackAbility) break;
-    }
-
     if (!AttackAbility || !AttackAbility->DamageEffect) return;
 
     FGameplayEffectContextHandle Context = AttackerASC->MakeEffectContext();
-
     Context.AddSourceObject(Attacker);
 
-    FGameplayEffectSpecHandle SpecDamage =
-        AttackerASC->MakeOutgoingSpec(
-            AttackAbility->DamageEffect,
-            1.f,
-            Context);
+    FGameplayEffectSpecHandle SpecDamage = AttackerASC->MakeOutgoingSpec(
+        AttackAbility->DamageEffect, 1.f, Context);
 
-    FGameplayEffectSpecHandle SpecStagger =
-        AttackerASC->MakeOutgoingSpec(
-            AttackAbility->StaggerEffect,
-            1.f,
-            Context);
+    FGameplayEffectSpecHandle SpecStagger = AttackerASC->MakeOutgoingSpec(
+        AttackAbility->StaggerEffect, 1.f, Context);
 
-    AttackerASC->ApplyGameplayEffectSpecToTarget(
-        *SpecDamage.Data.Get(),
-        TargetASC);
-
-    AttackerASC->ApplyGameplayEffectSpecToTarget(
-        *SpecStagger.Data.Get(),
-        TargetASC);
+    AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecDamage.Data.Get(), TargetASC);
+    AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecStagger.Data.Get(), TargetASC);
 
     DisableAttackHitbox();
 }
