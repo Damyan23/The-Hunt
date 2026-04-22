@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -10,27 +8,33 @@
 
 class UInventorySubsystem;
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class THEHUNT_API UInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
+public:
 	UInventoryComponent();
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSlotUpdated, int32, SlotIndex, UTexture2D*, Icon);
 
-public:	
-	// Called every frame
+	// Delegate types
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSlotUpdated, int32, SlotIndex, UTexture2D*, Icon);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSlotClickedWithKey, int32, SlotIndex, int32, HotbarSlot);
+
+public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void AddItem(UItemDefinition* Item);
 	void RemoveItem(FInventorySlot* Slot);
 	void UseItem(const int32 Index);
+
+	// Bound event
+	UPROPERTY()
+	FOnSlotClickedWithKey OnSlotClickedWithKey;
+	UFUNCTION()
+	void OnSlotKeyBound(int32 SlotIndex, int32 HotbarSlot);
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	int32 Rows = 4;
@@ -40,6 +44,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	TArray<FInventorySlot> Slots;
+
+	UFUNCTION(BlueprintCallable)
+	UItemDefinition* GetHoveredSlotItemDefinition(int32 SlotIndex);
 
 	UPROPERTY(BlueprintAssignable)
 	FOnSlotUpdated OnSlotUpdated;

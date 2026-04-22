@@ -4,6 +4,7 @@
 #include "GameplayAbilitySystem/BasicAttackAbility.h"
 
 #include "InputPlayer/PlayerCharacter.h"
+#include "Items/Weapon/MeleeWeapon.h"
 
 	UBasicAttackAbility::UBasicAttackAbility()
 {

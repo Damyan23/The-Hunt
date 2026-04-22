@@ -4,8 +4,10 @@
 #include "Animations/Notifies/EnableHitbox.h"
 
 #include "GameplayAbilitySystem/BaseCharacter.h"
+#include "Items/Weapon/MeleeWeapon.h"
+
 void UEnableHitbox::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
-	const FAnimNotifyEventReference& EventReference)
+                           const FAnimNotifyEventReference& EventReference)
 {
 	Super::Notify(MeshComp, Animation, EventReference);
 
@@ -23,6 +25,6 @@ void UEnableHitbox::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* 
 
 	if (Character && Character->Weapon)
 	{
-		Character->Weapon->EnableHitbox();
+		Character->Weapon->EnableAttackHitbox();
 	}
 }

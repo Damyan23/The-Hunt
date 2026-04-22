@@ -15,13 +15,20 @@ void UGA_Player_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	FVector DashDirection = Player->GetVelocity();
 	DashDirection.Set(DashDirection.X, DashDirection.Y, 0);
 	DashDirection = DashDirection.GetSafeNormal();
+	
+	//Player->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	if (DashDirection.Size() == 0)
+	{
+		DashDirection = -Player->GetActorForwardVector();
+	}
 
 	CommitAbility(Handle, ActorInfo, ActivationInfo);
 
 	UAbilityTask_ApplyRootMotionConstantForce* DashTask = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
 		this, FName("Dash"), DashDirection, DashStrength, DashDuration,
 		false, StrengthOverTimeCurve,
-		ERootMotionFinishVelocityMode::ClampVelocity,  // clamp on finish
+		ERootMotionFinishVelocityMode::ClampVelocity,
 		FVector::ZeroVector,
 		600.f,   // max velocity after dash ends
 		false

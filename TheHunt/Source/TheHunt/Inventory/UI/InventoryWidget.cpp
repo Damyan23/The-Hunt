@@ -4,15 +4,19 @@
 #include "Inventory/UI/InventoryWidget.h"
 
 #include "Components/SizeBox.h"
+#include "InputPlayer/PlayerCharacter.h"
 
 void UInventoryWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
+
+    SetUserFocus(GetOwningPlayer());
 }
 
 void UInventoryWidget::SetupUI()
 {
     if (!InventoryComponent || !WrapBox) return;
+    SetIsFocusable(true);
 
     InventoryComponent->OnSlotUpdated.AddDynamic(this, &UInventoryWidget::UpdateUI);
 
@@ -32,6 +36,7 @@ void UInventoryWidget::SetupUI()
         SlotHeight = FirstSlot->SizeBox->GetHeightOverride();
         FirstSlot->SlotIndex = 0;
         FirstSlot->OnSlotClicked.AddDynamic(this, &UInventoryWidget::OnSlotClicked);
+        FirstSlot->OnSlotHovered.AddDynamic(this, &UInventoryWidget::OnSlotHovered);
         WrapBox->AddChildToWrapBox(FirstSlot);
         Slots.Add(FirstSlot);
 
@@ -44,6 +49,7 @@ void UInventoryWidget::SetupUI()
         {
             SlotWidget->SlotIndex = i;
             SlotWidget->OnSlotClicked.AddDynamic(this, &UInventoryWidget::OnSlotClicked);
+            SlotWidget->OnSlotHovered.AddDynamic(this, &UInventoryWidget::OnSlotHovered);
             WrapBox->AddChildToWrapBox(SlotWidget);
             Slots.Add(SlotWidget);
         }
@@ -78,4 +84,40 @@ void UInventoryWidget::UpdateUI(const int32 Index, UTexture2D* ItemIcon)
 void UInventoryWidget::OnSlotClicked(const int32 Index)
 {
     InventoryComponent->UseItem(Index);
+}
+
+void UInventoryWidget::OnSlotHovered(const int32 Index)
+{
+    HoveredSlotIndex = Index;
+
+    SetUserFocus(GetOwningPlayer());
+}
+
+FReply UInventoryWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+    if (HoveredSlotIndex == -1) return FReply::Unhandled();
+
+    FKey Key = InKeyEvent.GetKey();
+    int32 HotbarSlot = -1;
+
+    if (Key == EKeys::One)   HotbarSlot = 1;
+    if (Key == EKeys::Two)   HotbarSlot = 2;
+    if (Key == EKeys::Three) HotbarSlot = 3;
+    if (Key == EKeys::Four)  HotbarSlot = 4;
+
+    if (HotbarSlot != -1)
+    {
+        Slots[HoveredSlotIndex]->SetBoundToKey(HotbarSlot);
+        for (int i = 0; i < InventoryComponent->Slots.Num(); ++i)
+        {
+            if (i == HoveredSlotIndex) continue;
+
+            if (Slots[i]->BoundToKey == HotbarSlot)
+                Slots[i]->ToggleBoundKeyUI(ESlateVisibility::Hidden);
+        }
+        InventoryComponent->OnSlotClickedWithKey.Broadcast(HoveredSlotIndex, HotbarSlot);
+        return FReply::Handled();
+    }
+
+    return FReply::Unhandled();
 }

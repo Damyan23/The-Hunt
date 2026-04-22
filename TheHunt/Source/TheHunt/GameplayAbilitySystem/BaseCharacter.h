@@ -6,14 +6,14 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "AttributeSet.h"
+#include "GameplayEffectTypes.h"
+#include "GameplayEffect.h"
 #include "BaseAttributeSet.h"
 #include "Abilities/GameplayAbility.h"
-#include "Items/Weapon/MeleeWeapon.h"
 #include "BaseCharacter.generated.h"
 
-/**
- * 
- */
+class AMeleeWeapon;
+
 UCLASS()
 class THEHUNT_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
@@ -47,7 +47,7 @@ protected:
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AMeleeWeapon> WeaponClass;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon");
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<AMeleeWeapon> Weapon;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AbilitySystem")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;

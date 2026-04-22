@@ -5,10 +5,11 @@
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "InputPlayer/PlayerCharacter.h"
+#include "Items/Weapon/MeleeWeapon.h"
 
 void UBasicBlockingAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-    const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-    const FGameplayEventData* TriggerEventData)
+                                            const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+                                            const FGameplayEventData* TriggerEventData)
 {
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
@@ -138,6 +139,5 @@ UAnimInstance* UBasicBlockingAbility::GetPlayingAnimInstance() const
     APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
     if (Player && Player->Weapon)
         return Player->Weapon->WeaponMesh->GetAnimInstance();
-
     return ActorInfo->GetAnimInstance();
 }

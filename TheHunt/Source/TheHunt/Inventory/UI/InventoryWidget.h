@@ -43,9 +43,15 @@ public:
 
 	void SetupUI();
 
-private:
+	UPROPERTY(BlueprintReadOnly)
+	int HoveredSlotIndex = -1;
+protected:
 	UFUNCTION()
 	void UpdateUI(const int32 Index, UTexture2D* ItemIcon);
 	UFUNCTION()
 	void OnSlotClicked(const int32 Index);
+	UFUNCTION(BlueprintCallable)
+	void OnSlotHovered(const int32 Index);
+
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 };

@@ -10,7 +10,7 @@ struct THEHUNT_API FInventorySlot
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSoftObjectPtr<UItemDefinition> ItemDefinition;
+    TObjectPtr<UItemDefinition> ItemDefinition;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool bIsOccupied = false;

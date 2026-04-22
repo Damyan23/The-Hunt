@@ -16,6 +16,7 @@ UInventoryComponent::UInventoryComponent()
 
 	// ...
 	Slots.Init(FInventorySlot(), Rows * Columns);
+	OnSlotClickedWithKey.AddDynamic(this, &UInventoryComponent::OnSlotKeyBound);
 }
 
 
@@ -65,12 +66,31 @@ void UInventoryComponent::UseItem(const int32 Index)
 	FInventorySlot& Slot = Slots[Index];
 	if (!Slot.bIsOccupied) return;
 
-	UItemDefinition* ItemDef = Slot.ItemDefinition.LoadSynchronous();
+	UItemDefinition* ItemDef = Slot.ItemDefinition;
 
 	if (!ItemDef) return;
 
 	APlayerCharacter* Player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	Player->UseWeapon(ItemDef->WeaponClass);
+	Player->UseWeapon(ItemDef->WeaponData.WeaponClass);
 
 	RemoveItem(&Slot);
+}
+
+void UInventoryComponent::OnSlotKeyBound(int32 SlotIndex, int32 HotbarSlot)
+{
+	if (SlotIndex < 0 || SlotIndex > Slots.Num()) return;
+	APlayerCharacter* Player = Cast<APlayerCharacter>(GetOwner());
+
+	if (!Player) return;
+
+	FInventorySlot& SelectedSlot = Slots[SlotIndex];
+
+	Player->BindItemToSlot(SelectedSlot.ItemDefinition, HotbarSlot);
+}
+
+UItemDefinition* UInventoryComponent::GetHoveredSlotItemDefinition(int32 SlotIndex)
+{
+	if (SlotIndex < 0 || SlotIndex > Slots.Num()) return nullptr;
+
+	return Slots[SlotIndex].ItemDefinition;
 }

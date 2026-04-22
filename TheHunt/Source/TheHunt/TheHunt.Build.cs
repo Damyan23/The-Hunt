@@ -19,6 +19,7 @@ public class TheHunt : ModuleRules
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
+			"SlateCore",
 			"GameplayTags",
             "GameplayAbilities",
             "GameplayTasks"
@@ -36,12 +37,17 @@ public class TheHunt : ModuleRules
 			"TheHunt/Variant_Shooter/Weapons"
 		});
 
-		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.Add("UnrealEd");
+		}
 
-		// Uncomment if you are using online features
-		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
+        // Uncomment if you are using Slate UI
+        // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 
-		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
-	}
+        // Uncomment if you are using online features
+        // PrivateDependencyModuleNames.Add("OnlineSubsystem");
+
+        // To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
+    }
 }

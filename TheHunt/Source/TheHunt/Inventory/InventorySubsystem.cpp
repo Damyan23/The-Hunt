@@ -12,7 +12,7 @@ void UInventorySubsystem::RegisterInventory(AActor* actor, UInventoryComponent* 
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("When adding an inventory, either it was inavlid or the actor"));
+		UE_LOG(LogTemp, Warning, TEXT("When adding an inventory, either it was invalid or the actor was"));
 	}
 }
 

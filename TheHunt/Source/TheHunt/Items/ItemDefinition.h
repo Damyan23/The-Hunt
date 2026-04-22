@@ -1,11 +1,16 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "GameplayEffect.h"
+#include "ItemType.h"
 #include "Engine/DataAsset.h"
 #include "Engine/Texture2D.h"
+#include "ItemDef_Enums/ConsumableData.h"
+#include "ItemDef_Enums/RuneData.h"
+#include "ItemDef_Enums/WeaponData.h"
 #include "ItemDefinition.generated.h"
 
 class AMeleeWeapon;
+class URuneBase;
+class UTexture2D;
 
 UCLASS(BlueprintType)
 class THEHUNT_API UItemDefinition : public UPrimaryDataAsset
@@ -14,15 +19,43 @@ class THEHUNT_API UItemDefinition : public UPrimaryDataAsset
 public:
     UItemDefinition();
 
-    UPROPERTY(EditDefaultsOnly, Category = "Item")
+    // -------------------------
+    // GENERAL DATA
+    // -------------------------
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    EItemType ItemType = EItemType::Weapon;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     FName ItemID;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Item")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     TSoftObjectPtr<UTexture2D> ItemIcon;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Combat")
-    TSubclassOf<UGameplayEffect> DamageEffect;
+    // -------------------------
+    // WEAPON DATA
+    // -------------------------
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon",
+        meta = (EditCondition = "ItemType == EItemType::Weapon", EditConditionHides))
+    FWeaponData WeaponData;
 
-    UPROPERTY(EditDefaultsOnly, Category = "Combat")
-    TSubclassOf<AMeleeWeapon> WeaponClass;
+    // -------------------------
+    // CONSUMABLE DATA
+    // -------------------------
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Consumable",
+        meta = (EditCondition = "ItemType == EItemType::Consumable", EditConditionHides))
+    FConsumableData ConsumableData;
+
+    // -------------------------
+    // RUNE DATA
+    // -------------------------
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Rune",
+        meta = (EditCondition = "ItemType == EItemType::Rune", EditConditionHides))
+    FRuneData RuneData;
+
+    // -------------------------
+    // INVENTORY DATA
+    // -------------------------
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory",
+        meta = (EditCondition = "ItemType != EItemType::Weapon", EditConditionHides))
+    bool bIsStackable = false;
 };

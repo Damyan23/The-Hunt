@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "EnemyCharacter.h"
 
 #include "EnemyAIController.h"
+#include "Components/CapsuleComponent.h"
+#include "Items/Weapon/MeleeWeapon.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -27,7 +27,7 @@ void AEnemyCharacter::BeginPlay()
 
         Weapon->SetActorRelativeRotation(Weapon->AttachOffset.Rotator());
 
-        Weapon->WeaponMesh->SetVisibility(false);
+        //Weapon->WeaponMesh->SetVisibility(false);
     }
 
     float CurrentHealth = AbilitySystemComponent->GetNumericAttribute(
@@ -35,6 +35,13 @@ void AEnemyCharacter::BeginPlay()
     float MaxHealth = AbilitySystemComponent->GetNumericAttribute(
         UBaseAttributeSet::GetMaxHealthAttribute());
     OnHealthUpdated(CurrentHealth, MaxHealth);
+}
+
+void AEnemyCharacter::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+
+  
 }
 
 void AEnemyCharacter::OnDeath()
@@ -66,5 +73,28 @@ void AEnemyCharacter::OnDeath()
     }
 }
 
+void AEnemyCharacter::OpenParryWindow()
+{
+    AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Parryable")));
+}
 
-		
+void AEnemyCharacter::CloseParryWindow()
+{
+    AbilitySystemComponent->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Parryable")));
+}
+
+bool AEnemyCharacter::SetStagger()
+{
+    float CurrentStagger = AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetStaggerAttribute());
+    float MaxStagger = AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxStaggerAttribute());
+
+    if (CurrentStagger >= MaxStagger)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("sDADASDAS"));
+        AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Staggered")));
+        return true;
+    }
+
+    return false;
+}
+

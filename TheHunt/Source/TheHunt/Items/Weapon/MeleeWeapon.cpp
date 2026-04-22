@@ -4,6 +4,9 @@
 #include "Items/Weapon/MeleeWeapon.h"
 #include "GameplayAbilitySystem/BaseCharacter.h"
 #include "GameplayAbilitySystem/BasicAttackAbility.h"
+#include "Items/ItemDefinition.h"
+#include "Items/RuneBase.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AMeleeWeapon::AMeleeWeapon()
@@ -15,37 +18,46 @@ AMeleeWeapon::AMeleeWeapon()
     SetRootComponent(WeaponMesh);
 
     Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollider"));
-    Capsule->SetupAttachment(WeaponMesh, FName("Cylinder"));  // attach to the bone
+    Capsule->SetupAttachment(WeaponMesh, FName("Cylinder"));
     Capsule->SetGenerateOverlapEvents(true);
+    Capsule->SetMobility(EComponentMobility::Movable);
     Capsule->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
 
-    DisableHitbox();
+    Runes.SetNum(3);
 }
 
 // Called when the game starts or when spawned
 void AMeleeWeapon::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
 // Called every frame
 void AMeleeWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+    if (TimeStopEndTime > 0.f &&
+        GetWorld()->GetRealTimeSeconds() >= TimeStopEndTime)
+    {
+        RestoreGlobalTimeDilation();
+        TimeStopEndTime = 0.f;
+        SetActorTickEnabled(false);
+    }
 }
 
-void AMeleeWeapon::EnableHitbox() const
+void AMeleeWeapon::EnableAttackHitbox() const
 {
     UE_LOG(LogTemp, Warning, TEXT("Hitbox enabled"));
     Capsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
-void AMeleeWeapon::DisableHitbox() const
+void AMeleeWeapon::DisableAttackHitbox() const
 {
     UE_LOG(LogTemp, Warning, TEXT("Hitbox disabled"));
     Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
-
 
 void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
@@ -53,34 +65,131 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
 {
     if (!OtherActor) return;
 
-    const ABaseCharacter* Attacker = Cast<ABaseCharacter>(GetOwner());
+    ABaseCharacter* Attacker = Cast<ABaseCharacter>(GetOwner());
     ABaseCharacter* Target = Cast<ABaseCharacter>(OtherActor);
 
-    // Ignore if invalid, same actor, or target is not player controlled
     if (!Target || !Attacker || Target == Attacker) return;
 
-    if (!Target->IsPlayerControlled() && !Attacker->IsPlayerControlled()) return; // only damage the player
+    if (!Target->IsPlayerControlled() && !Attacker->IsPlayerControlled()) return;
 
     UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
-    if (!AttackerASC) return;
+    UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
 
+    if (!AttackerASC || !TargetASC) return;
+
+    /*
+     * ==========================
+     * BLOCK / PARRY CHECK
+     * ==========================
+     */
+    if (TargetASC->HasMatchingGameplayTag(
+        FGameplayTag::RequestGameplayTag("State.Blocking")))
+    {
+        // Perfect parry check
+        if (TargetASC->HasMatchingGameplayTag(
+            FGameplayTag::RequestGameplayTag("State.Parrying")))
+        {
+            if (AttackerASC->HasMatchingGameplayTag(
+                FGameplayTag::RequestGameplayTag("State.Parryable")))
+            {
+                UE_LOG(LogTemp, Warning, TEXT("PARRY SUCCESS"));
+
+                AttackerASC->AddLooseGameplayTag(
+                    FGameplayTag::RequestGameplayTag("State.Staggered"));
+
+                DisableAttackHitbox();
+                return;
+            }
+        }
+
+        DisableAttackHitbox();
+        return;
+    }
+
+    ApplyTimeStop(0.08, 0.2);
+
+    /*
+     * ==========================
+     * RUNES ONHIT
+     * ==========================
+     */
+    for (int i = 0; i < Runes.Num(); i++)
+    {
+        if (!Runes[i]) continue;
+        Runes[i]->OnHit(Attacker, Target, 0);
+    }
+
+    /*
+     * ==========================
+     * NORMAL DAMAGE
+     * ==========================
+     */
     UBasicAttackAbility* AttackAbility = nullptr;
+
     for (const FGameplayAbilitySpec& Spec : AttackerASC->GetActivatableAbilities())
     {
         AttackAbility = Cast<UBasicAttackAbility>(Spec.Ability);
+
         if (AttackAbility) break;
     }
 
     if (!AttackAbility || !AttackAbility->DamageEffect) return;
-    UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
-    if (!TargetASC) return;
+
     FGameplayEffectContextHandle Context = AttackerASC->MakeEffectContext();
+
     Context.AddSourceObject(Attacker);
-    FGameplayEffectSpecHandle SpecDamage = AttackerASC->MakeOutgoingSpec(
-        AttackAbility->DamageEffect, 1.f, Context);
-    FGameplayEffectSpecHandle SpecStagger = AttackerASC->MakeOutgoingSpec(
-        AttackAbility->StaggerEffect, 1.f, Context);
-    AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecDamage.Data.Get(), TargetASC);
-    AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecStagger.Data.Get(), TargetASC);
-    DisableHitbox();
+
+    FGameplayEffectSpecHandle SpecDamage =
+        AttackerASC->MakeOutgoingSpec(
+            AttackAbility->DamageEffect,
+            1.f,
+            Context);
+
+    FGameplayEffectSpecHandle SpecStagger =
+        AttackerASC->MakeOutgoingSpec(
+            AttackAbility->StaggerEffect,
+            1.f,
+            Context);
+
+    AttackerASC->ApplyGameplayEffectSpecToTarget(
+        *SpecDamage.Data.Get(),
+        TargetASC);
+
+    AttackerASC->ApplyGameplayEffectSpecToTarget(
+        *SpecStagger.Data.Get(),
+        TargetASC);
+
+    DisableAttackHitbox();
+}
+
+void AMeleeWeapon::OnSwordBlocked(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+    bool bFromSweep, const FHitResult& SweepResult)
+{
+
+}
+
+void AMeleeWeapon::ApplyTimeStop(float Duration, float TimeDilation)
+{
+    if (!GetWorld()) return;
+
+    PreviousGlobalTimeDilation = UGameplayStatics::GetGlobalTimeDilation(GetWorld());
+
+    const float EffectiveDilation = FMath::Max(TimeDilation, 0.001f);
+
+    UGameplayStatics::SetGlobalTimeDilation(GetWorld(), EffectiveDilation);
+
+    TimeStopEndTime = GetWorld()->GetRealTimeSeconds() + Duration;
+
+    SetActorTickEnabled(true);
+}
+
+void AMeleeWeapon::RestoreGlobalTimeDilation()
+{
+    if (!GetWorld()) return;
+
+    UGameplayStatics::SetGlobalTimeDilation(GetWorld(), PreviousGlobalTimeDilation);
+
+    // Clear the handle
+    GetWorld()->GetTimerManager().ClearTimer(TimeStopTimerHandle);
 }
