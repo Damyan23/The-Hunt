@@ -14,11 +14,11 @@ AMeleeWeapon::AMeleeWeapon()
     PrimaryActorTick.bCanEverTick = true;
 
     // Explicitly set root first
-    WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-    SetRootComponent(WeaponMesh);
+    ItemMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
+    SetRootComponent(ItemMesh);
 
     Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollider"));
-    Capsule->SetupAttachment(WeaponMesh, FName("Cylinder"));
+    Capsule->SetupAttachment(ItemMesh, FName("Cylinder"));
     Capsule->SetGenerateOverlapEvents(true);
     Capsule->SetMobility(EComponentMobility::Movable);
     Capsule->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
@@ -190,6 +190,25 @@ void AMeleeWeapon::OnSwordBlocked(UPrimitiveComponent* OverlappedComp, AActor* O
     bool bFromSweep, const FHitResult& SweepResult)
 {
 
+}
+
+bool AMeleeWeapon::EquipRune(URuneBase* Rune)
+{
+    if (!Rune) return false;
+
+    // Find first empty rune slot (null entry)
+    for (int32 i = 0; i < Runes.Num(); i++)
+    {
+        if (!Runes[i])
+        {
+            Runes[i] = Rune;
+            UE_LOG(LogTemp, Warning, TEXT("Rune equipped to slot %d"), i);
+            return true;
+        }
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("No empty rune slots available"));
+    return false;
 }
 
 void AMeleeWeapon::ApplyTimeStop(float Duration, float TimeDilation)

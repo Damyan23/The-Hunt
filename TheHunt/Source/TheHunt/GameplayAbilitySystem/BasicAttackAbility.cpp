@@ -26,7 +26,7 @@
             APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
 
             if (Player && Player->Weapon)
-                AnimInstance = Player->Weapon->WeaponMesh->GetAnimInstance();
+                AnimInstance = Player->Weapon->ItemMesh->GetAnimInstance();
             else
                 AnimInstance = ActorInfo->GetAnimInstance();
 

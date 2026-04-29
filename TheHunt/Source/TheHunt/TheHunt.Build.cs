@@ -22,10 +22,11 @@ public class TheHunt : ModuleRules
 			"SlateCore",
 			"GameplayTags",
             "GameplayAbilities",
-            "GameplayTasks"
+            "GameplayTasks",
+            "GeometryCore"
         });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "AnimGraphRuntime" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"TheHunt",

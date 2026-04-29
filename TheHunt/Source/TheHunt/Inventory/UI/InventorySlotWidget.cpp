@@ -3,22 +3,26 @@
 
 #include "Inventory/UI/InventorySlotWidget.h"
 
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "InputPlayer/PlayerCharacter.h"
+#include "Inventory/InventorySubsystem.h"
+
 void UInventorySlotWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-	Button->OnClicked.AddDynamic(this, &UInventorySlotWidget::OnButtonClicked);
 
+	Button->SetVisibility(ESlateVisibility::HitTestInvisible);
 	ToggleBoundKeyUI(ESlateVisibility::Hidden);
 }
 
-void UInventorySlotWidget::SetIcon(UTexture2D* Icon) const
+void UInventorySlotWidget::SetIcon(UTexture2D* Icon)
 {
 	UE_LOG(LogTemp, Warning, TEXT("It goes into the slot script"));
 
 	if (IsValid(SlotIcon))
 	{
 		SlotIcon->SetBrushFromTexture(Icon);
-	}	
+	}
 }
 
 void UInventorySlotWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
@@ -46,9 +50,4 @@ void UInventorySlotWidget::SetBoundToKey(int32 KeyIndex)
 	ToggleBoundKeyUI(ESlateVisibility::Visible);
 	BoundKeyNumber->SetText(FText::AsNumber(KeyIndex));
 	BoundToKey = KeyIndex;
-}
-
-void UInventorySlotWidget::OnButtonClicked()
-{
-	OnSlotClicked.Broadcast(SlotIndex);
 }

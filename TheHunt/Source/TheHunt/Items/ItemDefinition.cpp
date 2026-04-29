@@ -7,3 +7,15 @@ UItemDefinition::UItemDefinition()
 {
 	
 }
+
+TSubclassOf<AMeleeWeapon> UItemDefinition::GetWeaponClass() const
+{
+	if (!ItemClass) return nullptr;
+
+	if (ItemClass->IsChildOf(AMeleeWeapon::StaticClass()))
+	{
+		return TSubclassOf<AMeleeWeapon>(ItemClass);
+	}
+
+	return nullptr;
+}

@@ -6,9 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/WrapBox.h"
 #include "Inventory/InventoryComponent.h"
-#include "Inventory/InventorySlot.h"
 #include "Inventory/UI/InventorySlotWidget.h"
-#include "Components/CanvasPanelSlot.h"
 #include "Components/Border.h"
 #include "Engine/Texture2D.h"
 #include "Inventory/WeaponDescription.h"
@@ -50,6 +48,7 @@ public:
 
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	TObjectPtr<UWeaponDescription> WeaponDescription;
+
 protected:
 	UFUNCTION()
 	void UpdateUI(const int32 Index, UTexture2D* ItemIcon);
@@ -57,6 +56,4 @@ protected:
 	void OnSlotClicked(const int32 Index);
 	UFUNCTION(BlueprintCallable)
 	void OnSlotHovered(const int32 Index);
-
-	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 };

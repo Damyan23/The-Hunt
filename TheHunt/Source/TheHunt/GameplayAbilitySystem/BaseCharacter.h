@@ -38,7 +38,7 @@ protected:
 	void InitializeAttributes();
 	void GrantDefaultAbilities();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void AttachWeapon();
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)

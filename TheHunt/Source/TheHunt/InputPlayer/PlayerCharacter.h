@@ -89,9 +89,12 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	void UseWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass);
+	UFUNCTION(BlueprintCallable)
+	void EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass);
 
 	void BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex);
+
+	void EquipRuneToWeapon(UItemDefinition* RuneDef);
 
 protected:
 	void Move(const FInputActionValue& Value);

@@ -177,6 +177,7 @@ void ALootSpawner::SpawnItem()
         UItemDefinition* ItemDefinition = ChosenRow->ItemDefinition;
         FActorSpawnParameters Params;
         FTransform SpawnTransform(GetActorRotation(), GetActorLocation(), FVector(1.f, 1.f, 1.f));
-        GetWorld()->SpawnActor<AMeleeWeapon>(ItemDefinition->WeaponData.WeaponClass, SpawnTransform, Params);
+
+        GetWorld()->SpawnActor<AMeleeWeapon>(ItemDefinition->ItemClass, SpawnTransform, Params);
     }
 }

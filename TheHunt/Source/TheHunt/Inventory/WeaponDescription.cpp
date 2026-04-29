@@ -12,7 +12,7 @@ void UWeaponDescription::SetDescription(UItemDefinition* ItemDefinition)
     ItemName->SetText(FText::FromName(ItemDefinition->ItemName));
     ItemDescription->SetText(ItemDefinition->ItemDescription);
 
-    ItemIcon->SetBrushFromTexture(ItemDefinition->ItemIcon.LoadSynchronous());
+    ItemIcon->SetBrushFromTexture(ItemDefinition->ItemIcon);
 
     // Stats
     PhysicalAttack->SetText(FText::AsNumber(WeaponData.PhysicalAttack));

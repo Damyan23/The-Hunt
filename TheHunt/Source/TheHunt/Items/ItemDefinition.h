@@ -19,9 +19,17 @@ class THEHUNT_API UItemDefinition : public UPrimaryDataAsset
 public:
     UItemDefinition();
 
+    virtual FPrimaryAssetId GetPrimaryAssetId() const override
+    {
+        return FPrimaryAssetId("ItemDefinition", GetFName());
+    }
+
     // -------------------------
     // GENERAL DATA
     // -------------------------
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    FString ItemID;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     EItemType ItemType = EItemType::Weapon;
 
@@ -32,8 +40,14 @@ public:
     FText ItemDescription;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-    TSoftObjectPtr<UTexture2D> ItemIcon;
+    TObjectPtr<UTexture2D> ItemIcon;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    int CurrentQuantity;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item",
+        meta = (EditCondition = "ItemType != EItemType::Rune", EditConditionHides))
+    TSubclassOf<AInteractable> ItemClass;
     // -------------------------
     // WEAPON DATA
     // -------------------------
@@ -61,4 +75,12 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory",
         meta = (EditCondition = "ItemType != EItemType::Weapon", EditConditionHides))
     bool bIsStackable = false;
+
+
+    UFUNCTION(BlueprintCallable)
+    TSubclassOf<AMeleeWeapon> GetWeaponClass() const;
+
+
+    UFUNCTION(BlueprintCallable, Category = "Rune")
+    URuneBase* GetRune() const { return RuneData.Rune; }    
 };

@@ -34,10 +34,7 @@ protected:
 public:
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	TObjectPtr<USizeBox> SizeBox;
-	void SetIcon(UTexture2D* Icon) const;
-
-	UFUNCTION()
-	void OnButtonClicked();
+	void SetIcon(UTexture2D* Icon);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotClicked, int32, Index);
 	UPROPERTY()
@@ -55,5 +52,4 @@ public:
 
 	void ToggleBoundKeyUI(const ESlateVisibility OverlayVisiblity) const;
 	void SetBoundToKey(int32 KeyIndex);
-
 };

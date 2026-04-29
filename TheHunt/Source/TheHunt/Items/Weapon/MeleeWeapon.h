@@ -5,25 +5,25 @@
 #include "CoreMinimal.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
+#include "Items/Interactable.h"
 #include "MeleeWeapon.generated.h"
 
-class UItemDefinition;
 class URuneBase;
 class USkeletalMeshComponent;
 class UCapsuleComponent;
 
 UCLASS()
-class THEHUNT_API AMeleeWeapon : public AActor
+class THEHUNT_API AMeleeWeapon : public AInteractable
 {
 	GENERATED_BODY()
+
 
 public:	
 	// Sets default values for this actor's properties
 	AMeleeWeapon();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UCapsuleComponent> Capsule;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -31,19 +31,15 @@ protected:
 	virtual void PostInitializeComponents() override;
 
 public:	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	TObjectPtr<USkeletalMeshComponent> WeaponMesh;
-
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Item")
-	TObjectPtr<UItemDefinition> ItemDefinition;
 
 	
 	void EnableAttackHitbox() const;
 	void DisableAttackHitbox() const;	
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UCapsuleComponent> Capsule;
 	
 	UFUNCTION()
 	void OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -58,15 +54,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Attachment")
 	FTransform AttachOffset;
 
-
 	UPROPERTY(EditDefaultsOnly, Category = "Attachment")
 	FName AttachSocketName = "Hand_R_Socket";
+
+	UFUNCTION(BlueprintCallable, Category = "Runes")
+	bool EquipRune(URuneBase* Rune);
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category = "Runes")
 	TArray<TObjectPtr<URuneBase>> Runes;
 
-	// Time-stop helpers
-public:
 	UFUNCTION(BlueprintCallable, Category = "Time")
 	void ApplyTimeStop(float Duration = 0.5f, float TimeDilation = 0.0f);
 

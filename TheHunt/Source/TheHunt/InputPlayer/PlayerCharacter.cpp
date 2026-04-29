@@ -85,16 +85,6 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// ... rest of your BeginPlay code
-	if (InventoryWidgetClass)
-	{
-		InventoryWidget = CreateWidget<UInventoryWidget>(GetWorld(), InventoryWidgetClass);
-		InventoryWidget->InventoryComponent = FindComponentByClass<UInventoryComponent>();
-		InventoryWidget->SetupUI();
-		InventoryWidget->AddToViewport();
-		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
-	}
-
 	PC = GetWorld()->GetFirstPlayerController();
 	AttachWeapon();
 
@@ -165,7 +155,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
 		Input->BindAction(InteractAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Interact);
-		Input->BindAction(InventoryAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleInventory);
+
 		Input->BindAction(AttackAction, ETriggerEvent::Started, this, &APlayerCharacter::Attack);
 
 		Input->BindAction(BlockAction, ETriggerEvent::Started, this, &APlayerCharacter::StartBlock);
@@ -188,7 +178,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
-void APlayerCharacter::UseWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
+void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
 {
 	if (Weapon)
 	{
@@ -199,6 +189,7 @@ void APlayerCharacter::UseWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
 	WeaponClass = NewWeaponClass;
 	AttachWeapon();
 }
+
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
@@ -308,13 +299,9 @@ void APlayerCharacter::Interact()
 		{
 			if (IsValid(Hit.GetActor()) && Hit.GetActor() != this && Hit.GetActor() != Weapon)
 			{
-				if (AMeleeWeapon* Pickup = Cast<AMeleeWeapon>(Hit.GetActor()))
+				if (AInteractable* Interactable = Cast<AInteractable>(Hit.GetActor()))
 				{
-					if (UItemDefinition* ItemDef = Pickup->ItemDefinition)
-					{
-						GetWorld()->GetGameInstance()->GetSubsystem<UInventorySubsystem>()->AddItemToActor(this, ItemDef);
-						Pickup->Destroy();
-					}
+					Interactable->OnInteract(this);
 				}
 			}
 		}
@@ -328,14 +315,28 @@ void APlayerCharacter::ToggleInventory()
 	if (InventoryWidget->IsVisible())
 	{
 		InventoryWidget->SetVisibility(ESlateVisibility::Collapsed);
-		PC->SetShowMouseCursor(false);
-		PC->SetInputMode(FInputModeGameOnly());
+
+		PC->bShowMouseCursor = false;
+
+		FInputModeGameOnly InputMode;
+		PC->SetInputMode(InputMode);
+
+		PC->SetIgnoreLookInput(false);
+		PC->SetIgnoreMoveInput(false);
 	}
 	else
 	{
 		InventoryWidget->SetVisibility(ESlateVisibility::Visible);
-		PC->SetShowMouseCursor(true);
-		PC->SetInputMode(FInputModeGameAndUI());
+
+		PC->bShowMouseCursor = true;
+
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+		PC->SetInputMode(InputMode);
+		PC->SetIgnoreLookInput(true);
+		InventoryWidget->SetKeyboardFocus();
 	}
 }
 
@@ -355,17 +356,29 @@ void APlayerCharacter::Dash()
 void APlayerCharacter::BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex)
 {
 	if (HotbarSlotIndex < 1 || HotbarSlotIndex > 4) return;
-	// if another hotbar contains that item remove it from the other one and 
+
 	for (int i = 0; i < HotbarSlots.Num(); ++i)
 	{
-		// skip the selected hotbar slot as we are going to overwrite what it has anyway so there is no need to remove what it contains
 		if (i == HotbarSlotIndex) continue; 
 
 		if (HotbarSlots[i] == ItemDefinition)
 			HotbarSlots[i] = nullptr;
-		
 	}
 	HotbarSlots[HotbarSlotIndex - 1] = ItemDefinition;
+}
+
+void APlayerCharacter::EquipRuneToWeapon(UItemDefinition* RuneDef)
+{
+	if (!Weapon || !RuneDef) return;
+
+	URuneBase* Rune = RuneDef->GetRune();
+	if (!Rune)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No rune found on item definition"));
+		return;
+	}
+
+	Weapon->EquipRune(Rune);
 }
 
 void APlayerCharacter::ToggleLockOn()
@@ -518,9 +531,14 @@ void APlayerCharacter::UpdateLockOn(float DeltaTime)
 
 void APlayerCharacter::UseHotbarSlot(int32 Index)
 {
-	if (!HotbarSlots[Index]) return;
+	if (!HotbarSlots.IsValidIndex(Index) || !HotbarSlots[Index]) return;
+	if (HotbarSlots[Index]->ItemType != EItemType::Weapon) return;
 
-	WeaponClass = HotbarSlots[Index]->WeaponData.WeaponClass;
-	AttachWeapon();
+	TSubclassOf<AMeleeWeapon> NewWeaponClass = HotbarSlots[Index]->GetWeaponClass();
+	if (!NewWeaponClass) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("Key: %i pressed"), Index);
+
+	EquipWeapon(NewWeaponClass); // use EquipWeapon instead, it destroys the old one first
 }
 

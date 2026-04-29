@@ -138,6 +138,6 @@ UAnimInstance* UBasicBlockingAbility::GetPlayingAnimInstance() const
 
     APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
     if (Player && Player->Weapon)
-        return Player->Weapon->WeaponMesh->GetAnimInstance();
+        return Player->Weapon->ItemMesh->GetAnimInstance();
     return ActorInfo->GetAnimInstance();
 }

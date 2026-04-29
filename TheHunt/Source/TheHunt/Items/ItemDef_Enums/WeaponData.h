@@ -30,9 +30,6 @@ struct FWeaponData
     FWeaponData();
 
     UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<AMeleeWeapon> WeaponClass;
-
-    UPROPERTY(EditDefaultsOnly)
     TArray<TObjectPtr<URuneBase>> Runes;
 
     UPROPERTY(EditDefaultsOnly)
