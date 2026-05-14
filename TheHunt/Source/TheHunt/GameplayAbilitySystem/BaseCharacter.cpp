@@ -2,7 +2,10 @@
 #include "BaseCharacter.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffectExtension.h"
+#include "InputPlayer/PlayerCharacter.h"
 #include "Items/Weapon/MeleeWeapon.h"
+#include "EngineUtils.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -105,17 +108,59 @@ void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             }
         }
 
-        if (GettingHitMontage && bDamageFromActor)
+        if (GettingHitMontage && bDamageFromActor && HitVFX)
         {
             const UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-
             UAnimMontage* CurrentMontage = AnimInstance->GetCurrentActiveMontage();
             FName CurrentSection = AnimInstance->Montage_GetCurrentSection(CurrentMontage);
-
-            if (AnimInstance->Montage_GetCurrentSection(CurrentMontage) != FName("Non Cancelable")) 
+            if (AnimInstance->Montage_GetCurrentSection(CurrentMontage) != FName("Non Cancelable"))
             {
                 GetMesh()->GetAnimInstance()->Montage_Play(GettingHitMontage);
-            };
+            }
+        }
+
+        APlayerCharacter* PC = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+        if (PC)
+        {
+            FGameplayTag AttackTag = FGameplayTag::RequestGameplayTag("State.Attacking");
+            FGameplayCueParameters CueParams;
+            CueParams.Location = GetActorLocation();
+
+            if (IsPlayerControlled())
+            {
+                bool bEnemyIsAttacking = false;
+                for (TActorIterator<ABaseCharacter> It(GetWorld()); It; ++It)
+                {
+                    ABaseCharacter* Character = *It;
+                    if (Character && !Character->IsPlayerControlled())
+                    {
+                        if (Character->GetAbilitySystemComponent()->HasMatchingGameplayTag(AttackTag))
+                        {
+                            bEnemyIsAttacking = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (bEnemyIsAttacking)
+                {
+                    PC->AbilitySystemComponent->ExecuteGameplayCue(
+                        FGameplayTag::RequestGameplayTag("GameplayCue.Hit.CameraShake"),
+                        CueParams
+                    );
+                }
+            }
+            else
+            {
+                // Enemy got hit - only shake if player is attacking
+                if (PC->AbilitySystemComponent->HasMatchingGameplayTag(AttackTag))
+                {
+                    PC->AbilitySystemComponent->ExecuteGameplayCue(
+                        FGameplayTag::RequestGameplayTag("GameplayCue.Enemy.Hit.CameraShake"),
+                        CueParams
+                    );
+                }
+            }
         }
     }
 }

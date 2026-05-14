@@ -30,6 +30,7 @@ EStateTreeRunStatus FAttack::EnterState(FStateTreeExecutionContext& Context,
     FGameplayTagContainer TagContainer;
     TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash")));
     InstanceData.AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
+    InstanceData.AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking"));
 
     return EStateTreeRunStatus::Running;
 }
@@ -46,7 +47,7 @@ EStateTreeRunStatus FAttack::Tick(FStateTreeExecutionContext& Context, const flo
         FGameplayTagContainer TagContainer;
         TagContainer.AddTag(FGameplayTag::RequestGameplayTag("Ability.Attack.Slash"));
         InstanceData.AbilitySystemComponent->CancelAbilities(&TagContainer);
-
+        InstanceData.AbilitySystemComponent->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking"));
         return EStateTreeRunStatus::Failed;
     }
 

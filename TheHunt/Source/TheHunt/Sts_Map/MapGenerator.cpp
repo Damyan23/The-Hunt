@@ -1,10 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Sts_Map/MapGenerator.h"
 
 #include "MathUtil.h"
 #include "AnimNodes/AnimNode_SequenceEvaluator.h"
+#include "CompGeom/Delaunay2.h"
 
 void UMapGenerator::Generate(FVector2D BoardSize, float MinDistance, float SamplesBeforeRejection)
 {
@@ -13,6 +14,7 @@ void UMapGenerator::Generate(FVector2D BoardSize, float MinDistance, float Sampl
 
 TArray<FVector2D> UMapGenerator::PoissonDiskSample(FVector2D BoundingBox, float MinDist, float SamplesBeforeRejection)
 {
+	Grid.Empty(); // add this
 	CellSize = MinDist / FMathf::Sqrt(2);
 
 	const float GridWidth = FMathf::Ceil(BoundingBox.X / CellSize);
@@ -44,7 +46,6 @@ TArray<FVector2D> UMapGenerator::PoissonDiskSample(FVector2D BoundingBox, float 
 		{
 			float angle = FMath::FRand() * PI * 2;
 			FVector2D Dir = FVector2D(FMath::Sin(angle), FMath::Cos(angle));
-
 			FVector2D NewSpawnPoint = SpawnCenter + Dir * FMath::RandRange(MinDist, MinDist * 2);
 
 			if (IsValid(BoundingBox, NewSpawnPoint, Points, MinDist))
@@ -65,6 +66,159 @@ TArray<FVector2D> UMapGenerator::PoissonDiskSample(FVector2D BoundingBox, float 
 	}
 
 	return Points;
+}
+
+TArray<FVector2D> UMapGenerator::PoissonDiskSample(
+	FVector2D BoundingBox,
+	float MinDist,
+	float SamplesBeforeRejection,
+	TArray<FVector2D>& SamplePoints,
+	float MinRadiusFromSample,
+	TArray<TPair<FVector2D, FVector2D>> PathSegments,
+	float PathClearanceRadius,
+	float LargeObjectChance,
+	float LargeObjectRadius,
+	TArray<FVector2D>& OutLargeObjectPoints,
+	float RuinChance,
+	float RuinRadius,
+	TArray<FVector2D>& OutRuinPoints)
+{
+	Grid.Empty();
+	CellSize = MinDist / FMathf::Sqrt(2);
+
+	const float GridWidth = FMathf::Ceil(BoundingBox.X / CellSize);
+	const float GridHeight = FMathf::Ceil(BoundingBox.Y / CellSize);
+
+	TArray<FVector2D> Points;
+	TArray<FVector2D> SpawnPoints;
+
+	for (int32 i = 0; i < GridWidth; i++)
+	{
+		TArray<int32> Column;
+		for (int32 j = 0; j < GridHeight; j++)
+			Column.Add(0);
+		Grid.Add(Column);
+	}
+
+	for (auto& Point : SamplePoints)
+		SpawnPoints.Add(Point);
+
+	while (SpawnPoints.Num() > 0)
+	{
+		int32 SpawnIndex = FMath::RandRange(0, SpawnPoints.Num() - 1);
+		FVector2D SpawnCenter = SpawnPoints[SpawnIndex];
+		bool bCandidateAccepted = false;
+
+		bool bIsLargeObjectCandidate = false;
+		if (FMath::FRand() < LargeObjectChance)
+			bIsLargeObjectCandidate = true;
+		
+		bool bIsRuinCandidate = false;
+		if (FMath::FRand() < RuinChance && !bIsLargeObjectCandidate)
+			bIsRuinCandidate = true;
+
+		for (int32 i = 0; i < SamplesBeforeRejection; i++)
+		{
+			float Angle = FMath::FRand() * PI * 2;
+			FVector2D Dir = FVector2D(FMath::Sin(Angle), FMath::Cos(Angle));
+			FVector2D Candidate;
+			float Distance = 0;
+
+			if (SamplePoints.Contains(SpawnCenter))
+			{
+				Distance = MinRadiusFromSample;
+			}
+			else if (bIsLargeObjectCandidate)
+			{
+				Distance = LargeObjectRadius;
+			}
+			else if (bIsRuinCandidate)
+			{
+				Distance = RuinRadius;
+			}
+			else
+			{
+				Distance = MinDist;
+			}
+
+			
+			Candidate = SpawnCenter + Dir * FMath::RandRange(Distance, Distance * 2);
+
+			// Too close to other foliage points or out of bounds — reject
+			if (!IsValid(BoundingBox, Candidate, Points, Distance)) continue;
+
+			// Too close to any path node — reject
+			bool bTooCloseToSample = false;
+			for (FVector2D& Sample : SamplePoints)
+			{
+				float DistanceToCheck = MinRadiusFromSample;
+				if (bIsLargeObjectCandidate || bIsRuinCandidate) DistanceToCheck += Distance / 2;
+				if (FVector2D::Distance(Candidate, Sample) < DistanceToCheck)
+				{
+					bTooCloseToSample = true;
+					break;
+				}
+			}
+			if (bTooCloseToSample) continue;
+
+			bool bTooCloseToPath = false;
+			for (auto& Segment : PathSegments)
+			{
+				if (PointToSegmentDistance(Candidate, Segment.Key, Segment.Value) < PathClearanceRadius)
+				{
+					bTooCloseToPath = true;
+					break;
+				}
+			}
+			if (bTooCloseToPath) continue;
+
+			// Too close to a large object point
+			bool bTooCloseToLargeObject = false;
+			for (FVector2D& LargeObj : OutLargeObjectPoints)
+			{
+				if (FVector2D::Distance(Candidate, LargeObj) < LargeObjectRadius)
+				{
+					bTooCloseToLargeObject = true;
+					break;
+				}
+			}
+			if (bTooCloseToLargeObject) continue;
+
+			Points.Add(Candidate);
+			SpawnPoints.Add(Candidate);
+
+			if (bIsLargeObjectCandidate)
+				OutLargeObjectPoints.Add(Candidate);
+
+			if (bIsRuinCandidate)
+				OutRuinPoints.Add(Candidate);
+
+			int32 CellX = (int32)(Candidate.X / CellSize);
+			int32 CellY = (int32)(Candidate.Y / CellSize);
+			if (CellX < Grid.Num() && CellY < Grid[0].Num())
+				Grid[CellX][CellY] = Points.Num();
+
+			bCandidateAccepted = true;
+			break;
+		}
+
+		if (!bCandidateAccepted)
+			SpawnPoints.RemoveAt(SpawnIndex);
+	}
+
+	return Points;
+}
+
+float UMapGenerator::PointToSegmentDistance(FVector2D Point, FVector2D SegStart, FVector2D SegEnd)
+{
+	FVector2D Seg = SegEnd - SegStart;
+	FVector2D ToPoint = Point - SegStart;
+
+	float T = FVector2D::DotProduct(ToPoint, Seg) / FVector2D::DotProduct(Seg, Seg);
+	T = FMath::Clamp(T, 0.f, 1.f);
+
+	FVector2D Closest = SegStart + Seg * T;
+	return FVector2D::Distance(Point, Closest);
 }
 
 bool UMapGenerator::IsValid(FVector2D BoundingBox, FVector2D Candidate, TArray<FVector2D>& Points, float MinDist)
@@ -111,7 +265,7 @@ TArray<TPair<int32, int32>> UMapGenerator::BuildDelaunayConnections(TArray<FVect
 	TArray<TPair<int32, int32>> Edges;
 	if (!bSuccess) return Edges;
 
-	// Triangles gives you FIndex3i � three point indices per triangle
+	// Triangles gives you FIndex3i — three point indices per triangle
 	// Extract the 3 edges from each triangle
 	TSet<TPair<int32, int32>> EdgeSet; // use a set to avoid duplicates
 
@@ -134,19 +288,139 @@ TArray<TPair<int32, int32>> UMapGenerator::BuildDelaunayConnections(TArray<FVect
 	return Edges;
 }
 
-TArray<int32> UMapGenerator::GetPath(TArray<TPair<int32, int32>> Nodes, TArray<FVector2D>& Points, FVector2D BoundingBox)
+TArray<int32> UMapGenerator::AStar(
+	TArray<TPair<int32, int32>> Edges,
+	TArray<FVector2D>& Points,
+	FVector2D BoundingBox,
+	TArray<int32> ForcedPoints)
 {
+	int StartPointIndex, EndPointIndex;
+	GetStartAndEndPoint(StartPointIndex, EndPointIndex, BoundingBox, Points);
+
+	if (StartPointIndex == -1 || EndPointIndex == -1)
+		return {};
+
+	TMap<int32, TArray<int32>> Graph = GetNodesAndTheirConnections(Edges);
+
+	TArray<int32> Waypoints;
+	Waypoints.Add(StartPointIndex);
+	Waypoints.Append(ForcedPoints);
+	Waypoints.Add(EndPointIndex);
+
+	TArray<int32> FullPath;
+
+	auto MakeEdge = [](int32 A, int32 B)
+		{
+			return TPair<int32, int32>(FMath::Min(A, B), FMath::Max(A, B));
+		};
+
+	for (int32 w = 0; w < Waypoints.Num() - 1; w++)
+	{
+		int32 SegmentStart = Waypoints[w];
+		int32 SegmentEnd = Waypoints[w + 1];
+
+		TArray<int32> OpenList;
+		TSet<int32> ClosedSet;
+		TMap<int32, int32> CameFrom;
+		TMap<int32, float> GCost;
+
+		OpenList.Add(SegmentStart);
+		GCost.Add(SegmentStart, 0.f);
+		CameFrom.Add(SegmentStart, SegmentStart);
+
+		bool bReachedEnd = false;
+
+		while (OpenList.Num() > 0)
+		{
+			int32 Current = -1;
+			float BestF = FLT_MAX;
+
+			for (int32 Node : OpenList)
+			{
+				float G = GCost[Node];
+				float H = FVector2D::Distance(Points[Node], Points[SegmentEnd]);
+				float F = G + H;
+
+				if (F < BestF)
+				{
+					BestF = F;
+					Current = Node;
+				}
+			}
+
+			if (Current == SegmentEnd)
+			{
+				bReachedEnd = true;
+				break;
+			}
+
+			OpenList.Remove(Current);
+			ClosedSet.Add(Current);
+
+			if (!Graph.Contains(Current)) continue;
+
+			for (int32 Neighbor : Graph[Current])
+			{
+				if (ClosedSet.Contains(Neighbor)) continue;
+
+				float Distance = FVector2D::Distance(Points[Current], Points[Neighbor]);
+
+				TPair<int32, int32> Edge = MakeEdge(Current, Neighbor);
+				float Usage = EdgeUsage.Contains(Edge) ? EdgeUsage[Edge] : 0.f;
+
+				float Penalty = Usage * 25.f;         // smaller
+				float Attraction = FirstPathNodes.Contains(Neighbor) ? 40.f : 0.f; // MUCH smaller
+
+				float NewG = GCost[Current]
+					+ Distance
+					+ Penalty
+					- Attraction;
+
+				if (!GCost.Contains(Neighbor) || NewG < GCost[Neighbor])
+				{
+					GCost.Add(Neighbor, NewG);
+					CameFrom.Add(Neighbor, Current);
+
+					if (!OpenList.Contains(Neighbor))
+						OpenList.Add(Neighbor);
+				}
+			}
+		}
+
+		if (!bReachedEnd)
+			return {};
+
+		TArray<int32> Segment;
+		int32 Current = SegmentEnd;
+
+		while (Current != SegmentStart)
+		{
+			Segment.Insert(Current, 0);
+			Current = CameFrom[Current];
+		}
+
+		if (w == 0)
+			Segment.Insert(SegmentStart, 0);
+
+		FullPath.Append(Segment);
+	}
+
+	return FullPath;
+}
+
+void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointIndex, FVector2D BoundingBox, TArray<FVector2D>& Points)
+{
+	StartPointIndex = -1;
+	EndPointIndex = -1;
+
 	const int32 GridWidth = FMath::CeilToInt(BoundingBox.X / CellSize);
 	const int32 GridHeight = FMath::CeilToInt(BoundingBox.Y / CellSize);
 
 	int32 StartingCell = Grid[GridWidth / 2][GridHeight - 1];
 
-	int32 StartingPointIndex = -1;
-	int32 EndPointIndex = -1;
-
 	if (StartingCell != 0)
 	{
-		StartingPointIndex = StartingCell - 1;
+		StartPointIndex = StartingCell - 1;
 	}
 	else
 	{
@@ -164,7 +438,7 @@ TArray<int32> UMapGenerator::GetPath(TArray<TPair<int32, int32>> Nodes, TArray<F
 				if (Dist < ClosestDistance)
 				{
 					ClosestDistance = Dist;
-					StartingPointIndex = PointIndex;
+					StartPointIndex = PointIndex;
 				}
 			}
 
@@ -175,12 +449,12 @@ TArray<int32> UMapGenerator::GetPath(TArray<TPair<int32, int32>> Nodes, TArray<F
 				if (Dist < ClosestDistance)
 				{
 					ClosestDistance = Dist;
-					StartingPointIndex = PointIndex;
+					StartPointIndex = PointIndex;
 				}
 			}
 
 			float NextCellDist = (i + 1) * CellSize;
-			if (StartingPointIndex != -1 && NextCellDist > ClosestDistance)
+			if (StartPointIndex != -1 && NextCellDist > ClosestDistance)
 				break;
 		}
 	}
@@ -227,76 +501,6 @@ TArray<int32> UMapGenerator::GetPath(TArray<TPair<int32, int32>> Nodes, TArray<F
 				break;
 		}
 	}
-
-	if (StartingPointIndex == -1 || EndPointIndex == -1)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not find start or end point"));
-		return {};
-	}
-
-	TArray<int32> OpenList;
-	TArray<int32> ClosedList;
-
-	TMap<int32, int32> CameFrom; // key = node, value = its parent
-	TMap<int32, float> GCost; // cost to reach each node
-
-	TMap<int32, TArray<int32>> NodesAndTheirConnections = GetNodesAndTheirConnections(Nodes);
-
-	OpenList.Add(StartingPointIndex);
-	CameFrom.Add(StartingPointIndex, 0);
-	GCost.Add(StartingPointIndex, 0.f);
-
-	while (OpenList.Num() > 0)
-	{
-		int CurrentNodeIndex = -1;
-		float LowestFCost = FLT_MAX;
-		for (int i = 0; i < OpenList.Num(); ++i)
-		{
-			int32 CurrentPointIndex = OpenList[i];
-			float G = GCost.FindOrAdd(CurrentPointIndex);
-			float H = FVector2D::Distance(Points[CurrentPointIndex], Points[EndPointIndex]);
-			float F = H + G;
-
-			if (F < LowestFCost)
-			{
-				LowestFCost = F;
-				CurrentNodeIndex = CurrentPointIndex;
-			}
-		}
-
-		if (CurrentNodeIndex == EndPointIndex) break;
-
-		OpenList.Remove(CurrentNodeIndex);
-		ClosedList.Add(CurrentNodeIndex);
-
-		for (int32 NeighborIndex : NodesAndTheirConnections[CurrentNodeIndex])
-		{
-			if (ClosedList.Contains(NeighborIndex)) continue;
-
-			float NewGCost = GCost[CurrentNodeIndex] + FVector2D::Distance(Points[CurrentNodeIndex], Points[NeighborIndex]);
-
-			if (!GCost.Contains(NeighborIndex) || NewGCost < GCost[NeighborIndex])
-			{
-				GCost.Add(NeighborIndex, NewGCost);
-				CameFrom.Add(NeighborIndex, CurrentNodeIndex);
-
-				if (!OpenList.Contains(NeighborIndex))
-					OpenList.Add(NeighborIndex);
-			}
-		}
-	}
-
-	TArray<int32> Path;
-	int32 Current = EndPointIndex;
-
-	while (CameFrom.Contains(Current) && Current != StartingPointIndex)
-	{
-		Path.Insert(Current, 0);
-		Current = CameFrom[Current];
-	}
-	Path.Insert(StartingPointIndex, 0);
-
-	return Path;
 }
 
 TMap<int32, TArray<int32>> UMapGenerator::GetNodesAndTheirConnections(TArray<TPair<int32, int32>> Edges)
@@ -310,4 +514,122 @@ TMap<int32, TArray<int32>> UMapGenerator::GetNodesAndTheirConnections(TArray<TPa
 	}
 
 	return AdjacencyList;
+}
+
+TArray<TArray<int32>> UMapGenerator::GeneratePaths(TArray<TPair<int32, int32>> Edges, TArray<FVector2D>& Points, FVector2D BoundingBox, int32 NumPaths, int32 MinConvergencePoints, int32 MaxConvergencePoints, int32 MinRemovedPoints, int32 MaxRemovedPoints)
+{
+	TArray<TArray<int32>> AllPaths;
+	EdgeUsage.Empty();
+	FirstPathNodes.Empty();
+
+	if (NumPaths <= 0) return AllPaths;
+
+	TArray<TPair<int32, int32>> RemainingEdges = Edges;
+	TArray<int32> ConvergencePoints;
+
+	for (int32 p = 0; p < NumPaths; p++)
+	{
+		TArray<int32> Path = AStar(RemainingEdges, Points, BoundingBox, ConvergencePoints);
+		if (Path.Num() == 0) break;
+
+		AllPaths.Add(Path);
+
+		// Pick convergence points from first path
+		if (p == 0)
+		{
+			while (ConvergencePoints.Num() < MinConvergencePoints)
+			{
+				ConvergencePoints.Empty();
+				for (int32 i = 1; i < Path.Num() - 1; i++)
+				{
+					if (ConvergencePoints.Num() >= MaxConvergencePoints) break;
+					if (FMath::FRand() < 0.3f)
+						ConvergencePoints.Add(Path[i]);
+				}
+			}
+		}
+
+		// Count eligible nodes before attempting removal
+		TArray<int32> EligibleNodes;
+		for (int32 i = 1; i < Path.Num() - 1; i++)
+			if (!ConvergencePoints.Contains(Path[i]))
+				EligibleNodes.Add(Path[i]);
+
+		TSet<int32> NodesToRemove;
+
+		if (EligibleNodes.Num() >= MinRemovedPoints)
+		{
+			while (NodesToRemove.Num() < MinRemovedPoints)
+			{
+				NodesToRemove.Empty();
+				for (int32 Node : EligibleNodes)
+				{
+					if (NodesToRemove.Num() >= MaxRemovedPoints) break;
+					if (FMath::FRand() < 0.4f)
+						NodesToRemove.Add(Node);
+				}
+			}
+		}
+		else
+		{
+			// Not enough eligible nodes — remove all of them
+			for (int32 Node : EligibleNodes)
+				NodesToRemove.Add(Node);
+		}
+
+		RemainingEdges = RemainingEdges.FilterByPredicate([&](const TPair<int32, int32>& Edge)
+			{
+				return !NodesToRemove.Contains(Edge.Key) && !NodesToRemove.Contains(Edge.Value);
+			});
+
+		UE_LOG(LogTemp, Warning, TEXT("Convergence Points: %i"), ConvergencePoints.Num());
+		UE_LOG(LogTemp, Warning, TEXT("Removed Points on path %i: %i"), p, NodesToRemove.Num());
+	}
+
+	return AllPaths;
+}
+
+TMap<int32, AMapNode*> UMapGenerator::BuildMapGraph(TArray<TArray<int32>>& AllPaths, TArray<FVector2D>& Points,
+	UWorld* World, FVector Origin, TSubclassOf<AMapNode> NodeClass, AActor* Owner)
+{
+	TMap<int32, AMapNode*> MapGraph;
+
+	for (TArray<int32>& Path : AllPaths)
+	{
+		for (int32 i = 0; i < Path.Num() - 1; i++)
+		{
+			int32 FromIndex = Path[i];
+			int32 ToIndex = Path[i + 1];
+
+			
+			// Spawn From node if it doesn't exist yet
+			if (!MapGraph.Contains(FromIndex))
+			{
+				FVector WorldPos = FVector(Points[FromIndex].X, Points[FromIndex].Y, 0.f) + Origin;
+				AMapNode* Node = World->SpawnActor<AMapNode>(NodeClass, WorldPos, FRotator::ZeroRotator);
+				Node->PointIndex = FromIndex;
+				MapGraph.Add(FromIndex, Node);
+			}
+
+			// Spawn To node if it doesn't exist yet
+			if (!MapGraph.Contains(ToIndex))
+			{
+				FVector WorldPos = FVector(Points[ToIndex].X, Points[ToIndex].Y, 0.f) + Origin;
+				FActorSpawnParameters SpawnParameters;
+				AMapNode* Node = World->SpawnActor<AMapNode>(NodeClass, WorldPos, FRotator::ZeroRotator, SpawnParameters);
+				Node->PointIndex = ToIndex;
+				MapGraph.Add(ToIndex, Node);
+			}
+			
+
+			// Wire the connection
+			AMapNode* FromNode = MapGraph[FromIndex];
+			AMapNode* ToNode = MapGraph[ToIndex];
+
+			if (!FromNode->NextNodes.Contains(ToNode))
+				FromNode->NextNodes.Add(ToNode);
+		}
+	}
+
+	return MapGraph;
 }

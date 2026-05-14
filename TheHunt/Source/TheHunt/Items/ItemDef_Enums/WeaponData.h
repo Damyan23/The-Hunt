@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Items/RuneBase.h"
+#include "Items/WeaponType.h"
 #include "WeaponData.generated.h"
 
 class AMeleeWeapon;
@@ -28,6 +29,9 @@ struct FWeaponData
     GENERATED_BODY()
 
     FWeaponData();
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+    EWeaponType WeaponType = EWeaponType::Sword;
 
     UPROPERTY(EditDefaultsOnly)
     TArray<TObjectPtr<URuneBase>> Runes;

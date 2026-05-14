@@ -10,6 +10,7 @@
 #include "GameplayEffect.h"
 #include "BaseAttributeSet.h"
 #include "Abilities/GameplayAbility.h"
+#include "NiagaraSystem.h"
 #include "BaseCharacter.generated.h"
 
 class AMeleeWeapon;
@@ -76,6 +77,18 @@ public:
 	float StunDuration = 1.5f;
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	TSubclassOf<UGameplayEffect> StaggerResetEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
+	UNiagaraSystem* HitVFX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
+	UNiagaraSystem* BlockVFX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
+	UNiagaraSystem* ParryVFX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
+	UNiagaraSystem* PoisonVFX;
 
 	virtual void Die();
 

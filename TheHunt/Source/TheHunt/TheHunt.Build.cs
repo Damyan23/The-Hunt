@@ -23,14 +23,16 @@ public class TheHunt : ModuleRules
 			"GameplayTags",
             "GameplayAbilities",
             "GameplayTasks",
-            "GeometryCore"
+            "GeometryCore",
+            "Niagara",
+            "CableComponent"
         });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "AnimGraphRuntime" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "AnimGraphRuntime", "Niagara", "CableComponent" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"TheHunt",
-			"TheHunt/Variant_Horror",
+            "TheHunt/Variant_Horror",
 			"TheHunt/Variant_Horror/UI",
 			"TheHunt/Variant_Shooter",
 			"TheHunt/Variant_Shooter/AI",

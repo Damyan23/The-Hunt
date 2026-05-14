@@ -9,7 +9,7 @@
 /**
  * 
  */
-UENUM()
+UENUM(BlueprintType)
 enum class EItemType : uint8
 {
 	Weapon,

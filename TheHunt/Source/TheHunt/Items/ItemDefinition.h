@@ -51,7 +51,7 @@ public:
     // -------------------------
     // WEAPON DATA
     // -------------------------
-    UPROPERTY(EditDefaultsOnly, Category = "Weapon",
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon",
         meta = (EditCondition = "ItemType == EItemType::Weapon", EditConditionHides))
     FWeaponData WeaponData;
 

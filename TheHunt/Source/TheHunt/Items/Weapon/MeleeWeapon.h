@@ -66,6 +66,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Time")
 	void ApplyTimeStop(float Duration = 0.5f, float TimeDilation = 0.0f);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float KnockbackForce = 300.f;
+
 protected:
 	UFUNCTION()
 	void RestoreGlobalTimeDilation();

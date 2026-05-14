@@ -82,11 +82,39 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
 {
     if (!OtherActor) return;
 
+
+
     ABaseCharacter* Attacker = Cast<ABaseCharacter>(GetOwner());
     ABaseCharacter* Target = Cast<ABaseCharacter>(OtherActor);
 
     if (!Target || !Attacker || Target == Attacker) return;
     if (!Target->IsPlayerControlled() && !Attacker->IsPlayerControlled()) return;
+
+    FVector SpawnLocation = OtherComp ? OtherComp->GetComponentLocation() : Target->GetActorLocation();
+
+    // Try to get exact impact point with a trace
+    FHitResult TraceHit;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);
+    Params.AddIgnoredActor(Attacker);
+
+    bool bHit = GetWorld()->SweepSingleByChannel(
+        TraceHit,
+        Capsule->GetComponentLocation(),
+        OtherComp->GetComponentLocation(),
+        Capsule->GetComponentQuat(),
+        ECC_Pawn,
+        FCollisionShape::MakeCapsule(
+            Capsule->GetScaledCapsuleRadius(),
+            Capsule->GetScaledCapsuleHalfHeight()
+        ),
+        Params
+    );
+
+    if (bHit)
+    {
+        SpawnLocation = TraceHit.ImpactPoint;
+    }
 
     UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
     UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();
@@ -119,6 +147,24 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
                 UE_LOG(LogTemp, Warning, TEXT("PARRY SUCCESS"));
                 AttackerASC->AddLooseGameplayTag(
                     FGameplayTag::RequestGameplayTag("State.Staggered"));
+
+
+                // Parry VFX
+                if (Target->ParryVFX)
+                {
+                    FGameplayCueParameters CueParams;
+                    CueParams.Location = SpawnLocation;
+                    CueParams.SourceObject = TWeakObjectPtr<UObject>(Target->ParryVFX);
+                    CueParams.RawMagnitude = 20.f;
+                    TargetASC->ExecuteGameplayCue(
+                        FGameplayTag::RequestGameplayTag("GameplayCue.Hit.Impact"),
+                        CueParams
+                    );
+
+                    UE_LOG(LogTemp, Warning, TEXT("SweepResult.ImpactPoint: %s"), *SweepResult.ImpactPoint.ToString());
+                    UE_LOG(LogTemp, Warning, TEXT("bFromSweep: %s"), bFromSweep ? TEXT("true") : TEXT("false"));
+                }
+
                 DisableAttackHitbox();
                 return;
             }
@@ -134,16 +180,22 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
             AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecStagger.Data.Get(), TargetASC);
         }
 
+        // Block VFX
+        if (Target->BlockVFX)
+        {
+            FGameplayCueParameters CueParams;
+            CueParams.Location = SpawnLocation;
+            CueParams.SourceObject = TWeakObjectPtr<UObject>(Target->BlockVFX);
+            CueParams.RawMagnitude = 20.f;
+            TargetASC->ExecuteGameplayCue(
+                FGameplayTag::RequestGameplayTag("GameplayCue.Hit.Impact"),
+                CueParams
+            );
+        }
+
         DisableAttackHitbox();
         return;
     }
-
-    // Don't deal damage if attacker is blocking
-    if (AttackerASC->HasMatchingGameplayTag(
-        FGameplayTag::RequestGameplayTag("State.Blocking")))
-        return;
-
-    ApplyTimeStop(0.08, 0.2);
 
     /*
      * ==========================
@@ -181,6 +233,27 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
 
     AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecDamage.Data.Get(), TargetASC);
     AttackerASC->ApplyGameplayEffectSpecToTarget(*SpecStagger.Data.Get(), TargetASC);
+
+    // Spawn hit VFX from target
+    if (Target->HitVFX)
+    {
+        FGameplayCueParameters CueParams;
+        CueParams.Location = SpawnLocation;
+        CueParams.SourceObject = TWeakObjectPtr<UObject>(Target->HitVFX);
+        CueParams.RawMagnitude = 20.f;
+        TargetASC->ExecuteGameplayCue(
+            FGameplayTag::RequestGameplayTag("GameplayCue.Hit.Impact"),
+            CueParams
+        );
+    }
+    
+    if (Target)
+    {
+        FVector KnockbackDirection = Target->GetActorLocation() - Attacker->GetActorLocation();
+        KnockbackDirection.Z = 0.f;
+        KnockbackDirection.Normalize();
+        Target->LaunchCharacter(KnockbackDirection * KnockbackForce, true, false);
+    }
 
     DisableAttackHitbox();
 }
