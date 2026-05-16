@@ -107,6 +107,8 @@ protected:
 	void ToggleInventory();
 	void Dash();
 
+	void TryPlayFootsteps();
+
 	UPROPERTY()
 	TArray<TObjectPtr<UItemDefinition>> HotbarSlots; 
 
@@ -132,6 +134,12 @@ protected:
 	float TargetSwitchCooldownTimer = 0.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
 	float LockOnOffsetZ = 20.f;
+
+	// In BaseCharacter.h
+	FTimerHandle FootstepTimerHandle;
+
+	UPROPERTY(EditAnywhere, Category = "Footsteps")
+	float FootstepInterval = 0.4f;
 
 private:
 	void UseHotbarSlot(int32 Index);

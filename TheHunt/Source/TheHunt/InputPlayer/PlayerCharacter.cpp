@@ -93,6 +93,14 @@ void APlayerCharacter::BeginPlay()
 		HitVignetteMID = UMaterialInstanceDynamic::Create(HitVignetteMaterial, this);
 		PostProcessComponent->AddOrUpdateBlendable(HitVignetteMID);
 	}
+
+	GetWorldTimerManager().SetTimer(
+		FootstepTimerHandle,
+		this,
+		&APlayerCharacter::TryPlayFootsteps,
+		FootstepInterval,
+		false // not repeating
+	);
 }
 
 void APlayerCharacter::AttachWeapon()
@@ -351,6 +359,27 @@ void APlayerCharacter::Dash()
 		TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Movement.Normal.Dash")));
 	
 	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
+}
+
+void APlayerCharacter::TryPlayFootsteps()
+{
+	float Speed = GetVelocity().Size();
+
+	if (Speed < 10.f || GetCharacterMovement()->IsFalling())
+	{
+		// Reschedule even when not playing, so it picks up again when moving
+		GetWorldTimerManager().SetTimer(FootstepTimerHandle, this, &APlayerCharacter::TryPlayFootsteps, FootstepInterval, false);
+		return;
+	}
+
+	float Interval = FMath::GetMappedRangeValueClamped(
+		FVector2D(0.f, 600.f),
+		FVector2D(0.5f, 0.25f),
+		Speed
+	);
+
+	GetWorldTimerManager().SetTimer(FootstepTimerHandle, this, &APlayerCharacter::TryPlayFootsteps, Interval, false);
+	PlayFootstepSounds();
 }
 
 void APlayerCharacter::BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex)

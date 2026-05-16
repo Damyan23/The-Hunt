@@ -137,6 +137,8 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
     if (TargetASC->HasMatchingGameplayTag(
         FGameplayTag::RequestGameplayTag("State.Blocking")))
     {
+        FCombatSoundData WeaponSoundData = Target->Weapon->ItemDefinition->WeaponData.SoundData;
+
         // Perfect parry check
         if (TargetASC->HasMatchingGameplayTag(
             FGameplayTag::RequestGameplayTag("State.Parrying")))
@@ -148,6 +150,8 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
                 AttackerASC->AddLooseGameplayTag(
                     FGameplayTag::RequestGameplayTag("State.Staggered"));
 
+
+                UGameplayStatics::PlaySoundAtLocation(this, WeaponSoundData.ParrySound, GetActorLocation());
 
                 // Parry VFX
                 if (Target->ParryVFX)
@@ -169,6 +173,8 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
                 return;
             }
         }
+
+        UGameplayStatics::PlaySoundAtLocation(this, WeaponSoundData.BlockSound, GetActorLocation());
 
         // Apply stagger to blocker even though damage is blocked
         if (AttackAbility && AttackAbility->StaggerEffect)

@@ -24,6 +24,20 @@ enum class EWeigh : uint8
 };
 
 USTRUCT(BlueprintType)
+struct FCombatSoundData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ToolTip = "Sounds played when the weapon is swung during an attack"))
+    TArray<USoundBase*> SwingSounds;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TObjectPtr<USoundBase> BlockSound;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TObjectPtr<USoundBase> ParrySound;
+};
+
+USTRUCT(BlueprintType)
 struct FWeaponData
 {
     GENERATED_BODY()
@@ -53,5 +67,8 @@ struct FWeaponData
 
     UPROPERTY(EditDefaultsOnly)
     float GuardDamageNegation;
+
+    UPROPERTY(EditDefaultsOnly, meta = (ToolTip = "Combat related sounds for the weapon"))
+    FCombatSoundData SoundData;
 };
 

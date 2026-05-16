@@ -5,6 +5,7 @@
 #include "InputPlayer/PlayerCharacter.h"
 #include "Items/Weapon/MeleeWeapon.h"
 #include "EngineUtils.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -106,6 +107,11 @@ void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             {
                 bDamageFromActor = true;
             }
+        }
+
+        if (GettingHitSound)
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, GettingHitSound, GetActorLocation());
         }
 
         if (GettingHitMontage && bDamageFromActor && HitVFX)
@@ -210,5 +216,22 @@ void ABaseCharacter::OnGuardBroken()
             AbilitySystemComponent->MakeEffectContext());
 
     }, StunDuration, false);
+}
+
+void ABaseCharacter::PlayFootstepSounds()
+{
+    FVector Location = GetActorLocation();
+
+    PlayRandomSoundAtLocation(BootSounds, Location);
+    PlayRandomSoundAtLocation(SurfaceSounds, Location);
+    PlayRandomSoundAtLocation(WeatherLayerSounds, Location);
+}
+
+void ABaseCharacter::PlayRandomSoundAtLocation(const TArray<USoundBase*>& Sounds, FVector Location)
+{
+    if (Sounds.IsEmpty()) return;
+    USoundBase* Sound = Sounds[FMath::RandRange(0, Sounds.Num() - 1)];
+    if (Sound)
+        UGameplayStatics::PlaySoundAtLocation(this, Sound, Location, FRotator::ZeroRotator, 0.25);
 }
 

@@ -92,6 +92,9 @@ public:
 
 	virtual void Die();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound FX")
+	TObjectPtr<USoundBase> GettingHitSound;
+
 protected:
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 	virtual void OnDeath();
@@ -101,4 +104,16 @@ protected:
 	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
 	virtual void OnGuardBroken();
 
+	UFUNCTION(BlueprintCallable)
+	void PlayFootstepSounds();
+	void PlayRandomSoundAtLocation(const TArray<USoundBase*>& Sounds, FVector Location);
+
+	UPROPERTY(EditAnywhere, Category = "Footsteps")
+	TArray<USoundBase*> BootSounds;
+
+	UPROPERTY(EditAnywhere, Category = "Footsteps")
+	TArray<USoundBase*> SurfaceSounds;
+
+	UPROPERTY(EditAnywhere, Category = "Footsteps")
+	TArray<USoundBase*> WeatherLayerSounds;
 };

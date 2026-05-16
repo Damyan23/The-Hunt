@@ -5,6 +5,7 @@
 
 #include "InputPlayer/PlayerCharacter.h"
 #include "Items/Weapon/MeleeWeapon.h"
+#include "Kismet/GameplayStatics.h"
 
 	UBasicAttackAbility::UBasicAttackAbility()
 {
@@ -24,11 +25,21 @@
         {
             UAnimInstance* AnimInstance = nullptr;
             APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
+            FCombatSoundData WeaponSoundData;
 
             if (Player && Player->Weapon)
+            {
                 AnimInstance = Player->Weapon->ItemMesh->GetAnimInstance();
+                WeaponSoundData = Player->Weapon->ItemDefinition->WeaponData.SoundData;
+            }
             else
                 AnimInstance = ActorInfo->GetAnimInstance();
+
+            if (WeaponSoundData.SwingSounds.Num() > 0)
+            {
+                USoundBase* Sound = WeaponSoundData.SwingSounds[0];
+                UGameplayStatics::PlaySoundAtLocation(this, Sound, ActorInfo->AvatarActor->GetActorLocation());
+            }
 
             if (AnimInstance)
             {
