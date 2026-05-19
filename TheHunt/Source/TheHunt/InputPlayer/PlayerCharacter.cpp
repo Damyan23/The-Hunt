@@ -95,12 +95,9 @@ void APlayerCharacter::BeginPlay()
 	}
 
 	GetWorldTimerManager().SetTimer(
-		FootstepTimerHandle,
-		this,
+		FootstepTimerHandle, this,
 		&APlayerCharacter::TryPlayFootsteps,
-		FootstepInterval,
-		false // not repeating
-	);
+		0.1f, false);
 }
 
 void APlayerCharacter::AttachWeapon()
@@ -367,19 +364,28 @@ void APlayerCharacter::TryPlayFootsteps()
 
 	if (Speed < 10.f || GetCharacterMovement()->IsFalling())
 	{
-		// Reschedule even when not playing, so it picks up again when moving
-		GetWorldTimerManager().SetTimer(FootstepTimerHandle, this, &APlayerCharacter::TryPlayFootsteps, FootstepInterval, false);
+		// Poll frequently so we pick up movement quickly
+		GetWorldTimerManager().SetTimer(
+			FootstepTimerHandle, this,
+			&APlayerCharacter::TryPlayFootsteps,
+			0.1f, false); // short poll, not FootstepInterval
 		return;
 	}
 
+	// Play the sound first (we're here because the previous timer fired)
+	PlayFootstepSounds();
+
+	// Then schedule the next one based on speed
 	float Interval = FMath::GetMappedRangeValueClamped(
 		FVector2D(0.f, 600.f),
 		FVector2D(0.5f, 0.25f),
 		Speed
 	);
 
-	GetWorldTimerManager().SetTimer(FootstepTimerHandle, this, &APlayerCharacter::TryPlayFootsteps, Interval, false);
-	PlayFootstepSounds();
+	GetWorldTimerManager().SetTimer(
+		FootstepTimerHandle, this,
+		&APlayerCharacter::TryPlayFootsteps,
+		Interval, false);
 }
 
 void APlayerCharacter::BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex)

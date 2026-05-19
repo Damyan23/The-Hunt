@@ -13,6 +13,9 @@ class THEHUNT_API AInteractable : public AActor
     
     void InitializeItemDefinition();
 
+protected:
+    virtual void BeginPlay() override;
+
 public:
     AInteractable();
 
@@ -26,7 +29,7 @@ public:
     FName ItemName;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-    TObjectPtr<USkeletalMeshComponent> ItemMesh;
+    TObjectPtr<UStaticMeshComponent> ItemMesh;
 
     // Override in subclasses to define interact behavior
     UFUNCTION(BlueprintNativeEvent, Category = "Interaction")

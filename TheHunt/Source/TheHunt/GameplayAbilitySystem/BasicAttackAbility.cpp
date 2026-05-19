@@ -12,56 +12,50 @@
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
-	void UBasicAttackAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-		const FGameplayEventData* TriggerEventData)
-	{
-		Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
-		//ApplyCost(Handle, ActorInfo, ActivationInfo);
+    void UBasicAttackAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
+        const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+        const FGameplayEventData* TriggerEventData)
+    {
+        Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
         CommitAbility(Handle, ActorInfo, ActivationInfo);
 
-        if (AttackMontage)
+        if (!AttackMontage)
         {
-            UAnimInstance* AnimInstance = nullptr;
-            APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
-            FCombatSoundData WeaponSoundData;
+            EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+            return;
+        }
 
-            if (Player && Player->Weapon)
+        // Play sound if weapon has one
+        APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
+        if (Player && Player->Weapon)
+        {
+            FCombatSoundData& SoundData = Player->Weapon->ItemDefinition->WeaponData.SoundData;
+            if (SoundData.SwingSounds.Num() > 0)
             {
-                AnimInstance = Player->Weapon->ItemMesh->GetAnimInstance();
-                WeaponSoundData = Player->Weapon->ItemDefinition->WeaponData.SoundData;
-            }
-            else
-                AnimInstance = ActorInfo->GetAnimInstance();
-
-            if (WeaponSoundData.SwingSounds.Num() > 0)
-            {
-                USoundBase* Sound = WeaponSoundData.SwingSounds[0];
-                UGameplayStatics::PlaySoundAtLocation(this, Sound, ActorInfo->AvatarActor->GetActorLocation());
-            }
-
-            if (AnimInstance)
-            {
-                float MontageDuration = AnimInstance->Montage_Play(AttackMontage);
-
-                if (MontageDuration > 0.0f)
-                {
-                    FOnMontageEnded EndDelegate;
-                    EndDelegate.BindUObject(this, &UBasicAttackAbility::OnMontageEnded);
-                    AnimInstance->Montage_SetEndDelegate(EndDelegate, AttackMontage);
-                }
-                else
-                {
-                    EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
-                }
-            }
-            else
-            {
-                EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+                UGameplayStatics::PlaySoundAtLocation(this, SoundData.SwingSounds[0], Player->GetActorLocation());
             }
         }
-	}
+
+        // Play montage directly on the avatar via GAS
+        UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
+        if (!AnimInstance)
+        {
+            EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+            return;
+        }
+
+        float MontageDuration = AnimInstance->Montage_Play(AttackMontage);
+        if (MontageDuration > 0.0f)
+        {
+            FOnMontageEnded EndDelegate;
+            EndDelegate.BindUObject(this, &UBasicAttackAbility::OnMontageEnded);
+            AnimInstance->Montage_SetEndDelegate(EndDelegate, AttackMontage);
+        }
+        else
+        {
+            EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+        }
+    }
 
 	void UBasicAttackAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,

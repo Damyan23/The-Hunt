@@ -15,6 +15,8 @@ void UBasicBlockingAbility::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
     bIsExiting = false;
 
+    UE_LOG(LogTemp, Warning, TEXT("why no wrok?"));
+
     CommitAbility(Handle, ActorInfo, ActivationInfo);
 
     if (BlockMontage)
@@ -133,11 +135,6 @@ void UBasicBlockingAbility::OnMontageEnded(UAnimMontage* Montage, bool bInterrup
 
 UAnimInstance* UBasicBlockingAbility::GetPlayingAnimInstance() const
 {
-    const FGameplayAbilityActorInfo* ActorInfo = CurrentActorInfo;
-    if (!ActorInfo) return nullptr;
-
-    APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
-    if (Player && Player->Weapon)
-        return Player->Weapon->ItemMesh->GetAnimInstance();
-    return ActorInfo->GetAnimInstance();
+    if (!CurrentActorInfo) return nullptr;
+    return CurrentActorInfo->GetAnimInstance();
 }
