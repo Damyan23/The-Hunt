@@ -29,7 +29,7 @@ public:
     FName ItemName;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-    TObjectPtr<UStaticMeshComponent> ItemMesh;
+    TObjectPtr<USkeletalMeshComponent> ItemMesh;
 
     // Override in subclasses to define interact behavior
     UFUNCTION(BlueprintNativeEvent, Category = "Interaction")
