@@ -4,6 +4,7 @@
 #include "Animations/Notifies/DissableHitbox.h"
 
 #include "GameplayAbilitySystem/BaseCharacter.h"
+#include "Items/Weapon/MeleeWeapon.h"
 
 void UDissableHitbox::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
                              const FAnimNotifyEventReference& EventReference)
@@ -25,6 +26,6 @@ void UDissableHitbox::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase
 
 	if (Character && Character->Weapon)
 	{
-		Character->Weapon->DisableHitbox();
+		Character->Weapon->DisableAttackHitbox();
 	}
 }

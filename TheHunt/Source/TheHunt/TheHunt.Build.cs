@@ -19,16 +19,20 @@ public class TheHunt : ModuleRules
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
+			"SlateCore",
 			"GameplayTags",
             "GameplayAbilities",
-            "GameplayTasks"
+            "GameplayTasks",
+            "GeometryCore",
+            "Niagara",
+            "CableComponent"
         });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "AnimGraphRuntime", "Niagara", "CableComponent" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"TheHunt",
-			"TheHunt/Variant_Horror",
+            "TheHunt/Variant_Horror",
 			"TheHunt/Variant_Horror/UI",
 			"TheHunt/Variant_Shooter",
 			"TheHunt/Variant_Shooter/AI",
@@ -36,12 +40,17 @@ public class TheHunt : ModuleRules
 			"TheHunt/Variant_Shooter/Weapons"
 		});
 
-		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.Add("UnrealEd");
+		}
 
-		// Uncomment if you are using online features
-		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
+        // Uncomment if you are using Slate UI
+        // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 
-		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
-	}
+        // Uncomment if you are using online features
+        // PrivateDependencyModuleNames.Add("OnlineSubsystem");
+
+        // To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
+    }
 }

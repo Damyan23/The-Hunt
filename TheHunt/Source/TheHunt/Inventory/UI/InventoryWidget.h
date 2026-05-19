@@ -6,11 +6,10 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/WrapBox.h"
 #include "Inventory/InventoryComponent.h"
-#include "Inventory/InventorySlot.h"
 #include "Inventory/UI/InventorySlotWidget.h"
-#include "Components/CanvasPanelSlot.h"
 #include "Components/Border.h"
 #include "Engine/Texture2D.h"
+#include "Inventory/WeaponDescription.h"
 #include "InventoryWidget.generated.h"
 
 class UBorder;
@@ -27,6 +26,7 @@ private:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 public:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
@@ -43,9 +43,17 @@ public:
 
 	void SetupUI();
 
-private:
+	UPROPERTY(BlueprintReadOnly)
+	int HoveredSlotIndex = -1;
+
+	UPROPERTY(EditAnywhere, meta = (BindWidget))
+	TObjectPtr<UWeaponDescription> WeaponDescription;
+
+protected:
 	UFUNCTION()
 	void UpdateUI(const int32 Index, UTexture2D* ItemIcon);
 	UFUNCTION()
 	void OnSlotClicked(const int32 Index);
+	UFUNCTION(BlueprintCallable)
+	void OnSlotHovered(const int32 Index);
 };

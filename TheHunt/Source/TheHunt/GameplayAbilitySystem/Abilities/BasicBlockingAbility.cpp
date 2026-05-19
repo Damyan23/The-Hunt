@@ -5,50 +5,119 @@
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "InputPlayer/PlayerCharacter.h"
+#include "Items/Weapon/MeleeWeapon.h"
 
 void UBasicBlockingAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-  const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-  const FGameplayEventData* TriggerEventData)
+                                            const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+                                            const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+    Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	if (BlockMontage)
-	{
-		UAbilityTask_PlayMontageAndWait* Task = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-			this,
-			FName("BlockMontage"),
-			BlockMontage
-		);
-		Task->OnCompleted.AddDynamic(this, &UBasicBlockingAbility::OnMontageCompleted);
-		Task->OnInterrupted.AddDynamic(this, &UBasicBlockingAbility::OnMontageCompleted);
-		Task->OnCancelled.AddDynamic(this, &UBasicBlockingAbility::OnMontageCompleted);
-		Task->ReadyForActivation();
-	}
+    bIsExiting = false;
+
+    CommitAbility(Handle, ActorInfo, ActivationInfo);
+
+    if (BlockMontage)
+    {
+        UAnimInstance* AnimInstance = GetPlayingAnimInstance();
+
+        if (AnimInstance)
+        {
+            float MontageDuration = AnimInstance->Montage_Play(BlockMontage);
+
+            if (MontageDuration > 0.0f)
+            {
+                GetAbilitySystemComponentFromActorInfo()->AddLooseGameplayTag(
+                    FGameplayTag::RequestGameplayTag("State.Blocking"));
+
+                FOnMontageEnded EndDelegate;
+                EndDelegate.BindUObject(this, &UBasicBlockingAbility::OnMontageEnded);
+                AnimInstance->Montage_SetEndDelegate(EndDelegate, BlockMontage);
+            }
+            else
+            {
+                EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+            }
+        }
+        else
+        {
+            EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+        }
+    }
+}
+
+void UBasicBlockingAbility::RequestBlockExit()
+{
+    if (bIsExiting) return;
+
+    UAnimInstance* AnimInstance = GetPlayingAnimInstance();
+    if (!BlockMontage || !AnimInstance || !AnimInstance->Montage_IsPlaying(BlockMontage))
+    {
+        EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+        return;
+    }
+
+    bIsExiting = true;
+    AnimInstance->Montage_JumpToSection(FName("BlockExit"), BlockMontage);
+
+    // Get the length of the BlockExit section and set a timer to stop the montage
+    int32 SectionIndex = BlockMontage->GetSectionIndex(FName("BlockExit"));
+    if (SectionIndex != INDEX_NONE)
+    {
+        float SectionLength = BlockMontage->GetSectionLength(SectionIndex);
+        float PlayRate = AnimInstance->Montage_GetPlayRate(BlockMontage);
+        float ActualDuration = (PlayRate > 0.f) ? SectionLength / PlayRate : SectionLength;
+
+        if (UWorld* World = GetWorld())
+        {
+            World->GetTimerManager().SetTimer(
+                BlockExitTimerHandle,
+                [this]()
+                {
+                    UAnimInstance* Anim = GetPlayingAnimInstance();
+                    if (Anim && BlockMontage)
+                    {
+                        Anim->Montage_Stop(0.25f, BlockMontage);
+                    }
+                    // Montage_Stop triggers OnMontageEnded which calls EndAbility
+                },
+                ActualDuration,
+                false
+            );
+        }
+    }
 }
 
 void UBasicBlockingAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
-	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-	bool bReplicateEndAbility, bool bWasCancelled)
+    const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+    bool bReplicateEndAbility, bool bWasCancelled)
 {
-	// Remove blocking tag
-	GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTags(
-		FGameplayTagContainer(FGameplayTag::RequestGameplayTag("State.Blocking")));
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(BlockExitTimerHandle);
+    }
 
-	UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
-	if (BlockMontage && AnimInstance && AnimInstance->Montage_IsPlaying(BlockMontage))
-	{
-		// Jump to exit section
-		AnimInstance->Montage_JumpToSection(FName("BlockExit"), BlockMontage);
+    UAnimInstance* AnimInstance = GetPlayingAnimInstance();
+    if (BlockMontage && AnimInstance && AnimInstance->Montage_IsPlaying(BlockMontage))
+    {
+        AnimInstance->Montage_Stop(0.25f, BlockMontage);
+    }
 
-		// Wait for exit to finish then actually end the ability
-		FOnMontageEnded EndDelegate;
-		EndDelegate.BindUObject(this, &UBasicBlockingAbility::OnBlockExitFinished);
-		AnimInstance->Montage_SetEndDelegate(EndDelegate, BlockMontage);
+    GetAbilitySystemComponentFromActorInfo()->RemoveLooseGameplayTag(
+        FGameplayTag::RequestGameplayTag("State.Blocking"));
 
-		return;
-	}
+    bIsExiting = false;
 
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+    Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+void UBasicBlockingAbility::OnBlockExitFinished(UAnimMontage* Montage, bool bInterrupted)
+{
+    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UBasicBlockingAbility::OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
+{
 }
 
 void UBasicBlockingAbility::OnMontageCompleted()
@@ -56,8 +125,19 @@ void UBasicBlockingAbility::OnMontageCompleted()
 	Super::EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
 }
 
-void UBasicBlockingAbility::OnBlockExitFinished(UAnimMontage* Montage, bool bInterrupted)
+void UBasicBlockingAbility::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	// Now actually end the ability
-	Super::EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+    if (!bIsAbilityEnding)
+        EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, bInterrupted);
+}
+
+UAnimInstance* UBasicBlockingAbility::GetPlayingAnimInstance() const
+{
+    const FGameplayAbilityActorInfo* ActorInfo = CurrentActorInfo;
+    if (!ActorInfo) return nullptr;
+
+    APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
+    if (Player && Player->Weapon)
+        return Player->Weapon->ItemMesh->GetAnimInstance();
+    return ActorInfo->GetAnimInstance();
 }

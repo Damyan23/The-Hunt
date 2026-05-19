@@ -6,14 +6,15 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "AttributeSet.h"
+#include "GameplayEffectTypes.h"
+#include "GameplayEffect.h"
 #include "BaseAttributeSet.h"
 #include "Abilities/GameplayAbility.h"
-#include "Items/Weapon/MeleeWeapon.h"
+#include "NiagaraSystem.h"
 #include "BaseCharacter.generated.h"
 
-/**
- * 
- */
+class AMeleeWeapon;
+
 UCLASS()
 class THEHUNT_API ABaseCharacter : public ACharacter, public IAbilitySystemInterface
 {
@@ -38,15 +39,16 @@ protected:
 	void InitializeAttributes();
 	void GrantDefaultAbilities();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void AttachWeapon();
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
 	bool IsDead = false;
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AMeleeWeapon> WeaponClass;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon");
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
 	TObjectPtr<AMeleeWeapon> Weapon;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AbilitySystem")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -76,13 +78,42 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	TSubclassOf<UGameplayEffect> StaggerResetEffect;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
+	UNiagaraSystem* HitVFX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
+	UNiagaraSystem* BlockVFX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
+	UNiagaraSystem* ParryVFX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
+	UNiagaraSystem* PoisonVFX;
+
 	virtual void Die();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound FX")
+	TObjectPtr<USoundBase> GettingHitSound;
 
 protected:
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 	virtual void OnDeath();
+	UFUNCTION(BlueprintImplementableEvent, Category = "UI")
+	void OnHealthUpdated(float CurrentHealth, float MaxHealth);
 
 	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
 	virtual void OnGuardBroken();
 
+	UFUNCTION(BlueprintCallable)
+	void PlayFootstepSounds();
+	void PlayRandomSoundAtLocation(const TArray<USoundBase*>& Sounds, FVector Location);
+
+	UPROPERTY(EditAnywhere, Category = "Footsteps")
+	TArray<USoundBase*> BootSounds;
+
+	UPROPERTY(EditAnywhere, Category = "Footsteps")
+	TArray<USoundBase*> SurfaceSounds;
+
+	UPROPERTY(EditAnywhere, Category = "Footsteps")
+	TArray<USoundBase*> WeatherLayerSounds;
 };

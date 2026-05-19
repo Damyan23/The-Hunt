@@ -1,0 +1,29 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "NodeTypeData.generated.h"
+
+UENUM(BlueprintType)
+enum ENodeType
+{
+    Combat,
+    Shop,
+    Event
+};
+
+/**
+ * 
+ */
+USTRUCT(BlueprintType)
+struct FNodeTypeData : public FTableRowBase
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TEnumAsByte<ENodeType> NodeType;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    UTexture2D* Icon;
+};

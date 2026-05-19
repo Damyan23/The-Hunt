@@ -10,20 +10,29 @@ struct THEHUNT_API FInventorySlot
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TSoftObjectPtr<UItemDefinition> ItemDefinition;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TObjectPtr<UItemDefinition> ItemDefinition;
+     
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     bool bIsOccupied = false;
 
-    void AddItem(UItemDefinition* Item)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int SlotIndex;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly);
+    int Quantity;
+
+    void AddItem(UItemDefinition* Item, int32 ItemAmount)
     {
         ItemDefinition = Item;
+        Quantity += ItemAmount;
         bIsOccupied = true;
     }
 
     void ClearSlot()
     {
+     
         ItemDefinition = nullptr;   
+        Quantity = 0;
         bIsOccupied = false;
     }
 };
