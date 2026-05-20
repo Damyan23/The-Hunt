@@ -22,9 +22,7 @@ AMeleeWeapon::AMeleeWeapon()
     Capsule->SetGenerateOverlapEvents(true);
     Capsule->SetMobility(EComponentMobility::Movable);
     Capsule->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
-    
-    Capsule->SetRelativeRotationExact(FRotator(0.f, 90.f, 0.f));
-    
+
     Runes.SetNum(3);
 }
 

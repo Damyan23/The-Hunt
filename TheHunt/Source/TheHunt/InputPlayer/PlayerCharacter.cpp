@@ -77,8 +77,6 @@ APlayerCharacter::APlayerCharacter()
 	PostProcessComponent->SetupAttachment(RootComponent);
 
 	HotbarSlots.SetNum(4);	
-
-	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
 }
 
 
