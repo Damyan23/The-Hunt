@@ -16,14 +16,7 @@ class THEHUNT_API UWeaponDescription : public UItemDefinitionDescription
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable)
 	void SetDescription(UItemDefinition* ItemDefinition);
-
-private:
-	void SetWeaponDescription(UItemDefinition* ItemDefinition);
-	void SetConsumableDescription(UItemDefinition* ItemDefinition);
-	void SetRuneDescription(UItemDefinition* ItemDefinition);
-
 private:
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	TObjectPtr<UTextBlock> PhysicalAttack;
