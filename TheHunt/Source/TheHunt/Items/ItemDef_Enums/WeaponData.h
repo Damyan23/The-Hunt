@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Items/RuneBase.h"
 #include "Items/WeaponType.h"
+#include "Items/Weapon/CombatType.h"
 #include "WeaponData.generated.h"
 
 class AMeleeWeapon;
@@ -52,6 +53,9 @@ struct FWeaponData
 
     UPROPERTY(EditDefaultsOnly)
     EAttackType AttackType;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+    ECombatType CombatType;
 
     UPROPERTY(EditDefaultsOnly)
     EWeigh Weight;

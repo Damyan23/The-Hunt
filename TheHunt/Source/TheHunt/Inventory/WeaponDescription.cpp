@@ -7,20 +7,44 @@ void UWeaponDescription::SetDescription(UItemDefinition* ItemDefinition)
 {
     if (!ItemDefinition) return;
 
-    const FWeaponData& WeaponData = ItemDefinition->WeaponData;
-
+    // Set common fields
     ItemName->SetText(FText::FromName(ItemDefinition->ItemName));
     ItemDescription->SetText(ItemDefinition->ItemDescription);
-
     ItemIcon->SetBrushFromTexture(ItemDefinition->ItemIcon);
 
-    // Stats
+    switch (ItemDefinition->ItemType)
+    {
+    case EItemType::Weapon:
+        SetWeaponDescription(ItemDefinition);
+        break;
+    case EItemType::Consumable:
+        SetConsumableDescription(ItemDefinition);
+        break;
+    case EItemType::Rune:
+        SetRuneDescription(ItemDefinition);
+        break;
+    default:
+        break;
+    }
+}
+
+void UWeaponDescription::SetWeaponDescription(UItemDefinition* ItemDefinition)
+{
+    const FWeaponData& WeaponData = ItemDefinition->WeaponData;
+
+    // Show weapon-specific widgets
+    PhysicalAttack->SetVisibility(ESlateVisibility::Visible);
+    MagicAttack->SetVisibility(ESlateVisibility::Visible);
+    StructureDamage->SetVisibility(ESlateVisibility::Visible);
+    GuardDMGNegation->SetVisibility(ESlateVisibility::Visible);
+    AttackType->SetVisibility(ESlateVisibility::Visible);
+    AttackWeight->SetVisibility(ESlateVisibility::Visible);
+
     PhysicalAttack->SetText(FText::AsNumber(WeaponData.PhysicalAttack));
     MagicAttack->SetText(FText::AsNumber(WeaponData.MagicalAttack));
     StructureDamage->SetText(FText::AsNumber(WeaponData.StructureDamage));
     GuardDMGNegation->SetText(FText::AsNumber(WeaponData.GuardDamageNegation));
 
-    // Attack type
     switch (WeaponData.AttackType)
     {
     case EAttackType::Slash:
@@ -31,7 +55,6 @@ void UWeaponDescription::SetDescription(UItemDefinition* ItemDefinition)
         break;
     }
 
-    // Weight
     switch (WeaponData.Weight)
     {
     case EWeigh::Nimble:
@@ -42,18 +65,19 @@ void UWeaponDescription::SetDescription(UItemDefinition* ItemDefinition)
         break;
     }
 
-    // Runes
+    // Runes — read from weapon actor if available
     TArray<TObjectPtr<UImage>> RuneImages = { Rune1, Rune2, Rune3 };
-    TArray<TObjectPtr<UTextBlock>> RuneDescriptions = { Rune1Description, Rune2Description, Rune3Description };
+    TArray<TObjectPtr<UTextBlock>> RuneDescs = { Rune1Description, Rune2Description, Rune3Description };
 
     for (int32 i = 0; i < 3; i++)
     {
         if (WeaponData.Runes.IsValidIndex(i) && WeaponData.Runes[i])
         {
             URuneBase* Rune = WeaponData.Runes[i];
+            RuneImages[i]->SetVisibility(ESlateVisibility::Visible);
+            RuneDescs[i]->SetVisibility(ESlateVisibility::Visible);
 
-            // Set rune icon
-            if (RuneImages[i] && !Rune->RuneIcon.IsNull())
+            if (!Rune->RuneIcon.IsNull())
             {
                 UTexture2D* Icon = Rune->RuneIcon.LoadSynchronous();
                 if (Icon)
@@ -63,18 +87,64 @@ void UWeaponDescription::SetDescription(UItemDefinition* ItemDefinition)
                     RuneImages[i]->SetBrush(Brush);
                 }
             }
-
-            // Set rune description
-            if (RuneDescriptions[i])
-                RuneDescriptions[i]->SetText(Rune->RuneDescription);
+            RuneDescs[i]->SetText(Rune->RuneDescription);
         }
         else
         {
-            // Hide empty rune slots
-            if (RuneImages[i])
-                RuneImages[i]->SetVisibility(ESlateVisibility::Hidden);
-            if (RuneDescriptions[i])
-                RuneDescriptions[i]->SetVisibility(ESlateVisibility::Hidden);
+            RuneImages[i]->SetVisibility(ESlateVisibility::Hidden);
+            RuneDescs[i]->SetVisibility(ESlateVisibility::Hidden);
         }
     }
+}
+
+void UWeaponDescription::SetConsumableDescription(UItemDefinition* ItemDefinition)
+{
+    PhysicalAttack->SetVisibility(ESlateVisibility::Hidden);
+    MagicAttack->SetVisibility(ESlateVisibility::Hidden);
+    StructureDamage->SetVisibility(ESlateVisibility::Hidden);
+    GuardDMGNegation->SetVisibility(ESlateVisibility::Hidden);
+    AttackType->SetVisibility(ESlateVisibility::Hidden);
+    AttackWeight->SetVisibility(ESlateVisibility::Hidden);
+    Rune1->SetVisibility(ESlateVisibility::Hidden);
+    Rune2->SetVisibility(ESlateVisibility::Hidden);
+    Rune3->SetVisibility(ESlateVisibility::Hidden);
+    Rune1Description->SetVisibility(ESlateVisibility::Hidden);
+    Rune2Description->SetVisibility(ESlateVisibility::Hidden);
+    Rune3Description->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UWeaponDescription::SetRuneDescription(UItemDefinition* ItemDefinition)
+{
+    PhysicalAttack->SetVisibility(ESlateVisibility::Hidden);
+    MagicAttack->SetVisibility(ESlateVisibility::Hidden);
+    StructureDamage->SetVisibility(ESlateVisibility::Hidden);
+    GuardDMGNegation->SetVisibility(ESlateVisibility::Hidden);
+    AttackType->SetVisibility(ESlateVisibility::Hidden);
+    AttackWeight->SetVisibility(ESlateVisibility::Hidden);
+
+    if (Rune1 && ItemDefinition->RuneData.Rune)
+    {
+        URuneBase* Rune = ItemDefinition->RuneData.Rune;
+        if (!Rune->RuneIcon.IsNull())
+        {
+            UTexture2D* Icon = Rune->RuneIcon.LoadSynchronous();
+            if (Icon)
+            {
+                FSlateBrush Brush;
+                Brush.SetResourceObject(Icon);
+                Rune1->SetBrush(Brush);
+                Rune1->SetVisibility(ESlateVisibility::Visible);
+            }
+        }
+        if (Rune1Description)
+        {
+            Rune1Description->SetText(Rune->RuneDescription);
+            Rune1Description->SetVisibility(ESlateVisibility::Visible);
+        }
+    }
+
+    Rune2->SetVisibility(ESlateVisibility::Hidden);
+    Rune3->SetVisibility(ESlateVisibility::Hidden);
+    Rune2Description->SetVisibility(ESlateVisibility::Hidden);
+    Rune3Description->SetVisibility(ESlateVisibility::Hidden);
 }

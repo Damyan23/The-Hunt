@@ -3,6 +3,7 @@
 #include "GameplayAbilitySystem/BaseCharacter.h"
 #include "InputActionValue.h"
 #include "Components/PostProcessComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Inventory/UI/InventoryWidget.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "PlayerCharacter.generated.h"
@@ -66,6 +67,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	UMaterialInterface* HitVignetteMaterial;
 
+	TObjectPtr<USpringArmComponent> SpringArm;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
+	float SpringArmDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector SpringArmOffset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FRotator SpringArmRotation;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float NormalCameraLag = 0.1f;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float LockOnCameraLag = 0.3f;
+
 	UPROPERTY()
 	UMaterialInstanceDynamic* HitVignetteMID;
 
@@ -75,6 +91,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
 	FTimerHandle HitVignetteTimer;
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ECombatType, NewCombatType);
+
+	UPROPERTY(BlueprintAssignable, Category = "Combat")
+	FOnWeaponEquipped OnWeaponEquipped;
+
 public:
 	// Sets default values for this character's properties
 	APlayerCharacter();
@@ -82,6 +103,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 public:
 	// Called every frame

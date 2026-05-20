@@ -17,6 +17,7 @@
 #include "Perception/AISense_Sight.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 
 void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
@@ -59,26 +60,37 @@ APlayerCharacter::APlayerCharacter()
 	StimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	StimuliSource->RegisterForSense(TSubclassOf<UAISense_Hearing>());
 
-	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
-
-	Camera->SetupAttachment(GetMesh(), "Head_Bone");
-	Camera->SetUsingAbsoluteScale(true);
-
-	// Mesh follows controller rotation fully
-	bUseControllerRotationYaw = true;
-	bUseControllerRotationPitch = true;
+	// 3rd person — only yaw rotates the character, pitch stays on camera only
+	bUseControllerRotationYaw = false; // let the spring arm handle this
+	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 
-	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true; // character faces movement direction
 
-	Camera->bUsePawnControlRotation = false;
+	// Spring arm
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(RootComponent);
+	SpringArm->bUsePawnControlRotation = true; // camera rotates with controller
+
+	// Camera attaches to spring arm, not the mesh
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera->SetupAttachment(SpringArm);
+	Camera->bUsePawnControlRotation = false; // spring arm handles it
 
 	PostProcessComponent = CreateDefaultSubobject<UPostProcessComponent>(TEXT("PostProcess"));
 	PostProcessComponent->SetupAttachment(RootComponent);
 
-	HotbarSlots.SetNum(4);	
+	HotbarSlots.SetNum(4);
 }
 
+void APlayerCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	SpringArm->TargetArmLength = SpringArmDistance;
+	SpringArm->SetRelativeLocation(SpringArmOffset);
+	SpringArm->SetRelativeRotation(SpringArmRotation);
+}
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
@@ -102,6 +114,8 @@ void APlayerCharacter::BeginPlay()
 		false // not repeating
 	);
 }
+
+
 
 void APlayerCharacter::AttachWeapon()
 {
@@ -196,6 +210,11 @@ void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
 
 	WeaponClass = NewWeaponClass;
 	AttachWeapon();
+
+	if (Weapon && Weapon->ItemDefinition)
+	{
+		OnWeaponEquipped.Broadcast(Weapon->ItemDefinition->WeaponData.CombatType);
+	}
 }
 
 
@@ -517,15 +536,39 @@ TObjectPtr<AActor> APlayerCharacter::FindBestTarget(FVector Direction)
 void APlayerCharacter::UpdateLockOn(float DeltaTime)
 {
 	FGameplayTag LockOnTag = FGameplayTag::RequestGameplayTag(FName("State.LockedOn"));
-	if (!AbilitySystemComponent->HasMatchingGameplayTag(LockOnTag) || !LockOnTarget) return;
+	float Offset;
+	FVector ModifiedOffset = FVector(0, Offset, 0);
+	if (!AbilitySystemComponent->HasMatchingGameplayTag(LockOnTag) || !LockOnTarget)
+		return;
 
 	// Check if target went out of range
 	if (FVector::Dist(GetActorLocation(), LockOnTarget->GetActorLocation()) > LockOnDetectionRadius)
 	{
 		AbilitySystemComponent->RemoveLooseGameplayTag(LockOnTag);
-		LockOnTarget = nullptr;
+		LockOnTarget = nullptr;	
 		return;
 	}
+
+	FVector Velocity = GetVelocity().GetSafeNormal();
+	float RightDot = FVector::DotProduct(Velocity, GetActorRightVector());
+
+	FVector TargetOffset = SpringArmOffset; // default center
+
+	if (RightDot > 0.1f)
+	{
+		// Moving right — shift camera left so enemy stays visible
+		TargetOffset = SpringArmOffset + FVector(0.f, -60.f, 0.f);
+	}
+	else if (RightDot < -0.1f)
+	{
+		// Moving left — shift camera right
+		TargetOffset = SpringArmOffset + FVector(0.f, 60.f, 0.f);
+	}
+
+	// Smoothly interpolate to target offset
+	SpringArm->SetRelativeLocation(
+		FMath::VInterpTo(SpringArm->GetRelativeLocation(), TargetOffset, DeltaTime, 5.f)
+	);
 
 	// Track cooldown so it doesn't spam switch
 	TargetSwitchCooldownTimer -= DeltaTime;
