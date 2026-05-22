@@ -11,158 +11,204 @@
 UCLASS()
 class THEHUNT_API APlayerCharacter : public ABaseCharacter
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	UPROPERTY(Visibleanywhere, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* Camera;
+    // ============================================================
+    // CORE COMPONENTS
+    // ============================================================
+    UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
+    class UCameraComponent* Camera;
 
-	APlayerController* PC;
+    UPROPERTY(VisibleAnywhere)
+    TObjectPtr<USpringArmComponent> SpringArm;
 
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSource;
+    UPROPERTY(VisibleAnywhere)
+    TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSource;
 
+    UPROPERTY(VisibleAnywhere)
+    UPostProcessComponent* PostProcessComponent;
+
+    APlayerController* PC;
+
+    // ============================================================
+    // CAMERA
+    // ============================================================
 protected:
-	virtual void AttachWeapon() override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+    float SpringArmDistance;
 
-	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	class UInputMappingContext* InputMapping;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+    FVector SpringArmOffset;
 
-	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* MoveAction;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+    FRotator SpringArmRotation;
 
-	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* JumpAction;
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    float NormalCameraLag = 0.1f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LookAction;
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    float LockOnCameraLag = 0.3f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* InteractAction;
-	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* AttackAction;
-	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* BlockAction;
-	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* DashAction;
-	UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LockOnAction;
+    // ============================================================
+    // INPUT
+    // ============================================================
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputMappingContext* InputMapping;
 
-	UPROPERTY(EditAnywhere, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
-	float InteractionSphereRadius = 50.f;
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* MoveAction;
 
-	UPROPERTY(EditAnywhere, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
-	float InteractionDistance = 500.f;
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* LookAction;
 
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UInventoryWidget> InventoryWidgetClass;
-	UPROPERTY()
-	TObjectPtr<UInventoryWidget> InventoryWidget;
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* JumpAction;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Inventory", meta = (AllowPrivateAccess = "true"))
-	class UInputAction* InventoryAction;
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* InteractAction;
 
-	UPROPERTY(VisibleAnywhere)
-	UPostProcessComponent* PostProcessComponent;
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* AttackAction;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Effects")
-	UMaterialInterface* HitVignetteMaterial;
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* BlockAction;
 
-	TObjectPtr<USpringArmComponent> SpringArm;
-	UPROPERTY(EditAnywhere,BlueprintReadWrite)
-	float SpringArmDistance;
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* DashAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector SpringArmOffset;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FRotator SpringArmRotation;
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* LockOnAction;
 
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	float NormalCameraLag = 0.1f;
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* InventoryAction;
 
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	float LockOnCameraLag = 0.3f;
+    // ============================================================
+    // LOCK-ON
+    // ============================================================
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
+    float LockOnDetectionRadius = 500.f;
 
-	UPROPERTY()
-	UMaterialInstanceDynamic* HitVignetteMID;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
+    float LockOnRange;
 
-	virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
-	void ShowHitVignette();
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
+    float LockOnOffsetZ = 20.f;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Effects")
-	FTimerHandle HitVignetteTimer;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
+    float TargetingHeightOffset = 20.f;
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ECombatType, NewCombatType);
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
+    float TargetSwitchThreshold = 1.5f;
 
-	UPROPERTY(BlueprintAssignable, Category = "Combat")
-	FOnWeaponEquipped OnWeaponEquipped;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
+    float TargetSwitchCooldown = 0.2f;
 
-public:
-	// Sets default values for this character's properties
-	APlayerCharacter();
+    UPROPERTY()
+    TObjectPtr<AActor> LockOnTarget;
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	virtual void OnConstruction(const FTransform& Transform) override;
+    float TargetSwitchCooldownTimer = 0.f;
+    FVector2D LastMouseDelta;
 
-public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+    // ============================================================
+    // INVENTORY & HOTBAR
+    // ============================================================
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UInventoryWidget> InventoryWidgetClass;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	UFUNCTION(BlueprintCallable)
-	void EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass);
+    UPROPERTY()
+    TObjectPtr<UInventoryWidget> InventoryWidget;
 
-	void BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex);
+    UPROPERTY()
+    TArray<TObjectPtr<UItemDefinition>> HotbarSlots;
 
-	void EquipRuneToWeapon(UItemDefinition* RuneDef);
+    // ============================================================
+    // INTERACTION
+    // ============================================================
+    UPROPERTY(EditAnywhere, Category = "Interaction")
+    float InteractionSphereRadius = 50.f;
 
-protected:
-	void Move(const FInputActionValue& Value);
-	void Look(const FInputActionValue& Value);
-	void Jump();
-	void Attack();
-	void StartBlock();
-	void StopBlock();
-	void Interact();
-	void ToggleInventory();
-	void Dash();
+    UPROPERTY(EditAnywhere, Category = "Interaction")
+    float InteractionDistance = 500.f;
 
-	void TryPlayFootsteps();
+    // ============================================================
+    // EFFECTS
+    // ============================================================
+    UPROPERTY(EditDefaultsOnly, Category = "Effects")
+    UMaterialInterface* HitVignetteMaterial;
 
-	UPROPERTY()
-	TArray<TObjectPtr<UItemDefinition>> HotbarSlots; 
+    UPROPERTY()
+    UMaterialInstanceDynamic* HitVignetteMID;
 
-	void ToggleLockOn();
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
-	float TargetingHeightOffset = 20.0f;
+    UPROPERTY(EditDefaultsOnly, Category = "Effects")
+    FTimerHandle HitVignetteTimer;
 
-	TArray<TObjectPtr<AActor>> GetPossibleLockOnTargetsWithinRange();
-	TObjectPtr<AActor> FindBestTarget(FVector Direction = FVector::ZeroVector);
+    // ============================================================
+    // FOOTSTEPS
+    // ============================================================
+    UPROPERTY(EditAnywhere, Category = "Footsteps")
+    float FootstepInterval = 0.4f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
-	float LockOnRange;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
-	float LockOnDetectionRadius = 500.0f;
-	UPROPERTY()
-	TObjectPtr<AActor> LockOnTarget;
-	void UpdateLockOn(float DeltaTime);
-	FVector2D LastMouseDelta;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
-	float TargetSwitchThreshold = 1.5f; // tweak this
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
-	float TargetSwitchCooldown = 0.2f;
-	float TargetSwitchCooldownTimer = 0.f;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Lock-On")
-	float LockOnOffsetZ = 20.f;
+    FTimerHandle FootstepTimerHandle;
 
-	// In BaseCharacter.h
-	FTimerHandle FootstepTimerHandle;
+    // ============================================================
+    // COMBAT DELEGATE
+    // ============================================================
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ECombatType, NewCombatType);
 
-	UPROPERTY(EditAnywhere, Category = "Footsteps")
-	float FootstepInterval = 0.4f;
+    UPROPERTY(BlueprintAssignable, Category = "Combat")
+    FOnWeaponEquipped OnWeaponEquipped;
+
+    // ============================================================
+    // OVERRIDES
+    // ============================================================
+    virtual void AttachWeapon() override;
+    virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
+    virtual void BeginPlay() override;
+    virtual void OnConstruction(const FTransform& Transform) override;
+
+    // ============================================================
+    // INPUT HANDLERS
+    // ============================================================
+    void Move(const FInputActionValue& Value);
+    void Look(const FInputActionValue& Value);
+    void Jump();
+    void Attack();
+    void StartBlock();
+    void StopBlock();
+    void Interact();
+    void ToggleInventory();
+    void Dash();
+
+    // ============================================================
+    // LOCK-ON LOGIC
+    // ============================================================
+    void ToggleLockOn();
+    void UpdateLockOn(float DeltaTime);
+    TArray<TObjectPtr<AActor>> GetPossibleLockOnTargetsWithinRange();
+    TObjectPtr<AActor> FindBestTarget(FVector Direction = FVector::ZeroVector);
+
+    // ============================================================
+    // MISC
+    // ============================================================
+    void ShowHitVignette();
+    void TryPlayFootsteps();
+    void PlayHitReaction(AActor* Attacker);
 
 private:
-	void UseHotbarSlot(int32 Index);
+    void UseHotbarSlot(int32 Index);
+
+    // ============================================================
+    // PUBLIC API
+    // ============================================================
+public:
+    APlayerCharacter();
+
+    virtual void Tick(float DeltaTime) override;
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+    UFUNCTION(BlueprintCallable)
+    void EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass);
+
+    void BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex);
+    void EquipRuneToWeapon(UItemDefinition* RuneDef);
 };

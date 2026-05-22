@@ -14,16 +14,31 @@ AMeleeWeapon::AMeleeWeapon()
     PrimaryActorTick.bCanEverTick = true;
 
     // Explicitly set root first
-    ItemMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
+    ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
     SetRootComponent(ItemMesh);
 
-    Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleCollider"));
-    Capsule->SetupAttachment(ItemMesh, FName("Cylinder"));
-    Capsule->SetGenerateOverlapEvents(true);
-    Capsule->SetMobility(EComponentMobility::Movable);
-    Capsule->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
+    if (GetOwner())
+    {
+        ItemMesh->IgnoreActorWhenMoving(GetOwner(), true);
+        // This actually ignores overlaps with the owner
+        TArray<UPrimitiveComponent*> OwnerComponents;
+        GetOwner()->GetComponents<UPrimitiveComponent>(OwnerComponents);
+        for (UPrimitiveComponent* Comp : OwnerComponents)
+        {
+            ItemMesh->IgnoreComponentWhenMoving(Comp, true);
+            Comp->IgnoreComponentWhenMoving(ItemMesh, true);
+        }
+    }
+    ItemMesh->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
 
     Runes.SetNum(3);
+
+    UE_LOG(LogTemp, Warning, TEXT("=== SWORD COLLISION SETUP ==="));
+    UE_LOG(LogTemp, Warning, TEXT("Collision Enabled: %d"), (int32)ItemMesh->GetCollisionEnabled());
+    UE_LOG(LogTemp, Warning, TEXT("Object Type: %d"), (int32)ItemMesh->GetCollisionObjectType());
+    UE_LOG(LogTemp, Warning, TEXT("Generate Overlaps: %s"), ItemMesh->GetGenerateOverlapEvents() ? TEXT("YES") : TEXT("NO"));
+    UE_LOG(LogTemp, Warning, TEXT("Overlap Response to Pawn: %d"), (int32)ItemMesh->GetCollisionResponseToChannel(ECC_Pawn));
+    UE_LOG(LogTemp, Warning, TEXT("Owner: %s"), GetOwner() ? *GetOwner()->GetName() : TEXT("NULL"));
 }
 
 // Called when the game starts or when spawned
@@ -64,16 +79,19 @@ void AMeleeWeapon::Tick(float DeltaTime)
     }
 }
 
-void AMeleeWeapon::EnableAttackHitbox() const
+void AMeleeWeapon::EnableAttackHitbox()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Hitbox enabled"));
-    Capsule->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    ItemMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    UE_LOG(LogTemp, Warning, TEXT("=== HITBOX ENABLED ==="));
+    UE_LOG(LogTemp, Warning, TEXT("Collision now: %d"), (int32)ItemMesh->GetCollisionEnabled());
+    UE_LOG(LogTemp, Warning, TEXT("Generate Overlaps: %s"), ItemMesh->GetGenerateOverlapEvents() ? TEXT("YES") : TEXT("NO"));
+    UE_LOG(LogTemp, Warning, TEXT("Overlap Response to Pawn: %d"), (int32)ItemMesh->GetCollisionResponseToChannel(ECC_Pawn));
 }
 
 void AMeleeWeapon::DisableAttackHitbox() const
 {
     UE_LOG(LogTemp, Warning, TEXT("Hitbox disabled"));
-    Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -82,39 +100,24 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
 {
     if (!OtherActor) return;
 
-
-
     ABaseCharacter* Attacker = Cast<ABaseCharacter>(GetOwner());
     ABaseCharacter* Target = Cast<ABaseCharacter>(OtherActor);
 
     if (!Target || !Attacker || Target == Attacker) return;
     if (!Target->IsPlayerControlled() && !Attacker->IsPlayerControlled()) return;
 
-    FVector SpawnLocation = OtherComp ? OtherComp->GetComponentLocation() : Target->GetActorLocation();
+    UE_LOG(LogTemp, Warning, TEXT("OnSwordHit triggered"));
+    UE_LOG(LogTemp, Warning, TEXT("  OtherActor: %s"), OtherActor ? *OtherActor->GetName() : TEXT("NULL"));
+    UE_LOG(LogTemp, Warning, TEXT("  OtherComp: %s"), OtherComp ? *OtherComp->GetName() : TEXT("NULL"));
+    UE_LOG(LogTemp, Warning, TEXT("  OverlappedComp: %s"), OverlappedComp ? *OverlappedComp->GetName() : TEXT("NULL"));
+    UE_LOG(LogTemp, Warning, TEXT("  Owner: %s"), GetOwner() ? *GetOwner()->GetName() : TEXT("NULL"));
 
-    // Try to get exact impact point with a trace
-    FHitResult TraceHit;
-    FCollisionQueryParams Params;
-    Params.AddIgnoredActor(this);
-    Params.AddIgnoredActor(Attacker);
+    FVector SpawnLocation;
 
-    bool bHit = GetWorld()->SweepSingleByChannel(
-        TraceHit,
-        Capsule->GetComponentLocation(),
-        OtherComp->GetComponentLocation(),
-        Capsule->GetComponentQuat(),
-        ECC_Pawn,
-        FCollisionShape::MakeCapsule(
-            Capsule->GetScaledCapsuleRadius(),
-            Capsule->GetScaledCapsuleHalfHeight()
-        ),
-        Params
-    );
-
-    if (bHit)
-    {
-        SpawnLocation = TraceHit.ImpactPoint;
-    }
+    if (bFromSweep && !SweepResult.ImpactPoint.IsZero())
+        SpawnLocation = SweepResult.ImpactPoint;
+    else
+        SpawnLocation = Target->GetActorLocation();
 
     UAbilitySystemComponent* AttackerASC = Attacker->GetAbilitySystemComponent();
     UAbilitySystemComponent* TargetASC = Target->GetAbilitySystemComponent();

@@ -1,6 +1,4 @@
 ﻿#include "PlayerCharacter.h"
-#include "PlayerCharacter.h"
-#include <string>
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "Inventory/InventorySubsystem.h"
@@ -11,19 +9,33 @@
 #include "Enemy/EnemyCharacter.h"
 #include "Engine/OverlapResult.h"
 #include "Items/Weapon/MeleeWeapon.h"
-#include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameplayEffectExtension.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameplayAbilitySystem/BasicAttackAbility.h"
 
 void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
 	Super::OnHealthChanged(Data);
 
 	ShowHitVignette();
+
+	if (Data.NewValue < Data.OldValue)
+	{
+		// Get attacker from effect context
+		if (AbilitySystemComponent)
+		{
+			const FGameplayEffectModCallbackData* ModData = Data.GEModData;
+			if (ModData)
+			{
+				AActor* Attacker = ModData->EffectSpec.GetContext().GetInstigator();
+				PlayHitReaction(Attacker);
+			}
+		}
+	}
 }
 
 void APlayerCharacter::ShowHitVignette()
@@ -116,7 +128,6 @@ void APlayerCharacter::BeginPlay()
 }
 
 
-
 void APlayerCharacter::AttachWeapon()
 {
 	if (Weapon) return;
@@ -130,16 +141,10 @@ void APlayerCharacter::AttachWeapon()
 	if (!Weapon) return;
 
 	Weapon->AttachToComponent(
-	GetMesh(),FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Socket_Weapon_R");
+		GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Weapon_R");
 
-	/*
-	if (USceneComponent* Root = Weapon->GetRootComponent())
-	{
-		Root->SetRelativeLocation(Weapon->AttachOffset.GetLocation());
-		Root->SetRelativeRotation(Weapon->AttachOffset.GetRotation());
-		// Scale is preserved from the Blueprint CDO — don't override it
-	}
-	*/
+	OnWeaponEquipped.Broadcast(Weapon->ItemDefinition->WeaponData.CombatType);
+	
 }
 
 // Called every frame
@@ -210,11 +215,6 @@ void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
 
 	WeaponClass = NewWeaponClass;
 	AttachWeapon();
-
-	if (Weapon && Weapon->ItemDefinition)
-	{
-		OnWeaponEquipped.Broadcast(Weapon->ItemDefinition->WeaponData.CombatType);
-	}
 }
 
 
@@ -254,9 +254,16 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::Attack()
 {
-	if (AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking")))
-		return; // already attacking
+	// If ability is active try to queue next combo hit
+	FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindAbilitySpecFromClass(UBasicAttackAbility::StaticClass());
+	if (Spec && Spec->IsActive())
+	{
+		UBasicAttackAbility* Ability = Cast<UBasicAttackAbility>(Spec->GetPrimaryInstance());
+		if (Ability) Ability->QueueNextAttack();
+		return;
+	}
 
+	// Otherwise start new combo
 	FGameplayTagContainer TagContainer;
 	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash")));
 	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
@@ -399,6 +406,55 @@ void APlayerCharacter::TryPlayFootsteps()
 
 	GetWorldTimerManager().SetTimer(FootstepTimerHandle, this, &APlayerCharacter::TryPlayFootsteps, Interval, false);
 	PlayFootstepSounds();
+}
+
+void APlayerCharacter::PlayHitReaction(AActor* Attacker)
+{
+	if (!Attacker || !Weapon) return;
+
+	FVector ToAttacker = Attacker->GetActorLocation() - GetActorLocation();
+	ToAttacker.Z = 0;
+	ToAttacker.Normalize();
+
+	float DotForward = FVector::DotProduct(GetActorForwardVector(), ToAttacker);
+	float DotRight = FVector::DotProduct(GetActorRightVector(), ToAttacker);
+
+	UE_LOG(LogTemp, Warning, TEXT("DotForward: %.2f | DotRight: %.2f"), DotForward, DotRight);
+
+	UAnimMontage* HitMontage = nullptr;
+	FWeaponData WeaponData = Weapon->ItemDefinition->WeaponData;
+
+	if (DotForward > 0.5f)
+	{
+		HitMontage = WeaponData.HitF;
+		UE_LOG(LogTemp, Warning, TEXT("Hit direction: FRONT"));
+	}
+	else if (DotForward < -0.5f)
+	{
+		HitMontage = WeaponData.HitB;
+		UE_LOG(LogTemp, Warning, TEXT("Hit direction: BACK"));
+	}
+	else if (DotRight < 0.f)
+	{
+		HitMontage = WeaponData.HitL;
+		UE_LOG(LogTemp, Warning, TEXT("Hit direction: RIGHT"));
+	}
+	else
+	{
+		HitMontage = WeaponData.HitR;
+		UE_LOG(LogTemp, Warning, TEXT("Hit direction: LEFT"));
+	}
+
+	if (HitMontage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Playing montage: %s"), *HitMontage->GetName());
+		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+			AnimInstance->Montage_Play(HitMontage);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HitMontage is NULL for this direction"));
+	}
 }
 
 void APlayerCharacter::BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex)

@@ -8,9 +8,9 @@
 #include "Kismet/GameplayStatics.h"
 
 	UBasicAttackAbility::UBasicAttackAbility()
-{
-	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
-}
+	{
+		InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
+	}
 
 	void UBasicAttackAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
@@ -21,46 +21,30 @@
 		//ApplyCost(Handle, ActorInfo, ActivationInfo);
         CommitAbility(Handle, ActorInfo, ActivationInfo);
 
-        if (AttackMontage)
-        {
-            UAnimInstance* AnimInstance = nullptr;
-            APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
-            FCombatSoundData WeaponSoundData;
+		UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
+		if (!AnimInstance) return;
 
-            if (Player && Player->Weapon)
-            {
-                AnimInstance = Player->Weapon->ItemMesh->GetAnimInstance();
-                WeaponSoundData = Player->Weapon->ItemDefinition->WeaponData.SoundData;
-            }
-            else
-                AnimInstance = ActorInfo->GetAnimInstance();
+		ComboAttacks = Cast<ABaseCharacter>(GetAvatarActorFromActorInfo())->Weapon->ItemDefinition->WeaponData.LightAttacks;
 
-            if (WeaponSoundData.SwingSounds.Num() > 0)
-            {
-                USoundBase* Sound = WeaponSoundData.SwingSounds[0];
-                UGameplayStatics::PlaySoundAtLocation(this, Sound, ActorInfo->AvatarActor->GetActorLocation());
-            }
+		if (ComboAttacks.IsEmpty()) return;
 
-            if (AnimInstance)
-            {
-                float MontageDuration = AnimInstance->Montage_Play(AttackMontage);
+		// Clamp index
+		CurrentComboIndex = FMath::Clamp(CurrentComboIndex, 0, ComboAttacks.Num() - 1);
+		UAnimMontage* Montage = ComboAttacks[CurrentComboIndex];
 
-                if (MontageDuration > 0.0f)
-                {
-                    FOnMontageEnded EndDelegate;
-                    EndDelegate.BindUObject(this, &UBasicAttackAbility::OnMontageEnded);
-                    AnimInstance->Montage_SetEndDelegate(EndDelegate, AttackMontage);
-                }
-                else
-                {
-                    EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
-                }
-            }
-            else
-            {
-                EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
-            }
-        }
+		CommitAbility(Handle, ActorInfo, ActivationInfo);
+
+		float Duration = AnimInstance->Montage_Play(Montage);
+		if (Duration > 0.f)
+		{
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &UBasicAttackAbility::OnAttackFinished);
+			AnimInstance->Montage_SetEndDelegate(EndDelegate, Montage);
+		}
+		else
+		{
+			EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+		}
 	}
 
 	void UBasicAttackAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
@@ -70,14 +54,39 @@
 		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 	}
 
-	void UBasicAttackAbility::OnMontageCompleted()
+	void UBasicAttackAbility::OpenComboWindow()
 	{
-		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+		bComboWindowOpen = true;
+		bNextAttackQueued = false;
 	}
 
-    void UBasicAttackAbility::OnMontageEnded(UAnimMontage* Montage, bool bInterrupted)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Montage ended - Interrupted: %s"), bInterrupted ? TEXT("Yes") : TEXT("No"));
-        EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
-    }
+	void UBasicAttackAbility::CloseComboWindow()
+	{
+		bComboWindowOpen = false;
+	}
 
+	void UBasicAttackAbility::QueueNextAttack()
+	{
+		if (bComboWindowOpen)
+			bNextAttackQueued = true;
+	}
+
+	void UBasicAttackAbility::OnAttackFinished(UAnimMontage* Montage, bool bInterrupted)
+	{
+		if (bNextAttackQueued && CurrentComboIndex < ComboAttacks.Num() - 1)
+		{
+			CurrentComboIndex++;
+			bNextAttackQueued = false;
+			bComboWindowOpen = false;
+			// Re-activate for next combo hit
+			ActivateAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, nullptr);
+		}
+		else
+		{
+			// Reset combo
+			CurrentComboIndex = 0;
+			bNextAttackQueued = false;
+			bComboWindowOpen = false;
+			EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		}
+	}

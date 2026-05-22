@@ -42,37 +42,81 @@ USTRUCT(BlueprintType)
 struct FWeaponData
 {
     GENERATED_BODY()
-
     FWeaponData();
-    
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+
+    // ---- Stats ----
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
     EWeaponType WeaponType = EWeaponType::Sword;
 
-    UPROPERTY(EditDefaultsOnly)
-    TArray<TObjectPtr<URuneBase>> Runes;
-
-    UPROPERTY(EditDefaultsOnly)
+    UPROPERTY(EditDefaultsOnly, Category = "Stats")
     EAttackType AttackType;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
     ECombatType CombatType;
 
-    UPROPERTY(EditDefaultsOnly)
+    UPROPERTY(EditDefaultsOnly, Category = "Stats")
     EWeigh Weight;
 
-    UPROPERTY(EditDefaultsOnly)
+    UPROPERTY(EditDefaultsOnly, Category = "Stats")
     float PhysicalAttack;
 
-    UPROPERTY(EditDefaultsOnly)
-    float  MagicalAttack;
+    UPROPERTY(EditDefaultsOnly, Category = "Stats")
+    float MagicalAttack;
 
-    UPROPERTY(EditDefaultsOnly)
+    UPROPERTY(EditDefaultsOnly, Category = "Stats")
     float StructureDamage;
 
-    UPROPERTY(EditDefaultsOnly)
+    UPROPERTY(EditDefaultsOnly, Category = "Stats")
     float GuardDamageNegation;
 
-    UPROPERTY(EditDefaultsOnly, meta = (ToolTip = "Combat related sounds for the weapon"))
-    FCombatSoundData SoundData;
-};
+    // ---- Runes ----
+    UPROPERTY(EditDefaultsOnly, Category = "Runes")
+    TArray<TObjectPtr<URuneBase>> Runes;
 
+    // ---- Audio ----
+    UPROPERTY(EditDefaultsOnly, Category = "Audio")
+    FCombatSoundData SoundData;
+
+    // ---- Animations|Movement ----
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Movement")
+    TObjectPtr<UAnimMontage> EnterCombat;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Movement")
+    TObjectPtr<UAnimMontage> ExitCombat;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Movement")
+    TObjectPtr<UAnimMontage> Dodge;
+
+    // ---- Animations|Attack ----
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Attack")
+    TArray<TObjectPtr<UAnimMontage>> LightAttacks;
+
+    // ---- Animations|Hit ----
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Hit")
+    TObjectPtr<UAnimMontage> HitF;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Hit")
+    TObjectPtr<UAnimMontage> HitB;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Hit")
+    TObjectPtr<UAnimMontage> HitL;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Hit")
+    TObjectPtr<UAnimMontage> HitR;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Hit")
+    TObjectPtr<UAnimMontage> KnockbackF;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Hit")
+    TObjectPtr<UAnimMontage> KnockbackB;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Hit")
+    TObjectPtr<UAnimMontage> Die;
+
+    // ---- Animations|Block ----
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Block")
+    TArray<TObjectPtr<UAnimMontage>> Block;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Block")
+    TObjectPtr<UAnimMontage> BlockBroken;
+};
