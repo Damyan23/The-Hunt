@@ -4,15 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotify.h"
-#include "CloseComboWindow.generated.h"
+#include "ChangeComatType.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class THEHUNT_API UCloseComboWindow : public UAnimNotify
+class THEHUNT_API UChangeComatType : public UAnimNotify
 {
 	GENERATED_BODY()
-	
+
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
+	
 };

@@ -128,6 +128,10 @@ void APlayerCharacter::BeginPlay()
 }
 
 
+void APlayerCharacter::ToggleCombat()
+{
+}
+
 void APlayerCharacter::AttachWeapon()
 {
 	if (Weapon) return;
@@ -143,8 +147,11 @@ void APlayerCharacter::AttachWeapon()
 	Weapon->AttachToComponent(
 		GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Weapon_R");
 
-	OnWeaponEquipped.Broadcast(Weapon->ItemDefinition->WeaponData.CombatType);
-	
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	AnimInstance->Montage_Play(Weapon->ItemDefinition->WeaponData.EnterCombat);
+	CombatType = Weapon->ItemDefinition->WeaponData.CombatType;
+
+	OnWeaponEquipped.Broadcast(CombatType);
 }
 
 // Called every frame
@@ -191,6 +198,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		Input->BindAction(DashAction, ETriggerEvent::Started, this, &APlayerCharacter::Dash);
 
 		Input->BindAction(LockOnAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleLockOn);
+
+		Input->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleCombat);
 
 		TArray<FKey> HotbarKeys = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four };
 		for (int32 i = 0; i < HotbarKeys.Num(); i++)
@@ -254,16 +263,27 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::Attack()
 {
-	// If ability is active try to queue next combo hit
-	FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindAbilitySpecFromClass(UBasicAttackAbility::StaticClass());
-	if (Spec && Spec->IsActive())
+	if (CombatType == ECombatType::Unarmed) return;
+
+	if (AbilitySystemComponent->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Attacking")))
 	{
-		UBasicAttackAbility* Ability = Cast<UBasicAttackAbility>(Spec->GetPrimaryInstance());
-		if (Ability) Ability->QueueNextAttack();
-		return;
+		// Just queue, don't activate
+		for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
+		{
+			for (UGameplayAbility* Instance : Spec.GetAbilityInstances())
+			{
+				UBasicAttackAbility* Attack = Cast<UBasicAttackAbility>(Instance);
+				if (Attack && Attack->IsActive())
+				{
+					Attack->QueueNextAttack();
+					return; // return here, don't fall through to TryActivate
+				}
+			}
+		}
+		return; // even if we didn't find the instance, don't re-activate
 	}
 
-	// Otherwise start new combo
 	FGameplayTagContainer TagContainer;
 	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash")));
 	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
@@ -654,7 +674,20 @@ void APlayerCharacter::UpdateLockOn(float DeltaTime)
 	FRotator NewRotation = FMath::RInterpTo(GetControlRotation(), TargetRotation, DeltaTime, 20.f);
 	NewRotation.Roll = 0;
 	NewRotation.Pitch += LockOnOffsetZ;
+
+	FRotator CurrentRotation = GetActorRotation();
+	FRotator NewCharacterRotation = FMath::RInterpTo(
+		CurrentRotation,
+		TargetRotation,
+		DeltaTime,
+		10.f // rotation speed, tweak this
+	);
+	NewCharacterRotation.Pitch = 0.f;
+	NewCharacterRotation.Roll = 0.f;
+
+	SetActorRotation(NewCharacterRotation);
 	GetController()->SetControlRotation(NewRotation);
+	
 }
 
 void APlayerCharacter::UseHotbarSlot(int32 Index)
@@ -665,8 +698,32 @@ void APlayerCharacter::UseHotbarSlot(int32 Index)
 	TSubclassOf<AMeleeWeapon> NewWeaponClass = HotbarSlots[Index]->GetWeaponClass();
 	if (!NewWeaponClass) return;
 
-	UE_LOG(LogTemp, Warning, TEXT("Key: %i pressed"), Index);
+	if (Weapon && Weapon->ItemDefinition == HotbarSlots[Index])
+	{
+		// Store reference BEFORE nulling out Weapon
+		AMeleeWeapon* WeaponToDestroy = Weapon;
 
-	EquipWeapon(NewWeaponClass); // use EquipWeapon instead, it destroys the old one first
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		float MontageDuration = 1.f; // default fallback
+		if (AnimInstance && WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat)
+			MontageDuration = AnimInstance->Montage_Play(WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat) / 2;
+
+		// Now safe to null out
+		Weapon = nullptr;
+		WeaponClass = nullptr;
+		CombatType = ECombatType::Unarmed;
+		OnWeaponEquipped.Broadcast(CombatType);
+
+		FTimerHandle UnequipTimer;
+		GetWorldTimerManager().SetTimer(UnequipTimer, [WeaponToDestroy]()
+			{
+				if (IsValid(WeaponToDestroy))
+					WeaponToDestroy->Destroy();
+			}, MontageDuration, false);
+
+		return;
+	}
+
+	EquipWeapon(NewWeaponClass);
 }
 

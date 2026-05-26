@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "Items/ItemDefinition.h"
 #include "InventorySlot.h"
+#include "TheHuntGameInstance.h"
 #include "InventoryComponent.generated.h"
 
 class UInventorySubsystem;
@@ -59,7 +60,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	int32 NumberOfSlots;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FInventorySlot> Slots;
 
 	UFUNCTION(BlueprintCallable)

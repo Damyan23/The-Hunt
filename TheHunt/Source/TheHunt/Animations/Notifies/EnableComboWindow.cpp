@@ -14,11 +14,25 @@ void UEnableComboWindow::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceB
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(MeshComp->GetOwner());
 	if (!PlayerCharacter) return;
 
-	FGameplayAbilitySpec* Spec = PlayerCharacter->AbilitySystemComponent->FindAbilitySpecFromClass(UBasicAttackAbility::StaticClass());
-	if (!Spec) return;
+	UAbilitySystemComponent* AbilitySystemComponent = PlayerCharacter->GetAbilitySystemComponent();
+	if (!AbilitySystemComponent) return;
 
-	UBasicAttackAbility* AttackAbility = Cast<UBasicAttackAbility>(Spec->GetPrimaryInstance());
-	if (!AttackAbility) return;
-
-	AttackAbility->OpenComboWindow();
+	if (AbilitySystemComponent->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Attacking")))
+	{
+		for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
+		{
+			for (UGameplayAbility* Instance : Spec.GetAbilityInstances())
+			{
+				UBasicAttackAbility* Attack = Cast<UBasicAttackAbility>(Instance);
+				if (Attack && Attack->IsActive() && !Attack->bNextAttackQueued)
+				{
+					UE_LOG(LogTemp, Warning, TEXT("its open"));
+					Attack->OpenComboWindow();
+					return;
+				}
+			}
+		}
+		return;
+	}
 }

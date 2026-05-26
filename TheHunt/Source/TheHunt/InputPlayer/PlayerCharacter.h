@@ -82,6 +82,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
     class UInputAction* InventoryAction;
 
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* ToggleCombatAction;
+
     // ============================================================
     // LOCK-ON
     // ============================================================
@@ -108,7 +111,16 @@ protected:
 
     float TargetSwitchCooldownTimer = 0.f;
     FVector2D LastMouseDelta;
+    // ============================================================
+    // Combat
+    // ============================================================
+public:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    bool bIsCombatEnabled = false;
+private:
+    ECombatType CombatType = ECombatType::Unarmed;
 
+protected:
     // ============================================================
     // INVENTORY & HOTBAR
     // ============================================================
@@ -151,13 +163,18 @@ protected:
     FTimerHandle FootstepTimerHandle;
 
     // ============================================================
-    // COMBAT DELEGATE
+    // COMBAT
     // ============================================================
+public:
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquipped, ECombatType, NewCombatType);
 
     UPROPERTY(BlueprintAssignable, Category = "Combat")
     FOnWeaponEquipped OnWeaponEquipped;
 
+    UFUNCTION()
+    void ToggleCombat();
+
+protected:
     // ============================================================
     // OVERRIDES
     // ============================================================

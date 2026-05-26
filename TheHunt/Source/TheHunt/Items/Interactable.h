@@ -10,8 +10,9 @@ UCLASS(Abstract)
 class THEHUNT_API AInteractable : public AActor
 {
     GENERATED_BODY()
-    
-    void InitializeItemDefinition();
+
+protected:
+    virtual void OnConstruction(const FTransform& Transform) override;
 
 public:
     AInteractable();

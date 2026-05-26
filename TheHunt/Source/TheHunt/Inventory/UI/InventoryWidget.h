@@ -23,6 +23,7 @@ class THEHUNT_API UInventoryWidget : public UUserWidget
 
 private:
 	TArray<UInventorySlotWidget*> Slots;
+	UTheHuntGameInstance* GI;
 
 protected:
 	virtual void NativeConstruct() override;

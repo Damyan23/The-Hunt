@@ -13,6 +13,7 @@ void UInventoryWidget::NativeConstruct()
 	Super::NativeConstruct();
 
     SetUserFocus(GetOwningPlayer());
+    GI = Cast<UTheHuntGameInstance>(GetWorld()->GetGameInstance());
 }
 
 void UInventoryWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)

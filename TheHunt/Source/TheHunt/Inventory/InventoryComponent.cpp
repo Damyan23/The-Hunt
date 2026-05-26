@@ -33,10 +33,7 @@ void UInventoryComponent::OnComponentCreated()
 	Super::OnComponentCreated();
 
 	for (int i = 0; i < NumberOfSlots; i++)
-	{
-		FInventorySlot Slot(nullptr, false, i);
-		Slots.Add(Slot);
-	}
+		Slots.Add(FInventorySlot(nullptr, false, i));
 }
 
 
@@ -78,7 +75,7 @@ void UInventoryComponent::UseItem(const int32 Index)
 {
 	if (!Slots.IsValidIndex(Index)) return;
 
-	FInventorySlot& Slot = Slots[Index];
+	FInventorySlot& Slot = Slots[Index];;
 	if (!Slot.bIsOccupied) return;
 
 	UItemDefinition* ItemDef = Slot.ItemDefinition;
@@ -160,7 +157,7 @@ void UInventoryComponent::OnSlotKeyBound(int32 SlotIndex, int32 HotbarSlot)
 
 	if (!Player) return;
 
-	FInventorySlot& SelectedSlot = Slots[SlotIndex];
+	FInventorySlot& SelectedSlot = Slots[SlotIndex];;
 
 	Player->BindItemToSlot(SelectedSlot.ItemDefinition, HotbarSlot);
 }
@@ -252,7 +249,6 @@ int UInventoryComponent::CheckForEmptySlots()
 		if (!Slot.bIsOccupied)
 			return Slot.SlotIndex;
 	}
-
 	return -1;
 }
 
@@ -263,13 +259,9 @@ int UInventoryComponent::CheckForExistingItemInSlot(UItemDefinition* ItemDefinit
 	for (FInventorySlot& Slot : Slots)
 	{
 		if (!Slot.ItemDefinition) continue;
-
 		if (Slot.ItemDefinition->ItemID.Equals(ItemDefinition->ItemID))
-		{
 			return Slot.SlotIndex;
-		}
 	}
-
 	return -1;
-} 
+}
 

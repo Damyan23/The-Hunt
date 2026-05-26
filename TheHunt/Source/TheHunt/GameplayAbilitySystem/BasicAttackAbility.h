@@ -58,4 +58,7 @@ public:
     UFUNCTION()
     void OnAttackFinished(UAnimMontage* Montage, bool bInterrupted);
 
+    UFUNCTION()
+    void TriggerNextAttack();
+
 };

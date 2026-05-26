@@ -39,8 +39,6 @@ void AEnemyCharacter::BeginPlay()
 void AEnemyCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-
-  
 }
 
 void AEnemyCharacter::OnDeath()
