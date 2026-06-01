@@ -59,11 +59,6 @@ protected:
 
 	void ClearMap();
 
-	// Header
-#if WITH_EDITOR
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -82,6 +77,8 @@ public:
 
 	UFUNCTION()
 	void SpawnEnvironment(TArray<FVector2D>& SpawnPoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints);
+
+	void SetNodeTypes(TMap<int32, AMapNode*>& MapGraph);
 
 	UPROPERTY(EditAnywhere)
 	UStaticMesh* FoliageMesh;
@@ -122,8 +119,8 @@ public:
 	UPROPERTY()
 	TObjectPtr<AMapNode> StartNode;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UMapNodeData* NodeEventData;
+	UPROPERTY(EditAnywhere, Category = "Map")
+	TObjectPtr<UMapNodeData> NodeEventData;
 
 	// MapMaker.h
 	UPROPERTY(EditAnywhere)

@@ -7,9 +7,71 @@
 #include "AnimNodes/AnimNode_SequenceEvaluator.h"
 #include "CompGeom/Delaunay2.h"
 
-void UMapGenerator::Generate(FVector2D BoardSize, float MinDistance, float SamplesBeforeRejection)
+void UMapGenerator::Initialize(const FMapGeneratorSettings& InSettings)
 {
+	Settings = InSettings;
+}
 
+void UMapGenerator::GenerateMap(
+	TArray<TArray<int32>>& OutAllPaths,
+	TMap<int32, AMapNode*>& OutMapGraph,
+	TArray<FVector2D>& OutVegetationPoints,
+	TArray<FVector2D>& OutHousePoints,
+	TArray<FVector2D>& OutRuinPoints,
+	UWorld* World,
+	FVector ActorLocation,
+	TSubclassOf<AMapNode> MapNodeClass,
+	AActor* Owner)
+{
+	// Points
+	TArray<FVector2D> Points = PoissonDiskSample(Settings.BoardSize, Settings.MinDistancePath, Settings.SamplesBeforeRejectionPath);
+
+	// Delaunay
+	TArray<TPair<int32, int32>> Edges = BuildDelaunayConnections(Points);
+
+	// Paths
+	OutAllPaths = GeneratePaths(Edges, Points, Settings.BoardSize,
+		Settings.NumberOfPaths,
+		Settings.MinConvergencePoints, Settings.MaxConvergencePoints,
+		Settings.MinRemovedPoints, Settings.MaxRemovedPoints);
+
+	// Collect path node positions and segments for foliage exclusion
+	TSet<int32> PathNodeIndices;
+	for (TArray<int32>& Path : OutAllPaths)
+		for (int32 Index : Path)
+			PathNodeIndices.Add(Index);
+
+	TArray<FVector2D> PathNodePositions;
+	for (int32 Index : PathNodeIndices)
+		PathNodePositions.Add(Points[Index]);
+
+	TArray<TPair<FVector2D, FVector2D>> PathSegments;
+	for (TArray<int32>& Path : OutAllPaths)
+		for (int32 i = 0; i < Path.Num() - 1; i++)
+			PathSegments.Add({ Points[Path[i]], Points[Path[i + 1]] });
+
+	// Foliage
+	OutVegetationPoints = PoissonDiskSample(
+		Settings.BoardSize, Settings.MinDistFoliage, Settings.SamplesBeforeRejectionFoliage,
+		PathNodePositions, Settings.MinDistFoliage,
+		PathSegments, Settings.PathClearanceRadius,
+		Settings.LargeObjectSpawnChance, Settings.LargeObjectClearanceRadius, OutHousePoints,
+		Settings.RuinsSpawnChance, Settings.RuinsClearanceRadius, OutRuinPoints);
+
+	// Remove vegetation inside house/ruin radius
+	OutVegetationPoints.RemoveAll([&](const FVector2D& VP)
+		{
+			for (FVector2D& HP : OutHousePoints)
+				if (FVector2D::Distance(VP, HP) < Settings.LargeObjectClearanceRadius)
+					return true;
+			for (FVector2D& RP : OutRuinPoints)
+				if (FVector2D::Distance(VP, RP) < Settings.RuinsClearanceRadius)
+					return true;
+			return false;
+		});
+
+	// Map graph
+	OutMapGraph = BuildMapGraph(OutAllPaths, Points, World, ActorLocation, MapNodeClass, Owner);
 }
 
 TArray<FVector2D> UMapGenerator::PoissonDiskSample(FVector2D BoundingBox, float MinDist, float SamplesBeforeRejection)

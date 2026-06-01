@@ -9,8 +9,10 @@ UENUM(BlueprintType)
 enum ENodeType
 {
     Combat,
-    Shop,
-    Event
+    RandomEncounter,
+    Rest,
+    Perk,
+    Ritual
 };
 
 /**

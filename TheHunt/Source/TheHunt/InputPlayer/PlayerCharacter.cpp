@@ -133,6 +133,17 @@ void APlayerCharacter::ToggleCombat()
 {
 }
 
+void APlayerCharacter::ApplyPerk(UPerkData* Perk)
+{
+	if (!Perk || !Perk->Effect) return;
+
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(Perk->Effect, 1.0f, Context);
+	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+
+	ActivePerks.Add(Perk);
+}
+
 void APlayerCharacter::AttachWeapon()
 {
 	if (Weapon) return;
