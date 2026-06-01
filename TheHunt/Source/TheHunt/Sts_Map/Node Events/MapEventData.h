@@ -23,7 +23,7 @@ public:
     FText Description;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Event")
-    UStaticMesh* NodeMesh;
+    TSubclassOf<AActor> NodeActorClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Event")
     int32 NodeIndex;

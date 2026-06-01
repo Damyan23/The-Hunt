@@ -6,6 +6,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Inventory/UI/InventoryWidget.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perks/PerkData.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
@@ -133,6 +134,14 @@ protected:
     UPROPERTY()
     TArray<TObjectPtr<UItemDefinition>> HotbarSlots;
 
+public:
+    // ============================================================
+    // PERKS
+    // ============================================================
+    UPROPERTY()
+    TArray<TObjectPtr<UPerkData>> ActivePerks;
+protected:
+
     // ============================================================
     // INTERACTION
     // ============================================================
@@ -173,6 +182,11 @@ public:
 
     UFUNCTION()
     void ToggleCombat();
+
+    // ============================================================
+    // PERKS   
+    // ============================================================
+    void ApplyPerk(UPerkData* Perk);
 
 protected:
     // ============================================================

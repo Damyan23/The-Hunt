@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MapManager.h"
 #include "Nodes/MapNode.h"
 #include "UObject/Object.h"
 #include "MapGenerator.generated.h"
@@ -17,15 +18,18 @@ class THEHUNT_API UMapGenerator : public UObject
 
 public:
 
-	UMapGenerator(FVector2D BoardSize, float MinDistancePath, int SamplesBeforeRejectionPath)
+	void Initialize(const FMapGeneratorSettings& InSettings);
 
 	void GenerateMap(
-		TArray<TArray<int32>>& OutAllPaths,
-		TMap<int32, AMapNode*>& OutMapGraph,
-		TArray<FVector2D>& OutVegetationPoints,
-		TArray<FVector2D>& OutHousePoints,
-		TArray<FVector2D>& OutRuinPoints
-	);
+			TArray<TArray<int32>>& OutAllPaths,
+			TMap<int32, AMapNode*>& OutMapGraph,
+			TArray<FVector2D>& OutVegetationPoints,
+			TArray<FVector2D>& OutHousePoints,
+			TArray<FVector2D>& OutRuinPoints,
+			UWorld* World,
+			FVector ActorLocation,
+			TSubclassOf<AMapNode> MapNodeClass,
+			AActor* Owner);
 
 	TArray<FVector2D> PoissonDiskSample(FVector2D BoundingBox, float MinDist, float SamplesBeforeRejection);
 	TArray<FVector2D> PoissonDiskSample(
@@ -58,6 +62,8 @@ public:
 	void GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointIndex, FVector2D BoundingBox, TArray<FVector2D>& Points);
 private:
 	bool IsValid(FVector2D BoundingBox, FVector2D Candidate, TArray<FVector2D>& Points, float MinDistance);
+
+	FMapGeneratorSettings Settings;
 
 	float CellSize;
 	TMap<TPair<int32, int32>, int32> EdgeUsage;
