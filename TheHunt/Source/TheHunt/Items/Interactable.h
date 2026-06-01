@@ -10,8 +10,9 @@ UCLASS(Abstract)
 class THEHUNT_API AInteractable : public AActor
 {
     GENERATED_BODY()
-    
-    void InitializeItemDefinition();
+
+protected:
+    virtual void OnConstruction(const FTransform& Transform) override;
 
 public:
     AInteractable();
@@ -26,7 +27,7 @@ public:
     FName ItemName;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-    TObjectPtr<USkeletalMeshComponent> ItemMesh;
+    TObjectPtr<UStaticMeshComponent> ItemMesh;
 
     // Override in subclasses to define interact behavior
     UFUNCTION(BlueprintNativeEvent, Category = "Interaction")

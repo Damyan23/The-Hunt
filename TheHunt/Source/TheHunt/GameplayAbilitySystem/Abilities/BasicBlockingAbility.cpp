@@ -136,8 +136,5 @@ UAnimInstance* UBasicBlockingAbility::GetPlayingAnimInstance() const
     const FGameplayAbilityActorInfo* ActorInfo = CurrentActorInfo;
     if (!ActorInfo) return nullptr;
 
-    APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
-    if (Player && Player->Weapon)
-        return Player->Weapon->ItemMesh->GetAnimInstance();
     return ActorInfo->GetAnimInstance();
 }

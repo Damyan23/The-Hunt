@@ -6,36 +6,38 @@
 #include "InputPlayer/PlayerCharacter.h"
 
 void UGA_Player_Dash::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-                                      const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-                                      const FGameplayEventData* TriggerEventData)
+    const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+    const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+    Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
-	FVector DashDirection = Player->GetVelocity();
-	DashDirection.Set(DashDirection.X, DashDirection.Y, 0);
-	DashDirection = DashDirection.GetSafeNormal();
-	
-	//Player->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    UE_LOG(LogTemp, Warning, TEXT("goes in here"));
 
-	if (DashDirection.Size() == 0)
-	{
-		DashDirection = -Player->GetActorForwardVector();
-	}
+    APlayerCharacter* Player = Cast<APlayerCharacter>(ActorInfo->AvatarActor.Get());
+    if (!Player) { EndAbility(Handle, ActorInfo, ActivationInfo, false, false); return; }
 
-	CommitAbility(Handle, ActorInfo, ActivationInfo);
+    AMeleeWeapon* Weapon = Player->Weapon;
+    if (!Weapon || !Weapon->ItemDefinition) { EndAbility(Handle, ActorInfo, ActivationInfo, false, false); return; }
 
-	UAbilityTask_ApplyRootMotionConstantForce* DashTask = UAbilityTask_ApplyRootMotionConstantForce::ApplyRootMotionConstantForce(
-		this, FName("Dash"), DashDirection, DashStrength, DashDuration,
-		false, StrengthOverTimeCurve,
-		ERootMotionFinishVelocityMode::ClampVelocity,
-		FVector::ZeroVector,
-		600.f,   // max velocity after dash ends
-		false
-	);
+    UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
+    UAnimMontage* DodgeMontage = Weapon->ItemDefinition->WeaponData.Dodge;
 
-	DashTask->OnFinish.AddDynamic(this, &UGA_Player_Dash::OnDashFinished);
-	DashTask->ReadyForActivation();
+    if (!AnimInstance || !DodgeMontage) { EndAbility(Handle, ActorInfo, ActivationInfo, false, false); return; }
+
+    float MontageDuration = AnimInstance->Montage_Play(DodgeMontage);
+    if (MontageDuration > 0.f)
+    {
+        CommitAbility(Handle, ActorInfo, ActivationInfo);
+
+        // Bind the end delegate so ability ends when montage finishes
+        FOnMontageEnded EndDelegate;
+        EndDelegate.BindUObject(this, &UGA_Player_Dash::OnDashFinished);
+        AnimInstance->Montage_SetEndDelegate(EndDelegate, DodgeMontage);
+    }
+    else
+    {
+        EndAbility(Handle, ActorInfo, ActivationInfo, false, false);
+    }
 }
 
 void UGA_Player_Dash::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -44,7 +46,7 @@ void UGA_Player_Dash::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
-void UGA_Player_Dash::OnDashFinished()
+void UGA_Player_Dash::OnDashFinished(UAnimMontage* Montage, bool bInterrupted)
 {
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

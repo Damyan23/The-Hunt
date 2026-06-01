@@ -29,5 +29,5 @@ protected:
 	UCurveFloat* StrengthOverTimeCurve;
 private:
 	UFUNCTION()
-	void OnDashFinished();
+	void OnDashFinished(UAnimMontage* Montage, bool bInterrupted);
 };

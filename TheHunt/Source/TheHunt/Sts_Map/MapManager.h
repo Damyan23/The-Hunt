@@ -7,19 +7,51 @@
 #include "Nodes/MapNode.h"
 #include "Nodes/MapNodeConnectionWidget.h"
 #include "Nodes/MapNodeData.h"
-#include "Engine/StaticMeshActor.h"
-#include "Components/SplineMeshComponent.h"
-#include "CableComponent.h"
-#include "MapMaker.generated.h"
+
+#include "MapManager.generated.h"
+
+USTRUCT()
+struct FMapGeneratorSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere) FVector2D BoardSize;
+
+	// ============================================================
+	// PATHS SETTINGS
+	// ============================================================
+	UPROPERTY(EditAnywhere) float MinDistancePath = 100.f;
+	UPROPERTY(EditAnywhere) int SamplesBeforeRejectionPath = 30;
+	UPROPERTY(EditAnywhere) int NumberOfPaths = 5;
+	UPROPERTY(EditAnywhere) int MinConvergencePoints = 1;
+	UPROPERTY(EditAnywhere) int MaxConvergencePoints = 2;
+	UPROPERTY(EditAnywhere) int MinRemovedPoints = 4;
+	UPROPERTY(EditAnywhere) int MaxRemovedPoints = 8;
+
+	// ============================================================
+	// FOLIAGE SETTINGS
+	// ============================================================
+	UPROPERTY(EditAnywhere) float MinDistFoliage = 80.f;
+	UPROPERTY(EditAnywhere) float PathClearanceRadius = 150.f;
+	UPROPERTY(EditAnywhere) float SamplesBeforeRejectionFoliage = 30;
+
+	// ============================================================
+	// STRUCTURES SETTINGS
+	// ============================================================
+	UPROPERTY(EditAnywhere) float LargeObjectSpawnChance = 0.1f;
+	UPROPERTY(EditAnywhere) float LargeObjectClearanceRadius = 200.f;
+	UPROPERTY(EditAnywhere) float RuinsSpawnChance = 0.05f;
+	UPROPERTY(EditAnywhere) float RuinsClearanceRadius = 150.f;
+};
 
 UCLASS()
-class THEHUNT_API AMapMaker : public AActor
+class THEHUNT_API AMapManager : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AMapMaker();
+	AMapManager();
 
 protected:
 	// Called when the game starts or when spawned
@@ -36,37 +68,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(EditAnywhere)
-	FVector2D BoardSize = FVector2D(1000.f, 1000.f);
-
-	UPROPERTY(EditAnywhere, Category = "Path")
-	float MinDistPath = 50.f;
-
-	UPROPERTY(EditAnywhere, Category = "Path")
-	float SamplesBeforeRejectionPath = 30.f;
-
-	UPROPERTY(EditAnywhere, Category = "Foliage")
-	float MinDistFoliage = 50.f;
-
-	UPROPERTY(EditAnywhere, Category = "Foliage")
-	float SamplesBeforeRejectionFoliage = 30.f;
-
-	UPROPERTY(EditAnywhere, Category = "Foliage")
-	float MinDistToExistingFoliage = 50.f;
-
-	UPROPERTY(EditAnywhere, Category = "Foliage")
-	float PathClearanceRadius = 50.f;
+	UPROPERTY(EditAnywhere, Category = "Map Generation")
+	FMapGeneratorSettings GeneratorSettings;
 	
-	UPROPERTY(EditAnywhere, Category = "Houses")
-	float SpawnChanceHouses = 0.05f;
-	UPROPERTY(EditAnywhere, Category = "Houses")
-	float ClearanceRadiusHouses = 300.f;
-
-	UPROPERTY(EditAnywhere, Category = "Ruins")
-	float SpawnChanceRuins = 0.05f;
-	UPROPERTY(EditAnywhere, Category = "Ruins")
-	float ClearanceRadiusRuins= 300.f;
-
 	UPROPERTY(EditAnywhere, Category = "Path")
 	TSubclassOf<AActor> SplinePathActorClass;
 

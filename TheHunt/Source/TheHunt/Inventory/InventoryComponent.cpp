@@ -33,10 +33,7 @@ void UInventoryComponent::OnComponentCreated()
 	Super::OnComponentCreated();
 
 	for (int i = 0; i < NumberOfSlots; i++)
-	{
-		FInventorySlot Slot(nullptr, false, i);
-		Slots.Add(Slot);
-	}
+		Slots.Add(FInventorySlot(nullptr, false, i));
 }
 
 
@@ -66,6 +63,23 @@ void UInventoryComponent::AddItem(FString ItemID, int32 Amount)
 	OnItemAdded.Broadcast(FreeSlot);
 }
 
+void UInventoryComponent::AddItemUsingItemDefinition(UItemDefinition* ItemDefinition, float Amount)
+{
+	if (!ItemDefinition) return;
+
+	int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
+	int AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
+
+	if (AvailableSlot < 0) return;
+
+	FInventorySlot& FreeSlot = Slots[AvailableSlot];
+	FreeSlot.AddItem(ItemDefinition, Amount);
+
+	UE_LOG(LogTemp, Warning, TEXT("AddItem: Slot %d, Quantity: %d"), AvailableSlot, FreeSlot.Quantity);
+
+	OnItemAdded.Broadcast(FreeSlot);
+}
+
 void UInventoryComponent::RemoveItem(FInventorySlot* Slot)
 {
 	if (Slot == nullptr) return;
@@ -78,7 +92,7 @@ void UInventoryComponent::UseItem(const int32 Index)
 {
 	if (!Slots.IsValidIndex(Index)) return;
 
-	FInventorySlot& Slot = Slots[Index];
+	FInventorySlot& Slot = Slots[Index];;
 	if (!Slot.bIsOccupied) return;
 
 	UItemDefinition* ItemDef = Slot.ItemDefinition;
@@ -160,7 +174,7 @@ void UInventoryComponent::OnSlotKeyBound(int32 SlotIndex, int32 HotbarSlot)
 
 	if (!Player) return;
 
-	FInventorySlot& SelectedSlot = Slots[SlotIndex];
+	FInventorySlot& SelectedSlot = Slots[SlotIndex];;
 
 	Player->BindItemToSlot(SelectedSlot.ItemDefinition, HotbarSlot);
 }
@@ -225,6 +239,17 @@ int32 UInventoryComponent::GetHotbarIndexFromKey(FKey Key)
 	return -1;
 }
 
+void UInventoryComponent::RemoveFromItemQuantity(int SlotIndex, float Amount)
+{
+	if (!Slots.IsValidIndex(SlotIndex)) return;
+
+	FInventorySlot& Slot = Slots[SlotIndex];
+	if (!Slot.bIsOccupied) return;
+
+	Slot.RemoveQuantity(Amount);
+	OnItemAdded.Broadcast(Slot);
+}
+
 void UInventoryComponent::MoveSlot(FInventorySlot& From, FInventorySlot& To)
 {
 	To.ItemDefinition = From.ItemDefinition;
@@ -252,7 +277,6 @@ int UInventoryComponent::CheckForEmptySlots()
 		if (!Slot.bIsOccupied)
 			return Slot.SlotIndex;
 	}
-
 	return -1;
 }
 
@@ -263,13 +287,9 @@ int UInventoryComponent::CheckForExistingItemInSlot(UItemDefinition* ItemDefinit
 	for (FInventorySlot& Slot : Slots)
 	{
 		if (!Slot.ItemDefinition) continue;
-
 		if (Slot.ItemDefinition->ItemID.Equals(ItemDefinition->ItemID))
-		{
 			return Slot.SlotIndex;
-		}
 	}
-
 	return -1;
-} 
+}
 

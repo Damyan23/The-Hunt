@@ -17,6 +17,7 @@ class THEHUNT_API UBaseAttributeSet : public UAttributeSet
 	
 public:
 	UBaseAttributeSet();
+	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 	UPROPERTY(BlueprintReadOnly, Category="Attributes")
 	FGameplayAttributeData Health;

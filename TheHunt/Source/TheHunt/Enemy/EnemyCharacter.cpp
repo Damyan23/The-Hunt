@@ -26,8 +26,7 @@ void AEnemyCharacter::BeginPlay()
                 FName("Sword_joint"));
 
         Weapon->SetActorRelativeRotation(Weapon->AttachOffset.Rotator());
-
-        //Weapon->WeaponMesh->SetVisibility(false);
+        Weapon->ItemMesh->SetVisibility(false);
     }
 
     float CurrentHealth = AbilitySystemComponent->GetNumericAttribute(
@@ -40,8 +39,6 @@ void AEnemyCharacter::BeginPlay()
 void AEnemyCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-
-  
 }
 
 void AEnemyCharacter::OnDeath()

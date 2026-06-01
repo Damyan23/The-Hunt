@@ -1,6 +1,4 @@
 ﻿#include "PlayerCharacter.h"
-#include "PlayerCharacter.h"
-#include <string>
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "Inventory/InventorySubsystem.h"
@@ -11,18 +9,34 @@
 #include "Enemy/EnemyCharacter.h"
 #include "Engine/OverlapResult.h"
 #include "Items/Weapon/MeleeWeapon.h"
-#include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Sight.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameplayEffectExtension.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "GameplayAbilitySystem/BasicAttackAbility.h"
 
 void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
 	Super::OnHealthChanged(Data);
 
-	ShowHitVignette();
+	UE_LOG(LogTemp, Warning, TEXT("Health went from %f to %f"), Data.OldValue, Data.NewValue);
+
+	if (Data.NewValue < Data.OldValue)
+	{
+		ShowHitVignette();
+		// Get attacker from effect context
+		if (AbilitySystemComponent)
+		{
+			const FGameplayEffectModCallbackData* ModData = Data.GEModData;
+			if (ModData)
+			{
+				AActor* Attacker = ModData->EffectSpec.GetContext().GetInstigator();
+				PlayHitReaction(Attacker);
+			}
+		}
+	}
 }
 
 void APlayerCharacter::ShowHitVignette()
@@ -59,26 +73,37 @@ APlayerCharacter::APlayerCharacter()
 	StimuliSource->RegisterForSense(TSubclassOf<UAISense_Sight>());
 	StimuliSource->RegisterForSense(TSubclassOf<UAISense_Hearing>());
 
-	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
-
-	Camera->SetupAttachment(GetMesh(), "Head_Bone");
-	Camera->SetUsingAbsoluteScale(true);
-
-	// Mesh follows controller rotation fully
-	bUseControllerRotationYaw = true;
-	bUseControllerRotationPitch = true;
+	// 3rd person — only yaw rotates the character, pitch stays on camera only
+	bUseControllerRotationYaw = false; // let the spring arm handle this
+	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 
-	GetCharacterMovement()->bOrientRotationToMovement = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true; // character faces movement direction
 
-	Camera->bUsePawnControlRotation = false;
+	// Spring arm
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(RootComponent);
+	SpringArm->bUsePawnControlRotation = true; // camera rotates with controller
+
+	// Camera attaches to spring arm, not the mesh
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+	Camera->SetupAttachment(SpringArm);
+	Camera->bUsePawnControlRotation = false; // spring arm handles it
 
 	PostProcessComponent = CreateDefaultSubobject<UPostProcessComponent>(TEXT("PostProcess"));
 	PostProcessComponent->SetupAttachment(RootComponent);
 
-	HotbarSlots.SetNum(4);	
+	HotbarSlots.SetNum(4);
 }
 
+void APlayerCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	SpringArm->TargetArmLength = SpringArmDistance;
+	SpringArm->SetRelativeLocation(SpringArmOffset);
+	SpringArm->SetRelativeRotation(SpringArmRotation);
+}
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
@@ -103,6 +128,11 @@ void APlayerCharacter::BeginPlay()
 	);
 }
 
+
+void APlayerCharacter::ToggleCombat()
+{
+}
+
 void APlayerCharacter::AttachWeapon()
 {
 	if (Weapon) return;
@@ -116,16 +146,13 @@ void APlayerCharacter::AttachWeapon()
 	if (!Weapon) return;
 
 	Weapon->AttachToComponent(
-	GetMesh(),FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Socket_Weapon_R");
+		GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Weapon_R");
 
-	/*
-	if (USceneComponent* Root = Weapon->GetRootComponent())
-	{
-		Root->SetRelativeLocation(Weapon->AttachOffset.GetLocation());
-		Root->SetRelativeRotation(Weapon->AttachOffset.GetRotation());
-		// Scale is preserved from the Blueprint CDO — don't override it
-	}
-	*/
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	AnimInstance->Montage_Play(Weapon->ItemDefinition->WeaponData.EnterCombat);
+	CombatType = Weapon->ItemDefinition->WeaponData.CombatType;
+
+	OnWeaponEquipped.Broadcast(CombatType);
 }
 
 // Called every frame
@@ -172,6 +199,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		Input->BindAction(DashAction, ETriggerEvent::Started, this, &APlayerCharacter::Dash);
 
 		Input->BindAction(LockOnAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleLockOn);
+
+		Input->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleCombat);
 
 		TArray<FKey> HotbarKeys = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four };
 		for (int32 i = 0; i < HotbarKeys.Num(); i++)
@@ -235,8 +264,26 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::Attack()
 {
-	if (AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking")))
-		return; // already attacking
+	if (CombatType == ECombatType::Unarmed) return;
+
+	if (AbilitySystemComponent->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Attacking")))
+	{
+		// Just queue, don't activate
+		for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
+		{
+			for (UGameplayAbility* Instance : Spec.GetAbilityInstances())
+			{
+				UBasicAttackAbility* Attack = Cast<UBasicAttackAbility>(Instance);
+				if (Attack && Attack->IsActive())
+				{
+					Attack->QueueNextAttack();
+					return; // return here, don't fall through to TryActivate
+				}
+			}
+		}
+		return; // even if we didn't find the instance, don't re-activate
+	}
 
 	FGameplayTagContainer TagContainer;
 	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash")));
@@ -382,6 +429,55 @@ void APlayerCharacter::TryPlayFootsteps()
 	PlayFootstepSounds();
 }
 
+void APlayerCharacter::PlayHitReaction(AActor* Attacker)
+{
+	if (!Attacker || !Weapon) return;
+
+	FVector ToAttacker = Attacker->GetActorLocation() - GetActorLocation();
+	ToAttacker.Z = 0;
+	ToAttacker.Normalize();
+
+	float DotForward = FVector::DotProduct(GetActorForwardVector(), ToAttacker);
+	float DotRight = FVector::DotProduct(GetActorRightVector(), ToAttacker);
+
+	UE_LOG(LogTemp, Warning, TEXT("DotForward: %.2f | DotRight: %.2f"), DotForward, DotRight);
+
+	UAnimMontage* HitMontage = nullptr;
+	FWeaponData WeaponData = Weapon->ItemDefinition->WeaponData;
+
+	if (DotForward > 0.5f)
+	{
+		HitMontage = WeaponData.HitF;
+		UE_LOG(LogTemp, Warning, TEXT("Hit direction: FRONT"));
+	}
+	else if (DotForward < -0.5f)
+	{
+		HitMontage = WeaponData.HitB;
+		UE_LOG(LogTemp, Warning, TEXT("Hit direction: BACK"));
+	}
+	else if (DotRight < 0.f)
+	{
+		HitMontage = WeaponData.HitL;
+		UE_LOG(LogTemp, Warning, TEXT("Hit direction: RIGHT"));
+	}
+	else
+	{
+		HitMontage = WeaponData.HitR;
+		UE_LOG(LogTemp, Warning, TEXT("Hit direction: LEFT"));
+	}
+
+	if (HitMontage)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Playing montage: %s"), *HitMontage->GetName());
+		if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+			AnimInstance->Montage_Play(HitMontage);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HitMontage is NULL for this direction"));
+	}
+}
+
 void APlayerCharacter::BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex)
 {
 	if (HotbarSlotIndex < 1 || HotbarSlotIndex > 4) return;
@@ -517,15 +613,39 @@ TObjectPtr<AActor> APlayerCharacter::FindBestTarget(FVector Direction)
 void APlayerCharacter::UpdateLockOn(float DeltaTime)
 {
 	FGameplayTag LockOnTag = FGameplayTag::RequestGameplayTag(FName("State.LockedOn"));
-	if (!AbilitySystemComponent->HasMatchingGameplayTag(LockOnTag) || !LockOnTarget) return;
+	float Offset;
+	FVector ModifiedOffset = FVector(0, Offset, 0);
+	if (!AbilitySystemComponent->HasMatchingGameplayTag(LockOnTag) || !LockOnTarget)
+		return;
 
 	// Check if target went out of range
 	if (FVector::Dist(GetActorLocation(), LockOnTarget->GetActorLocation()) > LockOnDetectionRadius)
 	{
 		AbilitySystemComponent->RemoveLooseGameplayTag(LockOnTag);
-		LockOnTarget = nullptr;
+		LockOnTarget = nullptr;	
 		return;
 	}
+
+	FVector Velocity = GetVelocity().GetSafeNormal();
+	float RightDot = FVector::DotProduct(Velocity, GetActorRightVector());
+
+	FVector TargetOffset = SpringArmOffset; // default center
+
+	if (RightDot > 0.1f)
+	{
+		// Moving right — shift camera left so enemy stays visible
+		TargetOffset = SpringArmOffset + FVector(0.f, -60.f, 0.f);
+	}
+	else if (RightDot < -0.1f)
+	{
+		// Moving left — shift camera right
+		TargetOffset = SpringArmOffset + FVector(0.f, 60.f, 0.f);
+	}
+
+	// Smoothly interpolate to target offset
+	SpringArm->SetRelativeLocation(
+		FMath::VInterpTo(SpringArm->GetRelativeLocation(), TargetOffset, DeltaTime, 5.f)
+	);
 
 	// Track cooldown so it doesn't spam switch
 	TargetSwitchCooldownTimer -= DeltaTime;
@@ -555,7 +675,20 @@ void APlayerCharacter::UpdateLockOn(float DeltaTime)
 	FRotator NewRotation = FMath::RInterpTo(GetControlRotation(), TargetRotation, DeltaTime, 20.f);
 	NewRotation.Roll = 0;
 	NewRotation.Pitch += LockOnOffsetZ;
+
+	FRotator CurrentRotation = GetActorRotation();
+	FRotator NewCharacterRotation = FMath::RInterpTo(
+		CurrentRotation,
+		TargetRotation,
+		DeltaTime,
+		10.f // rotation speed, tweak this
+	);
+	NewCharacterRotation.Pitch = 0.f;
+	NewCharacterRotation.Roll = 0.f;
+
+	SetActorRotation(NewCharacterRotation);
 	GetController()->SetControlRotation(NewRotation);
+	
 }
 
 void APlayerCharacter::UseHotbarSlot(int32 Index)
@@ -566,8 +699,32 @@ void APlayerCharacter::UseHotbarSlot(int32 Index)
 	TSubclassOf<AMeleeWeapon> NewWeaponClass = HotbarSlots[Index]->GetWeaponClass();
 	if (!NewWeaponClass) return;
 
-	UE_LOG(LogTemp, Warning, TEXT("Key: %i pressed"), Index);
+	if (Weapon && Weapon->ItemDefinition == HotbarSlots[Index])
+	{
+		// Store reference BEFORE nulling out Weapon
+		AMeleeWeapon* WeaponToDestroy = Weapon;
 
-	EquipWeapon(NewWeaponClass); // use EquipWeapon instead, it destroys the old one first
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		float MontageDuration = 1.f; // default fallback
+		if (AnimInstance && WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat)
+			MontageDuration = AnimInstance->Montage_Play(WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat) / 2;
+
+		// Now safe to null out
+		Weapon = nullptr;
+		WeaponClass = nullptr;
+		CombatType = ECombatType::Unarmed;
+		OnWeaponEquipped.Broadcast(CombatType);
+
+		FTimerHandle UnequipTimer;
+		GetWorldTimerManager().SetTimer(UnequipTimer, [WeaponToDestroy]()
+			{
+				if (IsValid(WeaponToDestroy))
+					WeaponToDestroy->Destroy();
+			}, MontageDuration, false);
+
+		return;
+	}
+
+	EquipWeapon(NewWeaponClass);
 }
 

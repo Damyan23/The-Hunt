@@ -3,6 +3,8 @@
 
 #include "BaseAttributeSet.h"
 
+#include "GameplayEffectExtension.h"
+
 UBaseAttributeSet::UBaseAttributeSet()
 {
 	Health = 100.0f;
@@ -11,5 +13,25 @@ UBaseAttributeSet::UBaseAttributeSet()
 	MaxStamina = 100.0f;
 	Stagger = 0.0f;
 	MaxStagger = 30.0f;
+}
+
+void UBaseAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
+
+    if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+    {
+        // Clamp Health between 0 and MaxHealth
+        float CurrentMaxHealth = GetMaxHealth();
+        SetHealth(FMath::Clamp(GetHealth(), 0.0f, CurrentMaxHealth));
+    }
+
+    if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
+    {
+        // If MaxHealth was reduced, clamp Health down to new MaxHealth
+        float CurrentHealth = GetHealth();
+        float NewMaxHealth = GetMaxHealth();
+        SetHealth(FMath::Clamp(CurrentHealth, 0.0f, NewMaxHealth));
+    }
 }
 

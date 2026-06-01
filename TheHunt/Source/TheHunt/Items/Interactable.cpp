@@ -3,8 +3,10 @@
 #include "ItemFunctionLibrary.h"
 #include "Inventory/InventorySubsystem.h"
 
-void AInteractable::InitializeItemDefinition()
+void AInteractable::OnConstruction(const FTransform& Transform)
 {
+    Super::OnConstruction(Transform);
+
     ItemDefinition = UItemFunctionLibrary::FindItemById(ItemID);
 }
 
@@ -22,8 +24,19 @@ void AInteractable::AddToInventory(AActor* Interactor)
 {
     if (!Interactor) return;
 
-    UInventorySubsystem* Subsystem = GetGameInstance()->GetSubsystem<UInventorySubsystem>();
-    Subsystem->AddItemToActor(Interactor, ItemID, ItemDefinition->CurrentQuantity);
+    if (!ItemDefinition)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Interactable: ItemDefinition is null - check ItemID is set correctly"));
+        return;
+    }
 
+    UInventorySubsystem* Subsystem = GetGameInstance()->GetSubsystem<UInventorySubsystem>();
+    if (!Subsystem)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Interactable: InventorySubsystem is null"));
+        return;
+    }
+
+    Subsystem->AddItemToActor(Interactor, ItemID, ItemDefinition->CurrentQuantity);
     AActor::Destroy();
 }

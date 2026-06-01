@@ -35,11 +35,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	
-	void EnableAttackHitbox() const;
+	void EnableAttackHitbox();
 	void DisableAttackHitbox() const;	
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UCapsuleComponent> Capsule;
 	
 	UFUNCTION()
 	void OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,

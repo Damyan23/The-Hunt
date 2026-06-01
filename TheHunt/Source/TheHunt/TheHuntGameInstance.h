@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include "Inventory/InventorySlot.h"
 #include "Items/ItemSoundData.h"
 #include "TheHuntGameInstance.generated.h"
 
+
+class UInventoryComponent; // forward declare
 /**
  * 
  */

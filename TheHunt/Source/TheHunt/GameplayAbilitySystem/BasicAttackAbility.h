@@ -31,11 +31,14 @@ public:
         bool bReplicateEndAbility,
         bool bWasCancelled) override;
 
-    UFUNCTION()
-    void OnMontageCompleted();
+    // In your attack ability header
+    UPROPERTY(EditDefaultsOnly, Category = "Combo")
+    TArray<TObjectPtr<UAnimMontage>> ComboAttacks; // all attacks in order
 
-    UPROPERTY(EditDefaultsOnly, Category = "Attack")
-    TObjectPtr<UAnimMontage> AttackMontage;
+    int32 CurrentComboIndex = 0;
+    bool bComboWindowOpen = false;
+    bool bNextAttackQueued = false;
+    FTimerHandle ComboResetTimer;
 
     // The effect applied to the hit target
     UPROPERTY(EditDefaultsOnly, Category = "Attack")
@@ -44,5 +47,18 @@ public:
     TSubclassOf<UGameplayEffect> StaggerEffect;
 
     UFUNCTION()
-    void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+    void OpenComboWindow();
+
+    UFUNCTION()
+    void CloseComboWindow();
+
+    UFUNCTION()
+    void QueueNextAttack();
+
+    UFUNCTION()
+    void OnAttackFinished(UAnimMontage* Montage, bool bInterrupted);
+
+    UFUNCTION()
+    void TriggerNextAttack();
+
 };
