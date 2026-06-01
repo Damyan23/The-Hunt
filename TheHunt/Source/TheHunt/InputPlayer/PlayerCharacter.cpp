@@ -21,10 +21,11 @@ void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
 	Super::OnHealthChanged(Data);
 
-	ShowHitVignette();
+	UE_LOG(LogTemp, Warning, TEXT("Health went from %f to %f"), Data.OldValue, Data.NewValue);
 
 	if (Data.NewValue < Data.OldValue)
 	{
+		ShowHitVignette();
 		// Get attacker from effect context
 		if (AbilitySystemComponent)
 		{

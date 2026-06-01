@@ -4,7 +4,7 @@
 #include "MapCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Sts_Map/MapMaker.h"
+#include "Sts_Map/MapManager.h"
 
 // Sets default values
 AMapCharacter::AMapCharacter()
@@ -23,13 +23,13 @@ void AMapCharacter::BeginPlay()
 	GetCharacterMovement()->SetMovementMode(MOVE_None);
 
 	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMapMaker::StaticClass(), FoundActors);
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMapManager::StaticClass(), FoundActors);
 
 	PC = Cast<APlayerController>(GetController());
 
 	if (FoundActors.Num() > 0)
 	{
-		Map = Cast<AMapMaker>(FoundActors[0]);
+		Map = Cast<AMapManager>(FoundActors[0]);
 
 	}
 

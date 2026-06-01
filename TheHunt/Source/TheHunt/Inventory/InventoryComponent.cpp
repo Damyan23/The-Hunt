@@ -63,6 +63,23 @@ void UInventoryComponent::AddItem(FString ItemID, int32 Amount)
 	OnItemAdded.Broadcast(FreeSlot);
 }
 
+void UInventoryComponent::AddItemUsingItemDefinition(UItemDefinition* ItemDefinition, float Amount)
+{
+	if (!ItemDefinition) return;
+
+	int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
+	int AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
+
+	if (AvailableSlot < 0) return;
+
+	FInventorySlot& FreeSlot = Slots[AvailableSlot];
+	FreeSlot.AddItem(ItemDefinition, Amount);
+
+	UE_LOG(LogTemp, Warning, TEXT("AddItem: Slot %d, Quantity: %d"), AvailableSlot, FreeSlot.Quantity);
+
+	OnItemAdded.Broadcast(FreeSlot);
+}
+
 void UInventoryComponent::RemoveItem(FInventorySlot* Slot)
 {
 	if (Slot == nullptr) return;
@@ -220,6 +237,17 @@ int32 UInventoryComponent::GetHotbarIndexFromKey(FKey Key)
 	if (Key == EKeys::Three) return 3;
 	if (Key == EKeys::Four)  return 4;
 	return -1;
+}
+
+void UInventoryComponent::RemoveFromItemQuantity(int SlotIndex, float Amount)
+{
+	if (!Slots.IsValidIndex(SlotIndex)) return;
+
+	FInventorySlot& Slot = Slots[SlotIndex];
+	if (!Slot.bIsOccupied) return;
+
+	Slot.RemoveQuantity(Amount);
+	OnItemAdded.Broadcast(Slot);
 }
 
 void UInventoryComponent::MoveSlot(FInventorySlot& From, FInventorySlot& To)

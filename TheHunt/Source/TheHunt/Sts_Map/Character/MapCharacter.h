@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Sts_Map/MapMaker.h"
+#include "Sts_Map/MapManager.h"
 #include "Sts_Map/Nodes/MapNode.h"
 #include "GameFramework/Character.h"
 #include "MapCharacter.generated.h"
@@ -29,7 +29,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<AMapMaker> Map;
+	TObjectPtr<AMapManager> Map;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<AMapNode> CurrentNode;

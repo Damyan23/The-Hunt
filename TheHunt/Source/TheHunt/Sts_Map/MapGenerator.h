@@ -17,7 +17,15 @@ class THEHUNT_API UMapGenerator : public UObject
 
 public:
 
-	void Generate(FVector2D BoardSize, float MinDistance, float SamplesBeforeRejection);
+	UMapGenerator(FVector2D BoardSize, float MinDistancePath, int SamplesBeforeRejectionPath)
+
+	void GenerateMap(
+		TArray<TArray<int32>>& OutAllPaths,
+		TMap<int32, AMapNode*>& OutMapGraph,
+		TArray<FVector2D>& OutVegetationPoints,
+		TArray<FVector2D>& OutHousePoints,
+		TArray<FVector2D>& OutRuinPoints
+	);
 
 	TArray<FVector2D> PoissonDiskSample(FVector2D BoundingBox, float MinDist, float SamplesBeforeRejection);
 	TArray<FVector2D> PoissonDiskSample(

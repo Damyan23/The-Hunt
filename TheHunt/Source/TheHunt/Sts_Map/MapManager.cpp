@@ -1,9 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MapMaker.h"
+#include "MapManager.h"
 #include "Components/InstancedStaticMeshComponent.h"
-#include "Character/MapCharacter.h"
 #include "MapGenerator.h"
 #include "Components/SplineComponent.h"
 #include "Nodes/MapNode.h"
@@ -12,12 +11,12 @@
 #include "Nodes/NodeTypeData.h"
 
 // Sets default values
-AMapMaker::AMapMaker()
+AMapManager::AMapManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-    // In AMapMaker constructor
+    // In AMapManager constructor
     FoliageISMC = CreateDefaultSubobject<UInstancedStaticMeshComponent>("FoliageISMC");
     FoliageISMC->SetupAttachment(RootComponent);
 
@@ -36,7 +35,7 @@ AMapMaker::AMapMaker()
 }
 
 // Called when the game starts or when spawned
-void AMapMaker::BeginPlay()
+void AMapManager::BeginPlay()
 {
     Super::BeginPlay();
 
@@ -53,7 +52,7 @@ void AMapMaker::BeginPlay()
     Regenerate();
 }
 
-void AMapMaker::ClearMap()
+void AMapManager::ClearMap()
 {
     for (AMapNode* Node : SpawnedNodes)
     {
@@ -71,7 +70,7 @@ void AMapMaker::ClearMap()
 }
 
 #if WITH_EDITOR
-void AMapMaker::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+void AMapManager::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
     Super::PostEditChangeProperty(PropertyChangedEvent);
     if (!GetWorld()) return;
@@ -217,13 +216,13 @@ void AMapMaker::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEve
 #endif
 
 // Called every frame
-void AMapMaker::Tick(float DeltaTime)
+void AMapManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-void AMapMaker::Regenerate()
+void AMapManager::Regenerate()
 {
     if (!GetWorld()) return;
     FlushPersistentDebugLines(GetWorld());
@@ -405,7 +404,7 @@ void AMapMaker::Regenerate()
     DrawDebugBox(GetWorld(), Center, Extent, FColor::Red, true, -1.f, 0, 3.f);
 }
 
-void AMapMaker::SpawnEnvironment(TArray<FVector2D>& FoliagePoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints)
+void AMapManager::SpawnEnvironment(TArray<FVector2D>& FoliagePoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints)
 {
     // Set meshes and clear instances
     if (FoliageISMC && FoliageMesh) { FoliageISMC->SetStaticMesh(FoliageMesh); FoliageISMC->ClearInstances(); }

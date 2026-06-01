@@ -35,4 +35,12 @@ public:
         Quantity = 0;
         bIsOccupied = false;
     }
+
+    void RemoveQuantity (float Amount)
+    {
+        if (Quantity > 1)
+            Quantity -= Amount;
+        else
+            ClearSlot();
+    }
 };

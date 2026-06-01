@@ -34,7 +34,10 @@ protected:
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	UFUNCTION(BlueprintCallable)
 	void AddItem(FString ItemID, int32 Amount);
+	UFUNCTION(BlueprintCallable)
+	void AddItemUsingItemDefinition(UItemDefinition* ItemDefinition, float Amount);
 	void RemoveItem(FInventorySlot* Slot);
 	void UseItem(const int32 Index);	
 
@@ -72,9 +75,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UpdateSlotOnDragAndDrop(int32 SourceIndex, int32 TargetIndex);
 
-
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static int32 GetHotbarIndexFromKey(FKey Key);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveFromItemQuantity(int SlotIndex, float Amount);
 private:
 	int CheckForEmptySlots();
 	int CheckForExistingItemInSlot(UItemDefinition* ItemDefinition);

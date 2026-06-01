@@ -1,22 +1,86 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
+// UIEventData.cpp
 #include "UIEventData.h"
-#include "Blueprint/UserWidget.h"
+#include "Sts_Map/Nodes/BaseEventWidget.h"
 
 void UUIEventData::OnEnter_Implementation(APlayerController* PC)
 {
-	Super::OnEnter_Implementation(PC);
+    if (!PC || !EventWidget) return;
 
-	Widget = CreateWidget<UUserWidget>(GetWorld()->GetFirstPlayerController(), EventWidget);
-	if (Widget)
-		Widget->AddToViewport();
+    Widget = CreateWidget<UBaseEventWidget>(PC, EventWidget);
+    if (Widget)
+    {
+        Widget->AddToViewport();
+    }
 }
 
 void UUIEventData::OnComplete_Implementation(APlayerController* PC)
 {
-	Super::OnComplete_Implementation(PC);
+    if (Widget)
+    {
+        Widget->RemoveFromParent();
+        Widget = nullptr;
+    }
+}
 
-	if (Widget)
-		Widget->RemoveFromParent();
+FRewardEntry UUIEventData::PickReward()
+{
+    TArray<FRewardEntry>* Pool = nullptr;
+
+    switch (EventType)
+    {
+    case EUIEventType::ToolUsage:     Pool = &ToolUsageRewardPool;      break;
+    case EUIEventType::StrangerTrade: Pool = &StrangerTradeRewardPool;  break;
+    case EUIEventType::PushYourLuck:  Pool = &PushYourLuckRewardPool;   break;
+    }
+
+    if (!Pool || Pool->IsEmpty()) return FRewardEntry();
+
+    int32 Index = FMath::RandRange(0, Pool->Num() - 1);
+    return (*Pool)[Index];
+}
+
+bool UUIEventData::RollItemBreak()
+{
+    return FMath::FRand() < ItemBreakChance;
+}
+
+bool UUIEventData::RollRoomFail(int32 RoomIndex)
+{
+    if (!Rooms.IsValidIndex(RoomIndex)) return false;
+    return FMath::FRand() < Rooms[RoomIndex].FailChance;
+}
+
+TArray<FRewardEntry> UUIEventData::PickRoomRewards(int32 RoomIndex)
+{
+    TArray<FRewardEntry> Results;
+    if (!Rooms.IsValidIndex(RoomIndex) || PushYourLuckRewardPool.IsEmpty()) return Results;
+
+    int32 Count = Rooms[RoomIndex].RewardCount;
+    TArray<FRewardEntry> Available = PushYourLuckRewardPool;
+
+    for (int32 i = 0; i < Count && Available.Num() > 0; i++)
+    {
+        int32 Index = FMath::RandRange(0, Available.Num() - 1);
+        Results.Add(Available[Index]);
+        Available.RemoveAt(Index);
+    }
+
+    return Results;
+}
+
+float UUIEventData::GetRoomFailChance(int32 RoomIndex) const
+{
+    if (!Rooms.IsValidIndex(RoomIndex)) return 0.0f;
+    return Rooms[RoomIndex].FailChance;
+}
+
+float UUIEventData::GetRoomDamage(int32 RoomIndex) const
+{
+    if (!Rooms.IsValidIndex(RoomIndex)) return 0.0f;
+    return Rooms[RoomIndex].DamageOnFail;
+}
+
+int32 UUIEventData::GetRoomCount() const
+{
+    return Rooms.Num();
 }
