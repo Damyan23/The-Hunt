@@ -94,6 +94,8 @@ APlayerCharacter::APlayerCharacter()
 	PostProcessComponent->SetupAttachment(RootComponent);
 
 	HotbarSlots.SetNum(4);
+
+	Perks.SetNum(15);
 }
 
 void APlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -138,10 +140,28 @@ void APlayerCharacter::ApplyPerk(UPerkData* Perk)
 	if (!Perk || !Perk->Effect) return;
 
 	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
-	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(Perk->Effect, 1.0f, Context);
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(Perk->Effect, 1.f, Context);
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 
-	ActivePerks.Add(Perk);
+	for (auto& Slot : Perks)
+	{
+		
+	}
+
+	for (int i = 0; i < Perks.Num() - 1; i++)
+	{
+		FPerkSlot& Slot = Perks[i];
+
+		if (!Slot.bIsOccupied)
+		{
+			Slot.PerkData = Perk;
+			Slot.bIsOccupied = true;
+			Slot.SlotIndex = i;
+
+			OnPerkApplied.Broadcast(Slot);
+			break;
+		}
+	}
 }
 
 void APlayerCharacter::AttachWeapon()

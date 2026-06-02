@@ -7,6 +7,7 @@
 #include "Inventory/UI/InventoryWidget.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perks/PerkData.h"
+#include "Perks/PerkSlot.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
@@ -138,8 +139,13 @@ public:
     // ============================================================
     // PERKS
     // ============================================================
-    UPROPERTY()
-    TArray<TObjectPtr<UPerkData>> ActivePerks;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TArray<FPerkSlot> Perks;
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPerkApplied, FPerkSlot, PerkSlot);
+
+    UPROPERTY(BlueprintAssignable, Category = "Perks")
+    FOnPerkApplied OnPerkApplied;
 protected:
 
     // ============================================================
@@ -186,6 +192,7 @@ public:
     // ============================================================
     // PERKS   
     // ============================================================
+    UFUNCTION(BlueprintCallable)
     void ApplyPerk(UPerkData* Perk);
 
 protected:
