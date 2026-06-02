@@ -159,7 +159,7 @@ void AMapManager::SetNodeTypes(TMap<int32, AMapNode*>& MapGraph)
 {
     if (NodeEventData)
     {
-        TArray<ENodeType> Types;
+        TArray<ENodeType> Types = {ENodeType::Combat, ENodeType::RandomEncounter};
         const UEnum* EnumPtr = StaticEnum<ENodeType>();
         for (int32 i = 0; i < EnumPtr->NumEnums() - 1; i++)
             Types.Add((ENodeType)EnumPtr->GetValueByIndex(i));
