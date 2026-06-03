@@ -84,3 +84,25 @@ int32 UUIEventData::GetRoomCount() const
 {
     return Rooms.Num();
 }
+
+UPerkData* UUIEventData::GetRandomPerk()
+{
+    if (PerksPool.Num() > 0)
+    {
+        int32 Index = FMath::RandRange(0, PerksPool.Num() - 1);
+        return  PerksPool[Index];
+    }
+
+    return nullptr;
+}
+
+URuneBase* UUIEventData::GetRandomRune()
+{
+    if (RunesPool.Num() > 0)
+    {
+        int32 Index = FMath::RandRange(0, RunesPool.Num() - 1);
+        return  RunesPool[Index];
+    }
+
+    return nullptr;
+}

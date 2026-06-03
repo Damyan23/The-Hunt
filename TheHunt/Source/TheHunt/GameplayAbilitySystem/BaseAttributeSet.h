@@ -18,6 +18,7 @@ class THEHUNT_API UBaseAttributeSet : public UAttributeSet
 public:
 	UBaseAttributeSet();
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+	virtual bool PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data) override;
 
 	UPROPERTY(BlueprintReadOnly, Category="Attributes")
 	FGameplayAttributeData Health;
@@ -42,4 +43,13 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Attributes")
 	FGameplayAttributeData MaxStagger;
 	ATTRIBUTE_ACCESSORS_BASIC(UBaseAttributeSet, MaxStagger);
+
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData BaseStrength;
+	ATTRIBUTE_ACCESSORS_BASIC(UBaseAttributeSet, BaseStrength);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData Luck;
+	ATTRIBUTE_ACCESSORS_BASIC(UBaseAttributeSet, Luck);
 };

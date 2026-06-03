@@ -69,4 +69,7 @@ private:
 	TMap<TPair<int32, int32>, int32> EdgeUsage;
 	TArray<TArray<int32>> Grid;
 	TSet<int32> FirstPathNodes;
+
+	TArray<TArray<int32>> PathGrid;
+	float PathCellSize;
 };

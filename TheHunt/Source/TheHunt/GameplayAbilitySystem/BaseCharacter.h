@@ -98,9 +98,25 @@ public:
 protected:
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 	virtual void OnDeath();
+public:
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float, HealthPercent);
+
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnHealthChanged OnHealthChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChanged, float, StaminaPercent);
+
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnStaminaChanged OnStaminaChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaggerChanged, float, StaggerPercent);
+
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnStaggerChanged OnStaggerChangedEvent;
+protected:
 	UFUNCTION(BlueprintImplementableEvent, Category = "UI")
 	void OnHealthUpdated(float CurrentHealth, float MaxHealth);
-
+	virtual void OnStaminaChanged(const FOnAttributeChangeData& Data);
 	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
 	virtual void OnGuardBroken();
 

@@ -67,6 +67,10 @@ void AMapManager::ClearMap()
     for (AActor* Actor : SpawnedPathActors)
         if (Actor) Actor->Destroy();
     SpawnedPathActors.Empty();
+
+    for (AActor* Actor : SpawnedVisualizationNodes)
+        if (Actor) Actor->Destroy();
+    SpawnedVisualizationNodes.Empty();
 }
 
 // Called every frame
@@ -123,17 +127,17 @@ void AMapManager::SpawnEnvironment(TArray<FVector2D>& FoliagePoints, TArray<FVec
 
         if (Roll < 0.05f && BigStoneISMC && BigStoneMesh)
         {
-            float Scale = FMath::FRandRange(0.1f, 0.3f);
+            float Scale = FMath::FRandRange(0.8, 1.2f);
             BigStoneISMC->AddInstance(FTransform(RandomRot, WorldPos, FVector(Scale)));
         }
         else if (Roll < 0.2f && SmallStoneISMC && SmallStoneMesh)
         {
-            float Scale = FMath::FRandRange(0.1f, 0.25f);
+            float Scale = FMath::FRandRange(0.9, 1.05f);
             SmallStoneISMC->AddInstance(FTransform(RandomRot, WorldPos, FVector(Scale)));
         }
         else if (FoliageISMC && FoliageMesh)
         {
-            float Scale = FMath::FRandRange(0.25f, 0.5f);
+            float Scale = FMath::FRandRange(0.85f, 1.15f);
             FoliageISMC->AddInstance(FTransform(RandomRot, WorldPos, FVector(Scale)));
         }
     }
@@ -143,7 +147,7 @@ void AMapManager::SpawnEnvironment(TArray<FVector2D>& FoliagePoints, TArray<FVec
         FVector WorldPos = FVector(Point.X, Point.Y, 0.f) + GetActorLocation();
         FRotator RandomRot = FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f);
 
-        HouseISMC->AddInstance(FTransform(RandomRot, WorldPos, FVector(0.5f)));
+        HouseISMC->AddInstance(FTransform(RandomRot, WorldPos));
     }
 
     for (FVector2D& Point : RuinPoints)
@@ -151,7 +155,7 @@ void AMapManager::SpawnEnvironment(TArray<FVector2D>& FoliagePoints, TArray<FVec
         FVector WorldPos = FVector(Point.X, Point.Y, 0.f) + GetActorLocation();
         FRotator RandomRot = FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f);
 
-        RuinsISMC->AddInstance(FTransform(RandomRot, WorldPos, FVector(0.5f)));
+        RuinsISMC->AddInstance(FTransform(RandomRot, WorldPos));
     }
 }
 
@@ -205,6 +209,24 @@ void AMapManager::SetNodeTypes(TMap<int32, AMapNode*>& MapGraph)
             if (!Event) continue;
 
             Node->AssignEvent(Event);
+
+            // Spawn the node's visual actor
+            if (Event->NodeActorClass)
+            {
+                FActorSpawnParameters SpawnParams;
+                SpawnParams.Owner = Node;
+                AActor* NodeActor = GetWorld()->SpawnActor<AActor>(
+                    Event->NodeActorClass,
+                    Node->GetActorLocation(),
+                    Node->GetActorRotation(),
+                    SpawnParams
+                );
+                if (NodeActor)
+                {
+                    NodeActor->AttachToActor(Node, FAttachmentTransformRules::KeepWorldTransform);
+                    SpawnedVisualizationNodes.Add(NodeActor);
+                }
+            }
        
 
             // Spawn spline paths to next nodes

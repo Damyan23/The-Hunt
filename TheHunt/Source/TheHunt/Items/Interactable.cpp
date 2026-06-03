@@ -6,8 +6,16 @@
 void AInteractable::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
+}
+
+void AInteractable::BeginPlay()
+{
+    Super::BeginPlay();
 
     ItemDefinition = UItemFunctionLibrary::FindItemById(ItemID);
+
+    if (ItemDefinition && ItemDefinition->ItemType == EItemType::Weapon)
+        ItemDefinition = DuplicateObject<UItemDefinition>(ItemDefinition, this);
 }
 
 AInteractable::AInteractable()

@@ -42,6 +42,9 @@ public:
 	void UseItem(const int32 Index);	
 
 	UFUNCTION(BlueprintCallable)
+	void EquipRuneToWeapon(URuneBase* Rune, int32 SlotIndex);
+
+	UFUNCTION(BlueprintCallable)
 	void DropItem(UPARAM(ref) FInventorySlot& Slot);
 
 	UPROPERTY(BlueprintAssignable)

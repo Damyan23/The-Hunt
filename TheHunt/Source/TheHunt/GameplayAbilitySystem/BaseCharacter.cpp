@@ -32,6 +32,8 @@ void ABaseCharacter::BeginPlay()
         UBaseAttributeSet::GetHealthAttribute())
         .AddUObject(this, &ABaseCharacter::OnHealthChanged);
 
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaminaAttribute()).AddUObject(this, &ABaseCharacter::OnStaminaChanged);
+
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaggerAttribute()).AddUObject(this, &ABaseCharacter::OnStaggerChanged);
 }
 
@@ -89,7 +91,10 @@ void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 
     OnHealthUpdated(Data.NewValue, AbilitySystemComponent->GetNumericAttribute(
         UBaseAttributeSet::GetMaxHealthAttribute()));
-
+    float Delta = FMath::Abs(Data.NewValue - Data.OldValue);
+    if (Delta > 0.5f)
+        OnHealthChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+            UBaseAttributeSet::GetMaxHealthAttribute()));
     if (Data.NewValue <= 0.f)
     {
         IsDead = true;
@@ -175,8 +180,20 @@ void ABaseCharacter::OnDeath()
 {
 }
 
+void ABaseCharacter::OnStaminaChanged(const FOnAttributeChangeData& Data)
+{
+    float Delta = FMath::Abs(Data.NewValue - Data.OldValue);
+    if (Delta > 0.5f)
+        OnStaminaChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+            UBaseAttributeSet::GetMaxStaminaAttribute()));
+}
+
 void ABaseCharacter::OnStaggerChanged(const FOnAttributeChangeData& Data)
 {
+    if (Data.NewValue != Data.OldValue)
+        OnStaggerChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+            UBaseAttributeSet::GetMaxStaggerAttribute()));
+
     UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
     if (!AnimInstance) return;
 

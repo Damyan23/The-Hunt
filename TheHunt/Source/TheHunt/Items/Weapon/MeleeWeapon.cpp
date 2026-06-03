@@ -32,19 +32,20 @@ AMeleeWeapon::AMeleeWeapon()
     ItemMesh->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
 
     Runes.SetNum(3);
-
-    UE_LOG(LogTemp, Warning, TEXT("=== SWORD COLLISION SETUP ==="));
-    UE_LOG(LogTemp, Warning, TEXT("Collision Enabled: %d"), (int32)ItemMesh->GetCollisionEnabled());
-    UE_LOG(LogTemp, Warning, TEXT("Object Type: %d"), (int32)ItemMesh->GetCollisionObjectType());
-    UE_LOG(LogTemp, Warning, TEXT("Generate Overlaps: %s"), ItemMesh->GetGenerateOverlapEvents() ? TEXT("YES") : TEXT("NO"));
-    UE_LOG(LogTemp, Warning, TEXT("Overlap Response to Pawn: %d"), (int32)ItemMesh->GetCollisionResponseToChannel(ECC_Pawn));
-    UE_LOG(LogTemp, Warning, TEXT("Owner: %s"), GetOwner() ? *GetOwner()->GetName() : TEXT("NULL"));
 }
 
 // Called when the game starts or when spawned
 void AMeleeWeapon::BeginPlay()
 {
 	Super::BeginPlay();
+
+    if (ItemDefinition)
+    {
+        for (URuneBase* Rune : ItemDefinition->WeaponData.Runes)
+        {
+            if (Rune) EquipRune(Rune);
+        }
+    }
 }
 
 void AMeleeWeapon::OnConstruction(const FTransform& Transform)

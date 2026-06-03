@@ -4,6 +4,7 @@
 #include "MapEventData.h"
 #include "Items/ItemType.h"
 #include "RewardEntry.h"
+#include "Perks/PerkData.h"
 #include "UIEventData.generated.h"
 
 class UBaseEventWidget;
@@ -13,7 +14,10 @@ enum class EUIEventType : uint8
 {
     ToolUsage       UMETA(DisplayName = "Tool Usage"),
     StrangerTrade   UMETA(DisplayName = "Stranger Trade"),
-    PushYourLuck    UMETA(DisplayName = "Push Your Luck")
+    PushYourLuck    UMETA(DisplayName = "Push Your Luck"),
+    Perk            UMETA(DisplayName = "Perk"),
+    Ritual          UMETA(DisplayName = "Ritual"),
+    Rest            UMETA(DisplayName = "Rest")
 };
 
 USTRUCT(BlueprintType)
@@ -79,7 +83,12 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|Push Your Luck", meta = (EditCondition = "EventType == EUIEventType::PushYourLuck"))
     TArray<FDungeonRoom> Rooms;
-        
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|Perk", meta = (EditCondition = "EventType == EUIEventType::Perk"))
+    TArray<TObjectPtr<UPerkData>> PerksPool;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI|Ritual", meta = (EditCondition = "EventType == EUIEventType::Ritual"))
+    TArray<TObjectPtr<URuneBase>> RunesPool;
+
     // Shared helpers
     UFUNCTION(BlueprintCallable, Category = "UI Event")
     FRewardEntry PickReward();
@@ -102,4 +111,11 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "UI Event|Push Your Luck")
     int32 GetRoomCount() const;
+
+    UFUNCTION(BlueprintCallable, Category = "UI Event|Perks")
+    UPerkData* GetRandomPerk();
+
+
+    UFUNCTION(BlueprintCallable, Category = "UI Event|Ritual")
+    URuneBase* GetRandomRune();
 };

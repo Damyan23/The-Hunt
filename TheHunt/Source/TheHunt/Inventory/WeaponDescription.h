@@ -19,6 +19,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetDescription(UItemDefinition* ItemDefinition);
 
+	UFUNCTION(BlueprintCallable)
+	void SetSingleRuneDescription(URuneBase* Rune);
+
 private:
 	void SetWeaponDescription(UItemDefinition* ItemDefinition);
 	void SetConsumableDescription(UItemDefinition* ItemDefinition);
@@ -52,5 +55,4 @@ private:
 	TObjectPtr<UTextBlock> Rune2Description;
 	UPROPERTY(EditAnywhere, meta = (BindWidget))
 	TObjectPtr<UTextBlock> Rune3Description;
-
 };

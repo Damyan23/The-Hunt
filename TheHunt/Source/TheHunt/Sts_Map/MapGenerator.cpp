@@ -26,6 +26,9 @@ void UMapGenerator::GenerateMap(
 	// Points
 	TArray<FVector2D> Points = PoissonDiskSample(Settings.BoardSize, Settings.MinDistancePath, Settings.SamplesBeforeRejectionPath);
 
+	PathGrid = Grid;
+	PathCellSize = CellSize;
+
 	// Delaunay
 	TArray<TPair<int32, int32>> Edges = BuildDelaunayConnections(Points);
 
@@ -53,7 +56,7 @@ void UMapGenerator::GenerateMap(
 	// Foliage
 	OutVegetationPoints = PoissonDiskSample(
 		Settings.BoardSize, Settings.MinDistFoliage, Settings.SamplesBeforeRejectionFoliage,
-		PathNodePositions, Settings.MinDistFoliage,
+		PathNodePositions, Settings.NodeClearanceRadius,
 		PathSegments, Settings.PathClearanceRadius,
 		Settings.LargeObjectSpawnChance, Settings.LargeObjectClearanceRadius, OutHousePoints,
 		Settings.RuinsSpawnChance, Settings.RuinsClearanceRadius, OutRuinPoints);
@@ -475,10 +478,14 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 	StartPointIndex = -1;
 	EndPointIndex = -1;
 
-	const int32 GridWidth = FMath::CeilToInt(BoundingBox.X / CellSize);
-	const int32 GridHeight = FMath::CeilToInt(BoundingBox.Y / CellSize);
+	const int32 GridWidth = FMath::CeilToInt(BoundingBox.X / PathCellSize);
+	const int32 GridHeight = FMath::CeilToInt(BoundingBox.Y / PathCellSize);
 
-	int32 StartingCell = Grid[GridWidth / 2][GridHeight - 1];
+	if (PathGrid.Num() == 0 || GridWidth <= 0 || GridHeight <= 0) return;
+	if (GridWidth / 2 >= PathGrid.Num()) return;
+	if (GridHeight - 1 >= PathGrid[0].Num()) return;
+
+	int32 StartingCell = PathGrid[GridWidth / 2][GridHeight - 1];
 
 	if (StartingCell != 0)
 	{

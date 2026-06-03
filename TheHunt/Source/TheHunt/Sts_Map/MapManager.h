@@ -29,6 +29,11 @@ struct FMapGeneratorSettings
 	UPROPERTY(EditAnywhere) int MaxRemovedPoints = 8;
 
 	// ============================================================
+	// NODES SETTINGS
+	// ============================================================
+	UPROPERTY(EditAnywhere) float NodeClearanceRadius = 200.f;
+
+	// ============================================================
 	// FOLIAGE SETTINGS
 	// ============================================================
 	UPROPERTY(EditAnywhere) float MinDistFoliage = 80.f;
@@ -128,4 +133,6 @@ public:
 
 	UPROPERTY()
 	UMapNodeConnectionsWidget* ConnectionsWidget;
+
+	TArray<AActor*> SpawnedVisualizationNodes;
 };

@@ -65,34 +65,30 @@ void UWeaponDescription::SetWeaponDescription(UItemDefinition* ItemDefinition)
         break;
     }
 
+    UE_LOG(LogTemp, Warning, TEXT("=== SetWeaponDescription ==="));
+    UE_LOG(LogTemp, Warning, TEXT("  Runes in WeaponData: %d"), ItemDefinition->WeaponData.Runes.Num());
+
     // Runes — read from weapon actor if available
     TArray<TObjectPtr<UImage>> RuneImages = { Rune1, Rune2, Rune3 };
     TArray<TObjectPtr<UTextBlock>> RuneDescs = { Rune1Description, Rune2Description, Rune3Description };
 
     for (int32 i = 0; i < 3; i++)
     {
+        UE_LOG(LogTemp, Warning, TEXT("  Rune[%d]: %s"), i,
+            ItemDefinition->WeaponData.Runes[i] ? *ItemDefinition->WeaponData.Runes[i]->GetName() : TEXT("NULL"));
         if (WeaponData.Runes.IsValidIndex(i) && WeaponData.Runes[i])
         {
             URuneBase* Rune = WeaponData.Runes[i];
             RuneImages[i]->SetVisibility(ESlateVisibility::Visible);
             RuneDescs[i]->SetVisibility(ESlateVisibility::Visible);
 
-            if (!Rune->RuneIcon.IsNull())
+            if (Rune->RuneIcon)
             {
-                UTexture2D* Icon = Rune->RuneIcon.LoadSynchronous();
-                if (Icon)
-                {
-                    FSlateBrush Brush;
-                    Brush.SetResourceObject(Icon);
-                    RuneImages[i]->SetBrush(Brush);
-                }
+                FSlateBrush Brush;
+                Brush.SetResourceObject(Rune->RuneIcon);
+                RuneImages[i]->SetBrush(Brush);
             }
             RuneDescs[i]->SetText(Rune->RuneDescription);
-        }
-        else
-        {
-            RuneImages[i]->SetVisibility(ESlateVisibility::Hidden);
-            RuneDescs[i]->SetVisibility(ESlateVisibility::Hidden);
         }
     }
 }
@@ -125,16 +121,13 @@ void UWeaponDescription::SetRuneDescription(UItemDefinition* ItemDefinition)
     if (Rune1 && ItemDefinition->RuneData.Rune)
     {
         URuneBase* Rune = ItemDefinition->RuneData.Rune;
-        if (!Rune->RuneIcon.IsNull())
+        if (Rune->RuneIcon)
         {
-            UTexture2D* Icon = Rune->RuneIcon.LoadSynchronous();
-            if (Icon)
-            {
-                FSlateBrush Brush;
-                Brush.SetResourceObject(Icon);
-                Rune1->SetBrush(Brush);
-                Rune1->SetVisibility(ESlateVisibility::Visible);
-            }
+            FSlateBrush Brush;
+            Brush.SetResourceObject(Rune->RuneIcon);
+            Rune1->SetBrush(Brush);
+            Rune1->SetVisibility(ESlateVisibility::Visible);
+            
         }
         if (Rune1Description)
         {
@@ -147,4 +140,39 @@ void UWeaponDescription::SetRuneDescription(UItemDefinition* ItemDefinition)
     Rune3->SetVisibility(ESlateVisibility::Hidden);
     Rune2Description->SetVisibility(ESlateVisibility::Hidden);
     Rune3Description->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UWeaponDescription::SetSingleRuneDescription(URuneBase* Rune)
+{
+    // Hide all weapon stats
+    PhysicalAttack->SetVisibility(ESlateVisibility::Hidden);
+    MagicAttack->SetVisibility(ESlateVisibility::Hidden);
+    StructureDamage->SetVisibility(ESlateVisibility::Hidden);
+    GuardDMGNegation->SetVisibility(ESlateVisibility::Hidden);
+    AttackType->SetVisibility(ESlateVisibility::Hidden);
+    AttackWeight->SetVisibility(ESlateVisibility::Hidden);
+
+    // Hide all rune slots by default
+    Rune1->SetVisibility(ESlateVisibility::Hidden);
+    Rune2->SetVisibility(ESlateVisibility::Hidden);
+    Rune3->SetVisibility(ESlateVisibility::Hidden);
+    Rune1Description->SetVisibility(ESlateVisibility::Hidden);
+    Rune2Description->SetVisibility(ESlateVisibility::Hidden);
+    Rune3Description->SetVisibility(ESlateVisibility::Hidden);
+
+    if (!Rune) return;
+
+    if (Rune->RuneIcon)
+    {
+        FSlateBrush Brush;
+        Brush.SetResourceObject(Rune->RuneIcon);
+        Rune1->SetBrush(Brush);
+        Rune1->SetVisibility(ESlateVisibility::Visible);
+    }
+
+    if (Rune1Description)
+    {
+        Rune1Description->SetText(Rune->RuneDescription);
+        Rune1Description->SetVisibility(ESlateVisibility::Visible);
+    }
 }

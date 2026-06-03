@@ -117,8 +117,8 @@ protected:
     // Combat
     // ============================================================
 public:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    bool bIsCombatEnabled = false;
+    FTimerHandle StaminaRegenDelayTimer;
+    bool bStaminaRegenAllowed = true;
 private:
     ECombatType CombatType = ECombatType::Unarmed;
 
@@ -186,8 +186,8 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Combat")
     FOnWeaponEquipped OnWeaponEquipped;
 
-    UFUNCTION()
-    void ToggleCombat();
+    void StartStaminaRegenDelay();
+    void AllowStaminaRegen();
 
     // ============================================================
     // PERKS   

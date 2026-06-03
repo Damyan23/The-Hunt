@@ -130,9 +130,17 @@ void APlayerCharacter::BeginPlay()
 	);
 }
 
-
-void APlayerCharacter::ToggleCombat()
+void APlayerCharacter::StartStaminaRegenDelay()
 {
+	bStaminaRegenAllowed = false;
+	GetWorldTimerManager().ClearTimer(StaminaRegenDelayTimer);
+	GetWorldTimerManager().SetTimer(StaminaRegenDelayTimer, this,
+		&APlayerCharacter::AllowStaminaRegen, 1.5f, false);
+}
+
+void APlayerCharacter::AllowStaminaRegen()
+{
+	bStaminaRegenAllowed = true;
 }
 
 void APlayerCharacter::ApplyPerk(UPerkData* Perk)
@@ -230,8 +238,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		Input->BindAction(DashAction, ETriggerEvent::Started, this, &APlayerCharacter::Dash);
 
 		Input->BindAction(LockOnAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleLockOn);
-
-		Input->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleCombat);
 
 		TArray<FKey> HotbarKeys = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four };
 		for (int32 i = 0; i < HotbarKeys.Num(); i++)
