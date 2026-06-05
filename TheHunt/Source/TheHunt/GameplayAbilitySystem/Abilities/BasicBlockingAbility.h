@@ -22,14 +22,6 @@ protected:
 	bool bIsExiting = false;
 
 	UFUNCTION()
-	void OnMontageCompleted();
-
-	void OnMontageBlendOut(UAnimMontage* Montage, bool bInterrupted);
-
-	UFUNCTION()
-	void OnBlockExitFinished(UAnimMontage* Montage, bool bInterrupted);
-
-	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Attack")
@@ -42,10 +34,11 @@ protected:
 	FTimerHandle BlockExitTimerHandle;
 
 public:
-	/** Called externally (e.g. by AI controller) to trigger the block exit transition. */
 	void RequestBlockExit();
 
 private:
-	/** Returns the correct AnimInstance for the avatar (weapon mesh for player, body mesh for enemies). */
 	UAnimInstance* GetPlayingAnimInstance() const;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Blocking")
+	TArray<TObjectPtr<UAnimMontage>> BlockMontages;
 };

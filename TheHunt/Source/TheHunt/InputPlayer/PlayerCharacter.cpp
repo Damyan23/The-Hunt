@@ -16,6 +16,7 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameplayAbilitySystem/BasicAttackAbility.h"
+#include "GameplayAbilitySystem/Abilities/BasicBlockingAbility.h"
 
 void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
@@ -112,8 +113,20 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+#if !UE_BUILD_SHIPPING
+
+#endif
+
 	PC = GetWorld()->GetFirstPlayerController();
 	AttachWeapon();
+
+	if (PC)
+	{
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute health");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute stamina");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute stagger");
+		PC->ConsoleCommand("AbilitySystem.DebugAbilityTags");
+	}
 
 	if (HitVignetteMaterial)
 	{
@@ -130,18 +143,7 @@ void APlayerCharacter::BeginPlay()
 	);
 }
 
-void APlayerCharacter::StartStaminaRegenDelay()
-{
-	bStaminaRegenAllowed = false;
-	GetWorldTimerManager().ClearTimer(StaminaRegenDelayTimer);
-	GetWorldTimerManager().SetTimer(StaminaRegenDelayTimer, this,
-		&APlayerCharacter::AllowStaminaRegen, 1.5f, false);
-}
 
-void APlayerCharacter::AllowStaminaRegen()
-{
-	bStaminaRegenAllowed = true;
-}
 
 void APlayerCharacter::ApplyPerk(UPerkData* Perk)
 {
@@ -150,11 +152,6 @@ void APlayerCharacter::ApplyPerk(UPerkData* Perk)
 	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
 	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(Perk->Effect, 1.f, Context);
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
-
-	for (auto& Slot : Perks)
-	{
-		
-	}
 
 	for (int i = 0; i < Perks.Num() - 1; i++)
 	{
@@ -200,11 +197,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateLockOn(DeltaTime);
-
-	if (AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Poisoned")))
-	{
-		UE_LOG(LogTemp,Warning,TEXT("kurrec"))
-	}
 }
 
 // Called to bind functionality to input
@@ -329,6 +321,8 @@ void APlayerCharacter::Attack()
 
 void APlayerCharacter::StartBlock()
 {
+	if (AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking"))) return;
+
 	FGameplayTagContainer TagContainer;
 	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Block")));
 	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
@@ -346,12 +340,22 @@ void APlayerCharacter::StartBlock()
 
 void APlayerCharacter::StopBlock()
 {
-	UE_LOG(LogTemp, Warning, TEXT("StopBlock called"));
 	if (!AbilitySystemComponent) return;
 
-	FGameplayTagContainer TagContainer;
-	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Block")));
-	AbilitySystemComponent->CancelAbilities(&TagContainer);
+	for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
+	{
+		for (UGameplayAbility* Instance : Spec.GetAbilityInstances())
+		{
+			if (UBasicBlockingAbility* Block = Cast<UBasicBlockingAbility>(Instance))
+			{
+				if (Block->IsActive())
+				{
+					Block->RequestBlockExit();
+					return;
+				}
+			}
+		}
+	}
 }
 
 void APlayerCharacter::Interact()

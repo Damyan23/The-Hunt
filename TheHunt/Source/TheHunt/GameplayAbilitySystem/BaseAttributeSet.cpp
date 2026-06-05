@@ -51,8 +51,8 @@ bool UBaseAttributeSet::PreGameplayEffectExecute(struct FGameplayEffectModCallba
             return false;
 
         // Block regen if delay is active
-        APlayerCharacter* Player = Cast<APlayerCharacter>(GetOwningActor());
-        if (Player && !Player->bStaminaRegenAllowed && Data.EvaluatedData.Magnitude > 0.f)
+        ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwningActor());
+        if (Character && !Character->bStaminaRegenAllowed && Data.EvaluatedData.Magnitude > 0.f)
             return false;
     }
     return true;

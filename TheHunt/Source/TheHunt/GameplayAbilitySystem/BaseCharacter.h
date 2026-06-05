@@ -132,4 +132,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Footsteps")
 	TArray<USoundBase*> WeatherLayerSounds;
+
+public:
+	void StartStaminaRegenDelay();
+	void AllowStaminaRegen();
+
+	FTimerHandle StaminaRegenDelayTimer;
+	bool bStaminaRegenAllowed = true;
 };

@@ -115,7 +115,7 @@ struct FWeaponData
 
     // ---- Animations|Block ----
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Block")
-    TArray<TObjectPtr<UAnimMontage>> Block;
+    TArray<TObjectPtr<UAnimMontage>> Blocks;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Block")
     TObjectPtr<UAnimMontage> BlockBroken;

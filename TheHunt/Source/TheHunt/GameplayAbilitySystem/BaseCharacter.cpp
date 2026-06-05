@@ -252,3 +252,16 @@ void ABaseCharacter::PlayRandomSoundAtLocation(const TArray<USoundBase*>& Sounds
         UGameplayStatics::PlaySoundAtLocation(this, Sound, Location, FRotator::ZeroRotator, 0.25);
 }
 
+void ABaseCharacter::StartStaminaRegenDelay()
+{
+    bStaminaRegenAllowed = false;
+    GetWorldTimerManager().ClearTimer(StaminaRegenDelayTimer);
+    GetWorldTimerManager().SetTimer(StaminaRegenDelayTimer, this,
+        &APlayerCharacter::AllowStaminaRegen, 1.5f, false);
+}
+
+void ABaseCharacter::AllowStaminaRegen()
+{
+    bStaminaRegenAllowed = true;
+}
+
