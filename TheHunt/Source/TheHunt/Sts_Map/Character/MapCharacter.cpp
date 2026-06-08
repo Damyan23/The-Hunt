@@ -76,17 +76,30 @@ void AMapCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 void AMapCharacter::TravelToNode(AMapNode* TargetNode)
 {
-	if (!TargetNode || bIsMoving) return;
+	UE_LOG(LogTemp, Warning, TEXT("TravelToNode called. TargetNode=%s, bIsMoving=%s"),
+		TargetNode ? *TargetNode->GetName() : TEXT("NULL"),
+		bIsMoving ? TEXT("TRUE") : TEXT("FALSE"));
+
+	if (!TargetNode || bIsMoving)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  EARLY RETURN: %s"),
+			!TargetNode ? TEXT("TargetNode is NULL") : TEXT("bIsMoving is TRUE"));
+		return;
+	}
 
 	// Only allow travelling to connected nodes
-	if (CurrentNode && !CurrentNode->NextNodes.Contains(TargetNode)) return;
+	if (CurrentNode && !CurrentNode->NextNodes.Contains(TargetNode->GraphNode))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  EARLY RETURN: TargetNode not in CurrentNode->NextNodes"));
+		return;
+	}
 
-	UE_LOG(LogTemp, Warning, TEXT("OK SO IT GOES HEREEEEEEE"));
+	UE_LOG(LogTemp, Warning, TEXT("  OK, travelling to %s"), *TargetNode->GetName());
 
 	bIsMoving = true;
 	TravelAlpha = 0.f;
 	TravelStart = GetActorLocation();
-	TravelEnd = TargetNode->GetActorLocation();
+	TravelEnd = TargetNode->GraphNode->GetActorLocation();
 	PendingNode = TargetNode;
 }
 

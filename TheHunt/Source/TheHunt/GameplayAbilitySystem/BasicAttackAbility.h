@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Abilities/CombatAbilityBase.h"
 #include "Abilities/GameplayAbility.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "BasicAttackAbility.generated.h"
@@ -11,7 +12,7 @@
  * 
  */
 UCLASS()
-class THEHUNT_API UBasicAttackAbility : public UGameplayAbility
+class THEHUNT_API UBasicAttackAbility : public UCombatAbilityBase
 {
     GENERATED_BODY()
 
@@ -39,12 +40,6 @@ public:
     bool bComboWindowOpen = false;
     bool bNextAttackQueued = false;
     FTimerHandle ComboResetTimer;
-
-    // The effect applied to the hit target
-    UPROPERTY(EditDefaultsOnly, Category = "Attack")
-    TSubclassOf<UGameplayEffect> DamageEffect;
-    UPROPERTY(EditDefaultsOnly, Category = "Attack")
-    TSubclassOf<UGameplayEffect> StaggerEffect;
 
     UFUNCTION()
     void OpenComboWindow();

@@ -116,10 +116,11 @@ protected:
     // ============================================================
     // Combat
     // ============================================================
-public:
-
 private:
     ECombatType CombatType = ECombatType::Unarmed;
+
+    FVector DodgeDirection = FVector::ZeroVector;
+    bool bDodgeDirectionLocked = false;
 
 protected:
     // ============================================================
@@ -185,12 +186,13 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Combat")
     FOnWeaponEquipped OnWeaponEquipped;
 
+    void OnBlockBrokenMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
     // ============================================================
     // PERKS   
     // ============================================================
     UFUNCTION(BlueprintCallable)
     void ApplyPerk(UPerkData* Perk);
-
 protected:
     // ============================================================
     // OVERRIDES
@@ -199,6 +201,8 @@ protected:
     virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
     virtual void BeginPlay() override;
     virtual void OnConstruction(const FTransform& Transform) override;
+    virtual void OnGuardBroken() override;
+    virtual void OnDeath() override;
 
     // ============================================================
     // INPUT HANDLERS
@@ -232,9 +236,35 @@ private:
     void UseHotbarSlot(int32 Index);
 
     // ============================================================
+    // DEATH STATE
+    // ============================================================
+    UPROPERTY(EditDefaultsOnly, Category = "Death")
+    TSubclassOf<UUserWidget> DeathScreenWidgetClass;
+
+    UPROPERTY()
+    TObjectPtr<UUserWidget> DeathScreenWidget;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Death")
+    float DeathScreenDuration = 3.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Death")
+    TSubclassOf<UGameplayEffect> ReviveEffect;
+
+
+
+    UFUNCTION()
+    void OnDeathMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+    void ShowDeathScreen();
+    void Respawn();
+
+public:
+    UPROPERTY(BlueprintReadWrite, Category = "Death")
+    FVector LastSpawnPoint = FVector::ZeroVector;
+
+    // ============================================================
     // PUBLIC API
     // ============================================================
-public:
     APlayerCharacter();
 
     virtual void Tick(float DeltaTime) override;
@@ -245,4 +275,14 @@ public:
 
     void BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex);
     void EquipRuneToWeapon(UItemDefinition* RuneDef);
+
+    void EnableHitbox() const;
+    void DisableHitbox() const;
+
+    bool IsLockedOn() const {
+        return AbilitySystemComponent->HasMatchingGameplayTag(
+            FGameplayTag::RequestGameplayTag("State.LockedOn"));
+    }
+
+    AActor* GetLockOnTarget() const { return LockOnTarget; }
 };

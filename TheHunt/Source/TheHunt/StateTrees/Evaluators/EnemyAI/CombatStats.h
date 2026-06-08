@@ -20,20 +20,24 @@ protected:
 	virtual void TreeStart(FStateTreeExecutionContext& Context) override;
 	virtual void Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
 
-	TObjectPtr<UAbilitySystemComponent> ASC;
+	UPROPERTY()
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Context)
 	TObjectPtr<AEnemyCharacter> Character;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Output)
-	float Health;
+	float HealthPercentage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Output)
+	float StaminaPercentage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Output)
+	float StaggerPercentage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Output)
 	float Stamina;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Output)
-	float Stagger;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Output)
-	float MaxStagger;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Output)
 	FGameplayTagContainer TagContainer;

@@ -9,19 +9,11 @@ EStateTreeRunStatus FAttack::EnterState(FStateTreeExecutionContext& Context,
     const FStateTreeTransitionResult& Transition) const
 {
     FStateTreeTaskCommonBase::EnterState(Context, Transition);
-
-
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
     if (!InstanceData.AbilitySystemComponent)
         return EStateTreeRunStatus::Failed;
 
-    UE_LOG(LogTemp, Warning, TEXT("FAttack EnterState called"));
-
-    if (!InstanceData.AbilitySystemComponent)
-    {
-        UE_LOG(LogTemp, Error, TEXT("FAttack: ASC is NULL"));
-        return EStateTreeRunStatus::Failed;
-    }
+    InstanceData.TimeInState = 0.f;
 
     FGameplayTagContainer TagContainer;
     TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash")));
@@ -33,6 +25,25 @@ EStateTreeRunStatus FAttack::EnterState(FStateTreeExecutionContext& Context,
 EStateTreeRunStatus FAttack::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
+
+    InstanceData.TimeInState += DeltaTime;
+
+    // Keep rotating toward target during the wind-up window
+    if (InstanceData.TimeInState <= InstanceData.RotateTrackDuration
+        && InstanceData.Character && InstanceData.TargetActor)
+    {
+        FVector ToTarget = InstanceData.TargetActor->GetActorLocation() - InstanceData.Character->GetActorLocation();
+        ToTarget.Z = 0.f;
+        if (!ToTarget.IsNearlyZero())
+        {
+            FRotator TargetRot = ToTarget.Rotation();
+            FRotator CurrentRot = InstanceData.Character->GetActorRotation();
+            FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaTime, InstanceData.RotationSpeed);
+            NewRot.Pitch = 0.f;
+            NewRot.Roll = 0.f;
+            InstanceData.Character->SetActorRotation(NewRot);
+        }
+    }
 
     if (InstanceData.AbilitySystemComponent->HasMatchingGameplayTag(
         FGameplayTag::RequestGameplayTag("State.Staggered")))

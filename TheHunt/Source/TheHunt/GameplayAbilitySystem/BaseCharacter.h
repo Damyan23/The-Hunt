@@ -42,9 +42,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void AttachWeapon();
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly)
-	bool IsDead = false;
-
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
 	TSubclassOf<AMeleeWeapon> WeaponClass;
@@ -68,13 +65,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	TObjectPtr<UAnimMontage> GettingHitMontage;
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TObjectPtr<UAnimMontage> DeathMontage;
 
-	UPROPERTY(EditDefaultsOnly, Category="Animation")
-	TObjectPtr<UAnimMontage> StaggerMontage;
-	UPROPERTY(EditDefaultsOnly, Category="Stagger")
-	float StunDuration = 1.5f;
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	TSubclassOf<UGameplayEffect> StaggerResetEffect;
 
@@ -94,6 +85,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound FX")
 	TObjectPtr<USoundBase> GettingHitSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> DeathMontage;
 
 protected:
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);

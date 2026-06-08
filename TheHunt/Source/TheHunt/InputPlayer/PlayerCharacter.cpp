@@ -108,14 +108,131 @@ void APlayerCharacter::OnConstruction(const FTransform& Transform)
 	SpringArm->SetRelativeRotation(SpringArmRotation);
 }
 
+void APlayerCharacter::OnGuardBroken()
+{
+	Super::OnGuardBroken();
+	UE_LOG(LogTemp, Warning, TEXT("it should be playing the anim?"));
+
+	if (Weapon)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (!AnimInstance) return;
+
+		UAnimMontage* BlockBrokenMontage = Weapon->ItemDefinition->WeaponData.BlockBroken;
+		if (!BlockBrokenMontage) return;
+
+		float Duration = AnimInstance->Montage_Play(BlockBrokenMontage);
+		if (Duration > 0.f)
+		{
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &APlayerCharacter::OnBlockBrokenMontageEnded);
+			AnimInstance->Montage_SetEndDelegate(EndDelegate, BlockBrokenMontage);
+		}
+	}
+}
+
+void APlayerCharacter::OnDeath()
+{
+	Super::OnDeath();
+
+	if (PC)
+	{
+		PC->SetIgnoreMoveInput(true);
+		PC->SetIgnoreLookInput(true);
+	}
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAllAbilities();
+	}
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	{
+		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	GetCharacterMovement()->DisableMovement();
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && DeathMontage)
+	{
+		AnimInstance->Montage_Play(DeathMontage);
+	}
+
+	// Show the death screen after 0.2 seconds regardless of montage length
+	FTimerHandle DeathScreenTimer;
+	GetWorldTimerManager().SetTimer(DeathScreenTimer, this,
+		&APlayerCharacter::ShowDeathScreen, 0.2f, false);
+}
+
+void APlayerCharacter::OnDeathMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	ShowDeathScreen();
+}
+
+void APlayerCharacter::ShowDeathScreen()
+{
+	if (DeathScreenWidgetClass && PC)
+	{
+		DeathScreenWidget = CreateWidget<UUserWidget>(PC, DeathScreenWidgetClass);
+		if (DeathScreenWidget)
+		{
+			DeathScreenWidget->AddToViewport();
+		}
+	}
+
+	// Respawn after a delay (gives the widget animation time to play)
+	FTimerHandle RespawnTimer;
+	GetWorldTimerManager().SetTimer(RespawnTimer, this,
+		&APlayerCharacter::Respawn, DeathScreenDuration, false);
+}
+
+void APlayerCharacter::Respawn()
+{
+	// Remove the death screen
+	if (DeathScreenWidget)
+	{
+		DeathScreenWidget->RemoveFromParent();
+		DeathScreenWidget = nullptr;
+	}
+
+	// Move to the saved spawn point
+	SetActorLocation(LastSpawnPoint);
+	SetActorRotation(FRotator::ZeroRotator);
+
+	AbilitySystemComponent->RemoveLooseGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Dead"));
+
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+		Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+	if (PC)
+	{
+		PC->SetIgnoreMoveInput(false);
+		PC->SetIgnoreLookInput(false);
+	}
+
+	// Reset health/stamina via your init effect
+	if (ReviveEffect)
+	{
+		AbilitySystemComponent->ApplyGameplayEffectToSelf(
+			ReviveEffect.GetDefaultObject(), 1.f,
+			AbilitySystemComponent->MakeEffectContext());
+	}
+}
+
+void APlayerCharacter::OnBlockBrokenMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (!AbilitySystemComponent || !StaggerResetEffect) return;
+
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(
+		StaggerResetEffect.GetDefaultObject(), 1.f,
+		AbilitySystemComponent->MakeEffectContext());
+}
+
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-#if !UE_BUILD_SHIPPING
-
-#endif
 
 	PC = GetWorld()->GetFirstPlayerController();
 	AttachWeapon();
@@ -189,6 +306,9 @@ void APlayerCharacter::AttachWeapon()
 	CombatType = Weapon->ItemDefinition->WeaponData.CombatType;
 
 	OnWeaponEquipped.Broadcast(CombatType);
+	
+	DeathMontage = Weapon->ItemDefinition->WeaponData.Death;
+	Weapon->DisableAttackHitbox();
 }
 
 // Called every frame
@@ -472,6 +592,9 @@ void APlayerCharacter::TryPlayFootsteps()
 
 void APlayerCharacter::PlayHitReaction(AActor* Attacker)
 {
+	if (AbilitySystemComponent->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Dead"))) return;
+
 	if (!Attacker || !Weapon) return;
 
 	FVector ToAttacker = Attacker->GetActorLocation() - GetActorLocation();
@@ -545,6 +668,16 @@ void APlayerCharacter::EquipRuneToWeapon(UItemDefinition* RuneDef)
 	}
 
 	Weapon->EquipRune(Rune);
+}
+
+void APlayerCharacter::EnableHitbox() const
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+}
+
+void APlayerCharacter::DisableHitbox() const
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 }
 
 void APlayerCharacter::ToggleLockOn()
@@ -710,26 +843,57 @@ void APlayerCharacter::UpdateLockOn(float DeltaTime)
 		}
 	}
 
-	// Rotate camera toward current target
 	FVector DirectionToTarget = LockOnTarget->GetActorLocation() - GetActorLocation();
 	FRotator TargetRotation = DirectionToTarget.Rotation();
 	FRotator NewRotation = FMath::RInterpTo(GetControlRotation(), TargetRotation, DeltaTime, 20.f);
 	NewRotation.Roll = 0;
 	NewRotation.Pitch += LockOnOffsetZ;
+	GetController()->SetControlRotation(NewRotation);
 
-	FRotator CurrentRotation = GetActorRotation();
-	FRotator NewCharacterRotation = FMath::RInterpTo(
-		CurrentRotation,
-		TargetRotation,
-		DeltaTime,
-		10.f // rotation speed, tweak this
-	);
+
+	bool bDodging = AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Dodging"));
+
+	if (bDodging)
+	{
+		if (bDodgeDirectionLocked) return;
+
+		bDodgeDirectionLocked = true;
+
+		// Rotate the body toward the clean cardinal dodge direction relative to the target
+		FVector Input = GetCharacterMovement()->GetLastInputVector();
+		FVector DodgeDir;
+
+		FVector ToTarget = DirectionToTarget; ToTarget.Z = 0.f; ToTarget.Normalize();
+		FVector RightOfTarget = FVector::CrossProduct(FVector::UpVector, ToTarget);
+
+		if (Input.IsNearlyZero())
+		{
+			DodgeDir = -ToTarget; // no input -> backstep
+		}
+		else
+		{
+			Input.Z = 0.f; Input.Normalize();
+			float fwd = FVector::DotProduct(Input, ToTarget);
+			float right = FVector::DotProduct(Input, RightOfTarget);
+			if (FMath::Abs(right) > FMath::Abs(fwd))
+				DodgeDir = (right > 0.f) ? RightOfTarget : -RightOfTarget;
+			else
+				DodgeDir = (fwd > 0.f) ? ToTarget : -ToTarget;
+		}
+
+		FRotator DodgeRot = DodgeDir.Rotation();
+		DodgeRot.Pitch = 0.f; DodgeRot.Roll = 0.f;
+		SetActorRotation(DodgeRot); // snap, so the roll goes clean in that direction
+		return;
+	}
+	else
+		bDodgeDirectionLocked = false;
+
+	// Normal locked-on body rotation toward target
+	FRotator NewCharacterRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 10.f);
 	NewCharacterRotation.Pitch = 0.f;
 	NewCharacterRotation.Roll = 0.f;
-
 	SetActorRotation(NewCharacterRotation);
-	GetController()->SetControlRotation(NewRotation);
-	
 }
 
 void APlayerCharacter::UseHotbarSlot(int32 Index)

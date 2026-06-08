@@ -40,5 +40,8 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<UStaticMeshComponent> MeshComponent;
+
+    UPROPERTY()
+    TObjectPtr<AMapNode> GraphNode;
 };
 

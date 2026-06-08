@@ -11,15 +11,33 @@
 USTRUCT()
 struct FAttackInstanceData
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere,Category = Context)
-	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
+    UPROPERTY(EditAnywhere, Category = Context)
+    TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent = nullptr;
 
-	UPROPERTY()
-	bool bAbilityEnded = false;
+    // The actor to face (bind Parameters.CurrentTarget in the StateTree)
+    UPROPERTY(EditAnywhere, Category = Context)
+    TObjectPtr<AActor> TargetActor = nullptr;
 
-	FDelegateHandle AbilityEndedHandle;
+    // Owning enemy, so we can rotate it
+    UPROPERTY(EditAnywhere, Category = Context)
+    TObjectPtr<AActor> Character = nullptr;
+
+    UPROPERTY(EditAnywhere, Category = Parameters)
+    float RotationSpeed = 12.0f;
+
+    // How long after entering to keep rotating toward target (wind-up window)
+    UPROPERTY(EditAnywhere, Category = Parameters)
+    float RotateTrackDuration = 0.3f;
+
+    UPROPERTY()
+    float TimeInState = 0.f;
+
+    UPROPERTY()
+    bool bAbilityEnded = false;
+
+    FDelegateHandle AbilityEndedHandle;
 };
 
 USTRUCT(meta = (DisplayName = "Attack", Category = "Enemy|Combat"))

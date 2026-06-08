@@ -1,10 +1,11 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "GameplayAbilitySystem/Abilities/CombatAbilityBase.h"
 #include "AttackAbilityEnemy.generated.h"
 
 UCLASS()
-class THEHUNT_API UAttackAbilityEnemy : public UGameplayAbility
+class THEHUNT_API UAttackAbilityEnemy : public UCombatAbilityBase
 {
     GENERATED_BODY()
 

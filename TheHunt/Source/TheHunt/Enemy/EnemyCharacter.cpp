@@ -70,6 +70,29 @@ void AEnemyCharacter::OnDeath()
     }
 }
 
+void AEnemyCharacter::OnGuardBroken()
+{
+    Super::OnGuardBroken();
+
+    if (StaggerMontage)
+        GetMesh()->GetAnimInstance()->Montage_Play(StaggerMontage);
+
+    FTimerHandle StunTimer;
+    GetWorldTimerManager().SetTimer(StunTimer, [this]()
+        {
+            UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+            if (StaggerMontage && AnimInstance)
+                AnimInstance->Montage_JumpToSection(FName("StaggerExit"), StaggerMontage);
+
+            AbilitySystemComponent->RemoveLooseGameplayTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("State.Stunned")));
+
+            AbilitySystemComponent->ApplyGameplayEffectToSelf(
+                StaggerResetEffect.GetDefaultObject(), 1.f,
+                AbilitySystemComponent->MakeEffectContext());
+
+        }, StunDuration, false);
+}
+
 void AEnemyCharacter::OpenParryWindow()
 {
     AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Parryable")));

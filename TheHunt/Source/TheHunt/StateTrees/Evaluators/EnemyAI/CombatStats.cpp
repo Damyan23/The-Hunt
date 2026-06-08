@@ -7,16 +7,14 @@ void UCombatStats::TreeStart(FStateTreeExecutionContext& Context)
 {
 	Super::TreeStart(Context);
 
-    if (Character) ASC = Character->AbilitySystemComponent;
+    if (Character) AbilitySystemComponent = Character->AbilitySystemComponent;
 
-    ASC->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetHealthAttribute())
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetHealthAttribute())
         .AddUObject(this, &UCombatStats::OnHealthChanged);
-    ASC->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaminaAttribute())
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaminaAttribute())
         .AddUObject(this, &UCombatStats::OnStaminaChanged);
-    ASC->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaggerAttribute())
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaggerAttribute())
         .AddUObject(this, &UCombatStats::OnStaggerChanged);
-
-    MaxStagger = ASC->GetNumericAttribute(UBaseAttributeSet::GetMaxStaggerAttribute());
 
     // Read the cost once at start since GE values don't change at runtime
     if (AttackStaminaCostEffect)
@@ -37,20 +35,23 @@ void UCombatStats::TreeStart(FStateTreeExecutionContext& Context)
 void UCombatStats::Tick(FStateTreeExecutionContext& Context, const float DeltaTime)
 {
 	Super::Tick(Context, DeltaTime);
-    TagContainer = ASC->GetOwnedGameplayTags();
+    TagContainer = AbilitySystemComponent->GetOwnedGameplayTags();
+
+    UE_LOG(LogTemp, Warning, TEXT("Util in -> HP:%.2f Stam:%.2f Stag:%.2f"), HealthPercentage, StaminaPercentage, StaggerPercentage);
 }
 
 void UCombatStats::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
-    Health = Data.NewValue;
+    HealthPercentage = Data.NewValue / AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxHealthAttribute());
 }
 
 void UCombatStats::OnStaminaChanged(const FOnAttributeChangeData& Data)
 {
     Stamina = Data.NewValue;
+    StaminaPercentage = Data.NewValue / AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxStaminaAttribute());
 }
 
 void UCombatStats::OnStaggerChanged(const FOnAttributeChangeData& Data)
 {
-    Stagger = Data.NewValue;
+    StaggerPercentage = Data.NewValue / AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxStaggerAttribute());
 }

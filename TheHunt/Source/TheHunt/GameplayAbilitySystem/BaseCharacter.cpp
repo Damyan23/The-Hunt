@@ -83,11 +83,13 @@ UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 
 void ABaseCharacter::Die()
 {
+  
 }
 
 void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {  
-    if (IsDead) return;
+    if (AbilitySystemComponent->HasMatchingGameplayTag(
+        FGameplayTag::RequestGameplayTag("State.Dead"))) return;
 
     OnHealthUpdated(Data.NewValue, AbilitySystemComponent->GetNumericAttribute(
         UBaseAttributeSet::GetMaxHealthAttribute()));
@@ -97,7 +99,8 @@ void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
             UBaseAttributeSet::GetMaxHealthAttribute()));
     if (Data.NewValue <= 0.f)
     {
-        IsDead = true;
+        AbilitySystemComponent->AddLooseGameplayTag(
+            FGameplayTag::RequestGameplayTag("State.Dead"));
         OnDeath();
         return;
     }   
@@ -191,8 +194,22 @@ void ABaseCharacter::OnStaminaChanged(const FOnAttributeChangeData& Data)
 void ABaseCharacter::OnStaggerChanged(const FOnAttributeChangeData& Data)
 {
     if (Data.NewValue != Data.OldValue)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Stagger: %f"), Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+            UBaseAttributeSet::GetMaxStaggerAttribute()));
+
         OnStaggerChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
             UBaseAttributeSet::GetMaxStaggerAttribute()));
+    }
+
+
+    float MaxStagger = AbilitySystemComponent->GetNumericAttribute(
+        UBaseAttributeSet::GetMaxStaggerAttribute());
+    if (Data.NewValue >= MaxStagger && Data.OldValue < MaxStagger)
+    {
+        OnGuardBroken();
+        return;
+    }
 
     UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
     if (!AnimInstance) return;
@@ -215,24 +232,6 @@ void ABaseCharacter::OnGuardBroken()
     AbilitySystemComponent->CancelAbilities(&BlockTag);
 
     AbilitySystemComponent->AddLooseGameplayTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("State.Stunned")));
-
-    if (StaggerMontage)
-        GetMesh()->GetAnimInstance()->Montage_Play(StaggerMontage);
-
-    FTimerHandle StunTimer;
-    GetWorldTimerManager().SetTimer(StunTimer, [this]()
-    {
-        UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-        if (StaggerMontage && AnimInstance)
-            AnimInstance->Montage_JumpToSection(FName("StaggerExit"), StaggerMontage);
-
-        AbilitySystemComponent->RemoveLooseGameplayTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("State.Stunned")));
-
-        AbilitySystemComponent->ApplyGameplayEffectToSelf(
-            StaggerResetEffect.GetDefaultObject(), 1.f,
-            AbilitySystemComponent->MakeEffectContext());
-
-    }, StunDuration, false);
 }
 
 void ABaseCharacter::PlayFootstepSounds()

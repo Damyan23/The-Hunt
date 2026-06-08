@@ -224,6 +224,9 @@ void AMapManager::SetNodeTypes(TMap<int32, AMapNode*>& MapGraph)
                 if (NodeActor)
                 {
                     NodeActor->AttachToActor(Node, FAttachmentTransformRules::KeepWorldTransform);
+                    if (AMapNode* VisualAsNode = Cast<AMapNode>(NodeActor))
+                        VisualAsNode->GraphNode = Node;
+
                     SpawnedVisualizationNodes.Add(NodeActor);
                 }
             }

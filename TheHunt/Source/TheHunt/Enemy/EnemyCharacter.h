@@ -18,8 +18,16 @@ protected:
     virtual void Tick(float DeltaSeconds) override;
     virtual void OnDeath() override;
 
+    UPROPERTY(EditDefaultsOnly, Category = "Animation")
+    TObjectPtr<UAnimMontage> StaggerMontage;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Stagger")
+    float StunDuration = 1.5f;
+    virtual void OnGuardBroken() override;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Dying")
     float FreezeAfterDeathDuration = 10.0f;
+
 
 public:
     UPROPERTY(EditInstanceOnly, Category = "AI")

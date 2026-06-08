@@ -13,14 +13,19 @@ AMeleeWeapon::AMeleeWeapon()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    // Explicitly set root first
+    // Scene root so the mesh can have its own relative rotation
+    USceneComponent* SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    SetRootComponent(SceneRoot);
+
     ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-    SetRootComponent(ItemMesh);
+    ItemMesh->SetupAttachment(SceneRoot);
+
+    // Now you can rotate the mesh freely relative to the root
+    ItemMesh->SetRelativeRotation(FRotator(0.f, 0.f, 0.f)); // <-- set your correction here
 
     if (GetOwner())
     {
         ItemMesh->IgnoreActorWhenMoving(GetOwner(), true);
-        // This actually ignores overlaps with the owner
         TArray<UPrimitiveComponent*> OwnerComponents;
         GetOwner()->GetComponents<UPrimitiveComponent>(OwnerComponents);
         for (UPrimitiveComponent* Comp : OwnerComponents)
@@ -29,8 +34,8 @@ AMeleeWeapon::AMeleeWeapon()
             Comp->IgnoreComponentWhenMoving(ItemMesh, true);
         }
     }
-    ItemMesh->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
 
+    ItemMesh->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
     Runes.SetNum(3);
 }
 
@@ -126,10 +131,10 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
     if (!AttackerASC || !TargetASC) return;
 
     // Get attack ability early since we need it in multiple places
-    UBasicAttackAbility* AttackAbility = nullptr;
+    UCombatAbilityBase* AttackAbility = nullptr;
     for (const FGameplayAbilitySpec& Spec : AttackerASC->GetActivatableAbilities())
     {
-        AttackAbility = Cast<UBasicAttackAbility>(Spec.Ability);
+        AttackAbility = Cast<UCombatAbilityBase>(Spec.Ability);
         if (AttackAbility) break;
     }
 
@@ -179,6 +184,7 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
         }
 
         UGameplayStatics::PlaySoundAtLocation(this, WeaponSoundData.BlockSound, GetActorLocation());
+
 
         // Apply stagger to blocker even though damage is blocked
         if (AttackAbility && AttackAbility->StaggerEffect)
