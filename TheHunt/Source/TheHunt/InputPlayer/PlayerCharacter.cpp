@@ -18,53 +18,6 @@
 #include "GameplayAbilitySystem/BasicAttackAbility.h"
 #include "GameplayAbilitySystem/Abilities/BasicBlockingAbility.h"
 
-void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-	Super::OnHealthChanged(Data);
-
-	UE_LOG(LogTemp, Warning, TEXT("Health went from %f to %f"), Data.OldValue, Data.NewValue);
-
-	if (Data.NewValue < Data.OldValue)
-	{
-		ShowHitVignette();
-		// Get attacker from effect context
-		if (AbilitySystemComponent)
-		{
-			const FGameplayEffectModCallbackData* ModData = Data.GEModData;
-			if (ModData)
-			{
-				AActor* Attacker = ModData->EffectSpec.GetContext().GetInstigator();
-				PlayHitReaction(Attacker);
-			}
-		}
-	}
-}
-
-void APlayerCharacter::ShowHitVignette()
-{
-	if (!HitVignetteMID) return;
-
-	// Set intensity to full
-	HitVignetteMID->SetScalarParameterValue(FName("HitIntensity"), 1.0f);
-
-	// Fade it out over time
-	GetWorldTimerManager().SetTimer(HitVignetteTimer, [this]()
-		{
-			float CurrentIntensity;
-			HitVignetteMID->GetScalarParameterValue(FName("HitIntensity"), CurrentIntensity);
-
-			if (CurrentIntensity > 0.f)
-			{
-				HitVignetteMID->SetScalarParameterValue(
-					FName("HitIntensity"), CurrentIntensity - 0.05f);
-			}
-			else
-			{
-				GetWorldTimerManager().ClearTimer(HitVignetteTimer);
-			}
-		}, 0.016f, true); // runs every frame roughly
-}
-
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -106,6 +59,122 @@ void APlayerCharacter::OnConstruction(const FTransform& Transform)
 	SpringArm->TargetArmLength = SpringArmDistance;
 	SpringArm->SetRelativeLocation(SpringArmOffset);
 	SpringArm->SetRelativeRotation(SpringArmRotation);
+}
+
+// Called when the game starts or when spawned
+void APlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	PC = GetWorld()->GetFirstPlayerController();
+
+	UTheHuntGameInstance* GI = GetGameInstance<UTheHuntGameInstance>();
+	if (GI && GI->bHasSaved)
+	{
+		ApplyProgression(GI->GetProgression());
+	}
+	else
+	{
+		AttachWeapon();
+	}
+
+	AttachWeapon();
+
+	if (PC)
+	{
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute health");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute stamina");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute stagger");
+		PC->ConsoleCommand("AbilitySystem.DebugAbilityTags");
+	}
+
+	if (HitVignetteMaterial)
+	{
+		HitVignetteMID = UMaterialInstanceDynamic::Create(HitVignetteMaterial, this);
+		PostProcessComponent->AddOrUpdateBlendable(HitVignetteMID);
+	}
+
+	GetWorldTimerManager().SetTimer(
+		FootstepTimerHandle,
+		this,
+		&APlayerCharacter::TryPlayFootsteps,
+		FootstepInterval,
+		false // not repeating
+	);
+}
+
+
+FPlayerProgressionData APlayerCharacter::GatherProgression()
+{
+	FPlayerProgressionData Data;
+	Data.HotbarSlots = HotbarSlots;
+	Data.Perks = Perks;
+	Data.EquippedWeaponDef = Weapon ? Weapon->ItemDefinition : nullptr;
+
+	// Inventory from the subsystem
+	if (UInventorySubsystem* Inv = GetGameInstance()->GetSubsystem<UInventorySubsystem>())
+	{
+		Data.InventorySlots = Inv->GetInventory(this)->Slots;
+	}
+
+	// Attributes
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		TArray<FGameplayAttribute> Attrs;
+		ASC->GetAllAttributes(Attrs);
+		for (const FGameplayAttribute& A : Attrs)
+			Data.Attributes.Add(FName(*A.GetName()), ASC->GetNumericAttribute(A));
+	}
+	return Data;
+}
+
+void APlayerCharacter::ApplyProgression(const FPlayerProgressionData& Data)
+{
+	// Hotbar & perks
+	HotbarSlots = Data.HotbarSlots;
+	Perks = Data.Perks;
+
+	// Inventory
+	if (UInventorySubsystem* Sub = GetGameInstance()->GetSubsystem<UInventorySubsystem>())
+	{
+		if (UInventoryComponent* Inv = Sub->GetInventory(this))
+		{
+			Inv->LoadInventory(Data.InventorySlots);
+		}
+	}
+
+	// Equipped weapon — rebuild from the saved definition
+	if (Data.EquippedWeaponDef)
+	{
+		TSubclassOf<AMeleeWeapon> SavedClass = Data.EquippedWeaponDef->GetWeaponClass();
+		if (SavedClass)
+			EquipWeapon(SavedClass);
+	}
+
+	// Attributes
+	if (AbilitySystemComponent)
+	{
+		TArray<FGameplayAttribute> Attributes;
+		AbilitySystemComponent->GetAllAttributes(Attributes);
+
+		// Pass 1: Max attributes first (so current values clamp correctly)
+		for (const FGameplayAttribute& Attr : Attributes)
+		{
+			const FName AttrName = Attr.GetUProperty()->GetFName();
+			if (AttrName.ToString().Contains(TEXT("Max")))
+				if (const float* Saved = Data.Attributes.Find(AttrName))
+					AbilitySystemComponent->SetNumericAttributeBase(Attr, *Saved);
+		}
+
+		// Pass 2: current values
+		for (const FGameplayAttribute& Attr : Attributes)
+		{
+			const FName AttrName = Attr.GetUProperty()->GetFName();
+			if (!AttrName.ToString().Contains(TEXT("Max")))
+				if (const float* Saved = Data.Attributes.Find(AttrName))
+					AbilitySystemComponent->SetNumericAttributeBase(Attr, *Saved);
+		}
+	}
 }
 
 void APlayerCharacter::OnGuardBroken()
@@ -228,39 +297,6 @@ void APlayerCharacter::OnBlockBrokenMontageEnded(UAnimMontage* Montage, bool bIn
 		StaggerResetEffect.GetDefaultObject(), 1.f,
 		AbilitySystemComponent->MakeEffectContext());
 }
-
-// Called when the game starts or when spawned
-void APlayerCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	PC = GetWorld()->GetFirstPlayerController();
-	AttachWeapon();
-
-	if (PC)
-	{
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute health");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute stamina");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute stagger");
-		PC->ConsoleCommand("AbilitySystem.DebugAbilityTags");
-	}
-
-	if (HitVignetteMaterial)
-	{
-		HitVignetteMID = UMaterialInstanceDynamic::Create(HitVignetteMaterial, this);
-		PostProcessComponent->AddOrUpdateBlendable(HitVignetteMID);
-	}
-
-	GetWorldTimerManager().SetTimer(
-		FootstepTimerHandle,
-		this,
-		&APlayerCharacter::TryPlayFootsteps,
-		FootstepInterval,
-		false // not repeating
-	);
-}
-
-
 
 void APlayerCharacter::ApplyPerk(UPerkData* Perk)
 {
@@ -441,6 +477,8 @@ void APlayerCharacter::Attack()
 
 void APlayerCharacter::StartBlock()
 {
+	if (!Weapon) return;
+
 	if (AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking"))) return;
 
 	FGameplayTagContainer TagContainer;
@@ -515,8 +553,10 @@ void APlayerCharacter::Interact()
 		{
 			if (IsValid(Hit.GetActor()) && Hit.GetActor() != this && Hit.GetActor() != Weapon)
 			{
+				UE_LOG(LogTemp,Warning, TEXT("hmm why does it go here and not down"))
 				if (AInteractable* Interactable = Cast<AInteractable>(Hit.GetActor()))
 				{
+					UE_LOG(LogTemp, Warning, TEXT("should interact"));
 					Interactable->OnInteract(this);
 				}
 			}
@@ -567,6 +607,53 @@ void APlayerCharacter::Dash()
 		TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Movement.Normal.Dash")));
 	
 	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
+}
+
+void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	Super::OnHealthChanged(Data);
+
+	UE_LOG(LogTemp, Warning, TEXT("Health went from %f to %f"), Data.OldValue, Data.NewValue);
+
+	if (Data.NewValue < Data.OldValue)
+	{
+		ShowHitVignette();
+		// Get attacker from effect context
+		if (AbilitySystemComponent)
+		{
+			const FGameplayEffectModCallbackData* ModData = Data.GEModData;
+			if (ModData)
+			{
+				AActor* Attacker = ModData->EffectSpec.GetContext().GetInstigator();
+				PlayHitReaction(Attacker);
+			}
+		}
+	}
+}
+
+void APlayerCharacter::ShowHitVignette()
+{
+	if (!HitVignetteMID) return;
+
+	// Set intensity to full
+	HitVignetteMID->SetScalarParameterValue(FName("HitIntensity"), 1.0f);
+
+	// Fade it out over time
+	GetWorldTimerManager().SetTimer(HitVignetteTimer, [this]()
+		{
+			float CurrentIntensity;
+			HitVignetteMID->GetScalarParameterValue(FName("HitIntensity"), CurrentIntensity);
+
+			if (CurrentIntensity > 0.f)
+			{
+				HitVignetteMID->SetScalarParameterValue(
+					FName("HitIntensity"), CurrentIntensity - 0.05f);
+			}
+			else
+			{
+				GetWorldTimerManager().ClearTimer(HitVignetteTimer);
+			}
+		}, 0.016f, true); // runs every frame roughly
 }
 
 void APlayerCharacter::TryPlayFootsteps()
@@ -856,34 +943,44 @@ void APlayerCharacter::UpdateLockOn(float DeltaTime)
 	if (bDodging)
 	{
 		if (bDodgeDirectionLocked) return;
-
 		bDodgeDirectionLocked = true;
 
-		// Rotate the body toward the clean cardinal dodge direction relative to the target
 		FVector Input = GetCharacterMovement()->GetLastInputVector();
-		FVector DodgeDir;
-
 		FVector ToTarget = DirectionToTarget; ToTarget.Z = 0.f; ToTarget.Normalize();
 		FVector RightOfTarget = FVector::CrossProduct(FVector::UpVector, ToTarget);
 
+		FVector DodgeDir;
 		if (Input.IsNearlyZero())
 		{
-			DodgeDir = -ToTarget; // no input -> backstep
+			DodgeDir = -ToTarget;
+			UE_LOG(LogTemp, Warning, TEXT("DODGE: no input -> backstep"));
 		}
 		else
 		{
 			Input.Z = 0.f; Input.Normalize();
 			float fwd = FVector::DotProduct(Input, ToTarget);
 			float right = FVector::DotProduct(Input, RightOfTarget);
+			UE_LOG(LogTemp, Warning, TEXT("DODGE: Input=%s fwd=%.2f right=%.2f"),
+				*Input.ToString(), fwd, right);
+
 			if (FMath::Abs(right) > FMath::Abs(fwd))
-				DodgeDir = (right > 0.f) ? RightOfTarget : -RightOfTarget;
+			{
+				// Lateral dodge, but biased toward the enemy so it arcs inward (diagonal)
+				FVector LateralDir = (right > 0.f) ? RightOfTarget : -RightOfTarget;
+				// Blend in some "toward target" — tune InwardBias 0..1
+				float InwardBias = 0.6f; // 0 = pure sideways, 1 = straight at enemy
+				DodgeDir = (LateralDir * (1.f - InwardBias) + ToTarget * InwardBias).GetSafeNormal();
+			}
 			else
+			{
 				DodgeDir = (fwd > 0.f) ? ToTarget : -ToTarget;
+			}
 		}
+		UE_LOG(LogTemp, Warning, TEXT("DODGE: chosen DodgeDir=%s"), *DodgeDir.ToString());
 
 		FRotator DodgeRot = DodgeDir.Rotation();
 		DodgeRot.Pitch = 0.f; DodgeRot.Roll = 0.f;
-		SetActorRotation(DodgeRot); // snap, so the roll goes clean in that direction
+		SetActorRotation(DodgeRot);
 		return;
 	}
 	else

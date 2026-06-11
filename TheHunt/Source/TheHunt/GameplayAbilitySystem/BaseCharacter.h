@@ -21,54 +21,81 @@ class THEHUNT_API ABaseCharacter : public ACharacter, public IAbilitySystemInter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ABaseCharacter();
 
-
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	//~ Ability System
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-protected:
-	virtual void PostInitializeComponents() override;
-	void InitializeAttributes();
-	void GrantDefaultAbilities();
-
-	UFUNCTION(BlueprintCallable)
-	virtual void AttachWeapon();
-
+	//============================================================
+	//  Ability System
+	//============================================================
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
-	TSubclassOf<AMeleeWeapon> WeaponClass;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	TObjectPtr<AMeleeWeapon> Weapon;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AbilitySystem")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-	 
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	TObjectPtr<UBaseAttributeSet> BaseAttributes;
-
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UAttributeSet> AttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
 	TSubclassOf<UGameplayEffect> StaminaRegen;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TObjectPtr<UAnimMontage> GettingHitMontage;
+	//============================================================
+	//  Weapon
+	//============================================================
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+	TSubclassOf<AMeleeWeapon> WeaponClass;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	TObjectPtr<AMeleeWeapon> Weapon;
+
+	//============================================================
+	//  Combat
+	//============================================================
+public:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	TSubclassOf<UGameplayEffect> StaggerResetEffect;
 
+	virtual void Die();
+
+	//============================================================
+	//  Attribute Change Delegates (Blueprint-assignable)
+	//============================================================
+public:
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float, HealthPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnHealthChanged OnHealthChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChanged, float, StaminaPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnStaminaChanged OnStaminaChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaggerChanged, float, StaggerPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnStaggerChanged OnStaggerChangedEvent;
+
+	//============================================================
+	//  Animation
+	//============================================================
+public:
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> GettingHitMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> DeathMontage;
+
+	//============================================================
+	//  VFX
+	//============================================================
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	UNiagaraSystem* HitVFX;
 
@@ -81,43 +108,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	UNiagaraSystem* PoisonVFX;
 
-	virtual void Die();
-
+	//============================================================
+	//  Sound — General
+	//============================================================
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound FX")
 	TObjectPtr<USoundBase> GettingHitSound;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animation")
-	TObjectPtr<UAnimMontage> DeathMontage;
-
+	//============================================================
+	//  Sound — Footsteps
+	//============================================================
 protected:
-	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
-	virtual void OnDeath();
-public:
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float, HealthPercent);
-
-	UPROPERTY(BlueprintAssignable, Category = "Attributes")
-	FOnHealthChanged OnHealthChangedEvent;
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChanged, float, StaminaPercent);
-
-	UPROPERTY(BlueprintAssignable, Category = "Attributes")
-	FOnStaminaChanged OnStaminaChangedEvent;
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaggerChanged, float, StaggerPercent);
-
-	UPROPERTY(BlueprintAssignable, Category = "Attributes")
-	FOnStaggerChanged OnStaggerChangedEvent;
-protected:
-	UFUNCTION(BlueprintImplementableEvent, Category = "UI")
-	void OnHealthUpdated(float CurrentHealth, float MaxHealth);
-	virtual void OnStaminaChanged(const FOnAttributeChangeData& Data);
-	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
-	virtual void OnGuardBroken();
-
-	UFUNCTION(BlueprintCallable)
-	void PlayFootstepSounds();
-	void PlayRandomSoundAtLocation(const TArray<USoundBase*>& Sounds, FVector Location);
-
 	UPROPERTY(EditAnywhere, Category = "Footsteps")
 	TArray<USoundBase*> BootSounds;
 
@@ -127,10 +128,49 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Footsteps")
 	TArray<USoundBase*> WeatherLayerSounds;
 
+	//============================================================
+	//  Stamina Regen
+	//============================================================
 public:
 	void StartStaminaRegenDelay();
 	void AllowStaminaRegen();
 
 	FTimerHandle StaminaRegenDelayTimer;
 	bool bStaminaRegenAllowed = true;
+
+	//============================================================
+	//  Lifecycle / Setup
+	//============================================================
+protected:
+	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
+
+	void InitializeAttributes();
+	void GrantDefaultAbilities();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void AttachWeapon();
+
+	//============================================================
+	//  Attribute Change Handlers
+	//============================================================
+protected:
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
+	virtual void OnStaminaChanged(const FOnAttributeChangeData& Data);
+	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
+	virtual void OnGuardBroken();
+
+	virtual void OnDeath();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "UI")
+	void OnHealthUpdated(float CurrentHealth, float MaxHealth);
+
+	//============================================================
+	//  Sound / Footstep Helpers
+	//============================================================
+protected:
+	UFUNCTION(BlueprintCallable)
+	void PlayFootstepSounds();
+
+	void PlayRandomSoundAtLocation(const TArray<USoundBase*>& Sounds, FVector Location);
 };

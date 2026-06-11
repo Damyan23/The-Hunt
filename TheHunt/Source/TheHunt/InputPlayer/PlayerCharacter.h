@@ -177,6 +177,7 @@ protected:
 
     FTimerHandle FootstepTimerHandle;
 
+
     // ============================================================
     // COMBAT
     // ============================================================
@@ -250,17 +251,22 @@ private:
     UPROPERTY(EditDefaultsOnly, Category = "Death")
     TSubclassOf<UGameplayEffect> ReviveEffect;
 
-
-
     UFUNCTION()
     void OnDeathMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     void ShowDeathScreen();
     void Respawn();
 
+
+
 public:
     UPROPERTY(BlueprintReadWrite, Category = "Death")
     FVector LastSpawnPoint = FVector::ZeroVector;
+    // ============================================================
+    // SAVE DATA
+    // ============================================================
+    FPlayerProgressionData GatherProgression();
+    void ApplyProgression(const FPlayerProgressionData& Data);
 
     // ============================================================
     // PUBLIC API
@@ -285,4 +291,5 @@ public:
     }
 
     AActor* GetLockOnTarget() const { return LockOnTarget; }
+
 };

@@ -606,15 +606,22 @@ TArray<TArray<int32>> UMapGenerator::GeneratePaths(TArray<TPair<int32, int32>> E
 		// Pick convergence points from first path
 		if (p == 0)
 		{
-			while (ConvergencePoints.Num() < MinConvergencePoints)
+			int32 EligibleCount = FMath::Max(0, Path.Num() - 2); // interior nodes
+			int32 TargetConvergence = FMath::Min(MinConvergencePoints, EligibleCount);
+
+			int32 SafetyCounter = 0;
+			while (ConvergencePoints.Num() < TargetConvergence && SafetyCounter < 1000)
 			{
 				ConvergencePoints.Empty();
 				for (int32 i = 1; i < Path.Num() - 1; i++)
 				{
+					UE_LOG(LogTemp, Warning, TEXT("Convergence loop: have %d, need %d, pathlen %d"),
+						ConvergencePoints.Num(), MinConvergencePoints, Path.Num());
 					if (ConvergencePoints.Num() >= MaxConvergencePoints) break;
 					if (FMath::FRand() < 0.3f)
 						ConvergencePoints.Add(Path[i]);
 				}
+				SafetyCounter++;
 			}
 		}
 

@@ -3,6 +3,8 @@
 
 #include "MapCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Inventory/InventoryComponent.h"
+#include "Inventory/InventorySubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sts_Map/MapManager.h"
 
@@ -12,34 +14,27 @@ AMapCharacter::AMapCharacter()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	BaseAttributes = CreateDefaultSubobject<UBaseAttributeSet>(TEXT("BaseAttributesSet"));
+
 }
 
-// Called when the game starts or when spawned
+UAbilitySystemComponent* AMapCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
 void AMapCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetCharacterMovement()->GravityScale = 0.f;
-	GetCharacterMovement()->SetMovementMode(MOVE_None);
+	SetupMovement();
 
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMapManager::StaticClass(), FoundActors);
+	if (!LoadSaveData())
+		return;
 
-	PC = Cast<APlayerController>(GetController());
-
-	if (FoundActors.Num() > 0)
-	{
-		Map = Cast<AMapManager>(FoundActors[0]);
-
-	}
-
-	if (Map)
-	{
-		CurrentNode = Map->StartNode;
-
-		SetActorLocation(CurrentNode->GetActorLocation());
-		UE_LOG(LogTemp, Warning, TEXT("goes into here"));
-	}
+	FindMapManager();
+	PlaceOnCurrentNode();
 }
 
 // Called every frame
@@ -67,6 +62,106 @@ void AMapCharacter::Tick(float DeltaTime)
 
 }
 
+void AMapCharacter::SetupMovement()
+{
+	GetCharacterMovement()->GravityScale = 0.f;
+	GetCharacterMovement()->SetMovementMode(MOVE_None);
+	GetCharacterMovement()->bOrientRotationToMovement = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+	SetActorRotation(FRotator(0.f, -90.f, 0.f));
+}
+
+void AMapCharacter::FindMapManager()
+{
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMapManager::StaticClass(), FoundActors);
+	PC = Cast<APlayerController>(GetController());
+	if (FoundActors.Num() > 0)
+		Map = Cast<AMapManager>(FoundActors[0]);
+}
+
+bool AMapCharacter::LoadSaveData()
+{
+	GI = Cast<UTheHuntGameInstance>(GetGameInstance());
+	if (!GI)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstance is null!"));
+		return false;
+	}
+
+	if (GI->bHasSaved)
+	{
+		const FPlayerProgressionData& Data = GI->GetProgression();
+
+		if (UInventorySubsystem* Sub = GetGameInstance()->GetSubsystem<UInventorySubsystem>())
+		{
+			if (UInventoryComponent* Inv = Sub->GetInventory(this))
+			{
+				Inv->LoadInventory(GI->SavedProgression.InventorySlots);
+			}
+		}
+
+		// --- Restore GAS attributes ---
+		if (AbilitySystemComponent)
+		{
+			TArray<FGameplayAttribute> Attributes;
+			AbilitySystemComponent->GetAllAttributes(Attributes);
+
+			// Pass 1: set Max attributes first (so current values clamp correctly)
+			for (const FGameplayAttribute& Attr : Attributes)
+			{
+				const FName AttrName = Attr.GetUProperty()->GetFName();
+				if (AttrName.ToString().Contains(TEXT("Max")))
+				{
+					if (const float* Saved = Data.Attributes.Find(AttrName))
+						AbilitySystemComponent->SetNumericAttributeBase(Attr, *Saved);
+				}
+			}
+
+			// Pass 2: set the rest (current values)
+			for (const FGameplayAttribute& Attr : Attributes)
+			{
+				const FName AttrName = Attr.GetUProperty()->GetFName();
+				if (!AttrName.ToString().Contains(TEXT("Max")))
+				{
+					if (const float* Saved = Data.Attributes.Find(AttrName))
+						AbilitySystemComponent->SetNumericAttributeBase(Attr, *Saved);
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+void AMapCharacter::PlaceOnCurrentNode()
+{
+	if (!Map) return;
+
+	if (GI->CurrentNodeIndex >= 0)
+	{
+		CurrentNode = nullptr;
+		for (AMapNode* Node : Map->SpawnedNodes)
+		{
+			if (Node && Node->PointIndex == GI->CurrentNodeIndex)
+			{
+				CurrentNode = Node;
+				break;
+			}
+		}
+	}
+	else
+	{
+		CurrentNode = Map->StartNode;
+	}
+
+	if (!CurrentNode) return;
+
+	SetActorLocation(CurrentNode->GetActorLocation());
+}
+
 // Called to bind functionality to input
 void AMapCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -88,7 +183,7 @@ void AMapCharacter::TravelToNode(AMapNode* TargetNode)
 	}
 
 	// Only allow travelling to connected nodes
-	if (CurrentNode && !CurrentNode->NextNodes.Contains(TargetNode->GraphNode))
+	if (CurrentNode && !CurrentNode->NextNodes.Contains(TargetNode))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("  EARLY RETURN: TargetNode not in CurrentNode->NextNodes"));
 		return;
@@ -99,8 +194,9 @@ void AMapCharacter::TravelToNode(AMapNode* TargetNode)
 	bIsMoving = true;
 	TravelAlpha = 0.f;
 	TravelStart = GetActorLocation();
-	TravelEnd = TargetNode->GraphNode->GetActorLocation();
+	TravelEnd = TargetNode->GetActorLocation();
 	PendingNode = TargetNode;
+	GI->CurrentNodeIndex = TargetNode->PointIndex;
 }
 
 

@@ -65,8 +65,6 @@ protected:
 	void ClearMap();
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, Category = "Map Generation")
 	FMapGeneratorSettings GeneratorSettings;
@@ -135,4 +133,10 @@ public:
 	UMapNodeConnectionsWidget* ConnectionsWidget;
 
 	TArray<AActor*> SpawnedVisualizationNodes;
+
+	UFUNCTION(BlueprintCallable)
+	void SaveMapState(TArray<FVector2D>& FoliagePoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints);
+
+private:
+	void RebuildMapFromSave();
 };

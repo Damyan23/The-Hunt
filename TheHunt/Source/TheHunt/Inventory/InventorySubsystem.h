@@ -21,7 +21,7 @@ public:
 	void RegisterInventory(AActor* actor, UInventoryComponent* inventory);
 	void AddItemToActor(AActor* Target, FString ItemID, int32 Amount);
 	void RemoveItem(AActor* Target, int32 SlotIndex);
-
+	UInventoryComponent* GetInventory(AActor* InventoryHolder);
 
 private:
 	TMap<TObjectPtr<AActor>, TObjectPtr<UInventoryComponent>> Inventories; 

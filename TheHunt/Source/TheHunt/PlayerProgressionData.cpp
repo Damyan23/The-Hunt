@@ -1,4 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "TheHuntGameInstance.h"
-#include "Inventory/InventoryComponent.h" 
+
+#include "ProgressionSaveData.h"
+

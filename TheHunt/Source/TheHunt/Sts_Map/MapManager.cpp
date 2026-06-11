@@ -4,6 +4,8 @@
 #include "MapManager.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "MapGenerator.h"
+#include "ProgressionSaveData.h"
+#include "TheHuntGameInstance.h"
 #include "Components/SplineComponent.h"
 #include "Nodes/MapNode.h"
 #include "Nodes/MapNodeConnectionWidget.h"
@@ -38,6 +40,7 @@ AMapManager::AMapManager()
 void AMapManager::BeginPlay()
 {
     Super::BeginPlay();
+    UE_LOG(LogTemp, Warning, TEXT("map loads"));
 
     if (ConnectionsWidget)
         ConnectionsWidget->RemoveFromParent();
@@ -49,7 +52,11 @@ void AMapManager::BeginPlay()
         ConnectionsWidget->AddToViewport(-1);
     }
 
-    Regenerate();
+    UTheHuntGameInstance* GI = GetGameInstance<UTheHuntGameInstance>();
+    if (GI && GI->bHasMapState)
+        RebuildMapFromSave();
+    else
+        Regenerate();   // first time only
 }
 
 void AMapManager::ClearMap()
@@ -73,11 +80,50 @@ void AMapManager::ClearMap()
     SpawnedVisualizationNodes.Empty();
 }
 
-// Called every frame
-void AMapManager::Tick(float DeltaTime)
+void AMapManager::RebuildMapFromSave()
 {
-	Super::Tick(DeltaTime);
+    UTheHuntGameInstance* GI = GetGameInstance<UTheHuntGameInstance>();
+    if (!GI) return;
 
+    ClearMap();
+
+    // First pass: spawn all nodes, build an index->node lookup
+    TMap<int32, AMapNode*> Lookup;
+    for (const FSavedMapNode& Saved : GI->SavedMap)
+    {
+        AMapNode* Node = GetWorld()->SpawnActor<AMapNode>(
+            MapNodeClass, Saved.Location, FRotator::ZeroRotator);
+        Node->PointIndex = Saved.Index;
+        Node->NodeType = Saved.Type;
+        if (Saved.Event) Node->AssignEvent(Saved.Event);
+
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = Node;
+        AActor* NodeActor = GetWorld()->SpawnActor<AActor>(
+            Saved.Event->NodeActorClass,
+            Node->GetActorLocation(),
+            Node->GetActorRotation(),
+            SpawnParams
+        );
+        if (NodeActor)
+        {
+            NodeActor->AttachToActor(Node, FAttachmentTransformRules::KeepWorldTransform);
+        }
+
+        Lookup.Add(Saved.Index, Node);
+        SpawnedNodes.Add(Node);
+    }
+
+    // Second pass: reconnect NextNodes using the indices
+    for (const FSavedMapNode& Saved : GI->SavedMap)
+    {
+        AMapNode* Node = Lookup[Saved.Index];
+        for (int32 NextIdx : Saved.NextIndices)
+            if (AMapNode** Found = Lookup.Find(NextIdx))
+                Node->NextNodes.Add(*Found);
+    }
+
+    SpawnEnvironment(GI->FoliagePoints, GI->HousePoints, GI->RuinPoints);
 }
 
 void AMapManager::Regenerate()
@@ -107,6 +153,8 @@ void AMapManager::Regenerate()
 
     for (auto& Pair : MapGraph)
         SpawnedNodes.Add(Pair.Value);
+
+    SaveMapState(VegetationPoints, HousePoints, RuinPoints);
 }
 
 void AMapManager::SpawnEnvironment(TArray<FVector2D>& FoliagePoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints)
@@ -224,13 +272,10 @@ void AMapManager::SetNodeTypes(TMap<int32, AMapNode*>& MapGraph)
                 if (NodeActor)
                 {
                     NodeActor->AttachToActor(Node, FAttachmentTransformRules::KeepWorldTransform);
-                    if (AMapNode* VisualAsNode = Cast<AMapNode>(NodeActor))
-                        VisualAsNode->GraphNode = Node;
 
                     SpawnedVisualizationNodes.Add(NodeActor);
                 }
             }
-       
 
             // Spawn spline paths to next nodes
             for (AMapNode* NextNode : Node->NextNodes)
@@ -265,4 +310,34 @@ void AMapManager::SetNodeTypes(TMap<int32, AMapNode*>& MapGraph)
     }
 }
 
+void AMapManager::SaveMapState(TArray<FVector2D>& FoliagePoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints)
+{
+    UTheHuntGameInstance* GI = GetGameInstance<UTheHuntGameInstance>();
+    if (!GI) return;
+
+    GI->SavedMap.Empty();
+
+    // First build a lookup so we can write connections as indices
+    for (AMapNode* Node : SpawnedNodes)
+    {
+        if (!Node) continue;
+
+        FSavedMapNode Saved;
+        Saved.Index = Node->PointIndex;
+        Saved.Location = Node->GetActorLocation();
+        Saved.Type = Node->NodeType;
+        Saved.Event = Node->GetAssignedEvent();   // whatever getter you have for the event
+
+        // connections as indices
+        for (AMapNode* Next : Node->NextNodes)
+            if (Next) Saved.NextIndices.Add(Next->PointIndex);
+
+        GI->SavedMap.Add(Saved);
+    }
+
+    GI->FoliagePoints = FoliagePoints;
+    GI->HousePoints = HousePoints;
+    GI->RuinPoints = RuinPoints;
+    GI->bHasMapState = true;
+}
 

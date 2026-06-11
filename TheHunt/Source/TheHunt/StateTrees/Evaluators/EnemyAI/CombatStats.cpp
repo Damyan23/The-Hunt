@@ -16,6 +16,15 @@ void UCombatStats::TreeStart(FStateTreeExecutionContext& Context)
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaggerAttribute())
         .AddUObject(this, &UCombatStats::OnStaggerChanged);
 
+    const float MaxHealth = AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxHealthAttribute());
+    const float MaxStamina = AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxStaminaAttribute());
+    const float MaxStagger = AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxStaggerAttribute());
+
+    HealthPercentage = MaxHealth > 0.f ? AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetHealthAttribute()) / MaxHealth : 0.f;
+    StaminaPercentage = MaxStamina > 0.f ? AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetStaminaAttribute()) / MaxStamina : 0.f;
+    StaggerPercentage = MaxStagger > 0.f ? AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetStaggerAttribute()) / MaxStagger : 0.f;
+    Stamina = AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetStaminaAttribute());
+
     // Read the cost once at start since GE values don't change at runtime
     if (AttackStaminaCostEffect)
     {

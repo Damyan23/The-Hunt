@@ -31,6 +31,8 @@ protected:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, FInventorySlot, InventorySlot);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotMoved, FInventorySlot, InventorySlot);
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryLoaded);
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -53,10 +55,11 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnItemAdded OnItemRemoved;
 
-
 	UPROPERTY(BlueprintAssignable)
 	FOnSlotMoved OnSlotMoved;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnInventoryLoaded OnInventoryLoaded;
 	// Bound event
 	UPROPERTY()
 	FOnSlotClickedWithKey OnSlotClickedWithKey;
@@ -83,6 +86,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveFromItemQuantity(int SlotIndex, float Amount);
+
+	void LoadInventory(const TArray<FInventorySlot>& LoadedSlots);
 private:
 	int CheckForEmptySlots();
 	int CheckForExistingItemInSlot(UItemDefinition* ItemDefinition);

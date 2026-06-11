@@ -2,6 +2,7 @@
 
 
 #include "MapNode.h"
+#include "InputPlayer/PlayerCharacter.h"
 
 void AMapNode::OnEnter_Implementation(APlayerController* PC)
 {
@@ -12,9 +13,6 @@ void AMapNode::OnEnter_Implementation(APlayerController* PC)
 
 		UE_LOG(LogTemp, Warning, TEXT("does it go here?"));
 	}
-
-
-
 }
 
 void AMapNode::OnConstruction(const FTransform& Transform)

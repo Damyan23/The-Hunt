@@ -33,3 +33,14 @@ void UInventorySubsystem::RemoveItem(AActor* Target, int32 SlotIndex)
 		(*Found)->RemoveItem(&(*Found)->Slots[SlotIndex]);
 	}
 }
+
+UInventoryComponent* UInventorySubsystem::GetInventory(AActor* InventoryHolder)
+{
+	TObjectPtr<UInventoryComponent>* Found = Inventories.Find(InventoryHolder);
+	if (Found)
+	{
+		return *Found;
+	}
+	return nullptr;
+}
+

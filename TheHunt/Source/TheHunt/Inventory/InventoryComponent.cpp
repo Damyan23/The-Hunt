@@ -34,6 +34,8 @@ void UInventoryComponent::OnComponentCreated()
 
 	for (int i = 0; i < NumberOfSlots; i++)
 		Slots.Add(FInventorySlot(nullptr, false, i));
+
+	UE_LOG(LogTemp, Warning, TEXT("gets intialized"));
 }
 
 
@@ -50,15 +52,21 @@ void UInventoryComponent::AddItem(FString ItemID, int32 Amount)
 	UItemDefinition* ItemDefinition = UItemFunctionLibrary::FindItemById(ItemID);
 	if (!ItemDefinition) return;
 
-	int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
-	int AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
+	int AvailableSlot;
+	if (ItemDefinition->bIsStackable)
+	{
+		int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
+		AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
+	}
+	else
+	{
+		AvailableSlot = CheckForEmptySlots();
+	}
 
 	if (AvailableSlot < 0) return;
 
 	FInventorySlot& FreeSlot = Slots[AvailableSlot];
 	FreeSlot.AddItem(ItemDefinition, Amount);
-
-	UE_LOG(LogTemp, Warning, TEXT("AddItem: Slot %d, Quantity: %d"), AvailableSlot, FreeSlot.Quantity);
 
 	OnItemAdded.Broadcast(FreeSlot);
 }
@@ -67,15 +75,23 @@ void UInventoryComponent::AddItemUsingItemDefinition(UItemDefinition* ItemDefini
 {
 	if (!ItemDefinition) return;
 
-	int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
-	int AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
+	int AvailableSlot;
+	if (ItemDefinition->bIsStackable)
+	{
+		// Stackable: try to find an existing stack first, else an empty slot
+		int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
+		AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
+	}
+	else
+	{
+		// Non-stackable (weapons, etc.): always a fresh empty slot
+		AvailableSlot = CheckForEmptySlots();
+	}
 
 	if (AvailableSlot < 0) return;
 
 	FInventorySlot& FreeSlot = Slots[AvailableSlot];
 	FreeSlot.AddItem(ItemDefinition, Amount);
-
-	UE_LOG(LogTemp, Warning, TEXT("AddItem: Slot %d, Quantity: %d"), AvailableSlot, FreeSlot.Quantity);
 
 	OnItemAdded.Broadcast(FreeSlot);
 }
@@ -338,6 +354,13 @@ void UInventoryComponent::RemoveFromItemQuantity(int SlotIndex, float Amount)
 
 	Slot.RemoveQuantity(Amount);
 	OnItemAdded.Broadcast(Slot);
+}
+
+void UInventoryComponent::LoadInventory(const TArray<FInventorySlot>& LoadedSlots)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Inventory loaded"));
+	Slots = LoadedSlots;
+	OnInventoryLoaded.Broadcast();
 }
 
 void UInventoryComponent::MoveSlot(FInventorySlot& From, FInventorySlot& To)

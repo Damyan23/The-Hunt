@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "NodeTypeData.h"
-#include "InputPlayer/PlayerCharacter.h"
 #include "Sts_Map/Node Events/MapEventData.h"
 #include "UObject/Class.h"
 #include "MapNode.generated.h"
@@ -43,5 +42,7 @@ public:
 
     UPROPERTY()
     TObjectPtr<AMapNode> GraphNode;
+
+    UMapEventData* GetAssignedEvent() { return Event; }
 };
 
