@@ -35,6 +35,14 @@ void AMapCharacter::BeginPlay()
 
 	FindMapManager();
 	PlaceOnCurrentNode();
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		UBaseAttributeSet::GetHealthAttribute())
+		.AddUObject(this, &AMapCharacter::OnHealthChanged);
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaminaAttribute()).AddUObject(this, &AMapCharacter::OnStaminaChanged);
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaggerAttribute()).AddUObject(this, &AMapCharacter::OnStaggerChanged);
 }
 
 // Called every frame
@@ -99,9 +107,12 @@ bool AMapCharacter::LoadSaveData()
 		{
 			if (UInventoryComponent* Inv = Sub->GetInventory(this))
 			{
-				Inv->LoadInventory(GI->SavedProgression.InventorySlots);
+				Inv->LoadInventory(Data.InventorySlots);
 			}
 		}
+
+		if (Data.EquippedWeaponDef)
+			ItemDefinition = Data.EquippedWeaponDef;
 
 		// --- Restore GAS attributes ---
 		if (AbilitySystemComponent)
@@ -140,6 +151,21 @@ void AMapCharacter::PlaceOnCurrentNode()
 {
 	if (!Map) return;
 
+	UE_LOG(LogTemp, Warning, TEXT("PlaceOnNode: CurrentNodeIndex=%d, StartNode=%s"),
+		GI->CurrentNodeIndex,
+		Map->StartNode ? *Map->StartNode->GetName() : TEXT("NULL"));
+
+	if (GI->CurrentNodeIndex >= 0)
+	{
+		// ... finds by index
+		UE_LOG(LogTemp, Warning, TEXT("  Using SAVED index path"));
+	}
+	else
+	{
+		CurrentNode = Map->StartNode;
+		UE_LOG(LogTemp, Warning, TEXT("  Using START node path"));
+	}
+
 	if (GI->CurrentNodeIndex >= 0)
 	{
 		CurrentNode = nullptr;
@@ -158,8 +184,36 @@ void AMapCharacter::PlaceOnCurrentNode()
 	}
 
 	if (!CurrentNode) return;
-
 	SetActorLocation(CurrentNode->GetActorLocation());
+
+
+}
+
+bool AMapCharacter::SaveData()
+{
+	if (!GI)
+		return false;
+
+	FPlayerProgressionData SaveData = GI->GetProgression();
+	SaveData.InventorySlots = InventoryComponent->Slots;
+	SaveData.Perks = Perks;
+
+	// Gather GAS attributes
+	if (AbilitySystemComponent)
+	{
+		TArray<FGameplayAttribute> Attributes;
+		AbilitySystemComponent->GetAllAttributes(Attributes);
+		for (const FGameplayAttribute& Attr : Attributes)
+		{
+			const FName AttrName = Attr.GetUProperty()->GetFName();
+			SaveData.Attributes.Add(AttrName, AbilitySystemComponent->GetNumericAttribute(Attr));
+		}
+	}
+
+	// Actually store it on the game instance
+	GI->StoreProgression(SaveData);
+
+	return true;
 }
 
 // Called to bind functionality to input
@@ -171,32 +225,70 @@ void AMapCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 
 void AMapCharacter::TravelToNode(AMapNode* TargetNode)
 {
-	UE_LOG(LogTemp, Warning, TEXT("TravelToNode called. TargetNode=%s, bIsMoving=%s"),
-		TargetNode ? *TargetNode->GetName() : TEXT("NULL"),
-		bIsMoving ? TEXT("TRUE") : TEXT("FALSE"));
+	if (!TargetNode) return;
 
-	if (!TargetNode || bIsMoving)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("  EARLY RETURN: %s"),
-			!TargetNode ? TEXT("TargetNode is NULL") : TEXT("bIsMoving is TRUE"));
-		return;
-	}
+	// If the clicked node is a visualization actor, redirect to its graph node
+	if (TargetNode->GraphNode)
+		TargetNode = TargetNode->GraphNode;
 
-	// Only allow travelling to connected nodes
+	if (bIsMoving) return;
+
 	if (CurrentNode && !CurrentNode->NextNodes.Contains(TargetNode))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("  EARLY RETURN: TargetNode not in CurrentNode->NextNodes"));
 		return;
-	}
 
-	UE_LOG(LogTemp, Warning, TEXT("  OK, travelling to %s"), *TargetNode->GetName());
-
+	
 	bIsMoving = true;
 	TravelAlpha = 0.f;
 	TravelStart = GetActorLocation();
 	TravelEnd = TargetNode->GetActorLocation();
 	PendingNode = TargetNode;
 	GI->CurrentNodeIndex = TargetNode->PointIndex;
+}
+
+void AMapCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	float Delta = FMath::Abs(Data.NewValue - Data.OldValue);
+	if (Delta > 0.5f)
+		OnHealthChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+			UBaseAttributeSet::GetMaxHealthAttribute()));
+}
+
+void AMapCharacter::OnStaminaChanged(const FOnAttributeChangeData& Data)
+{
+	float Delta = FMath::Abs(Data.NewValue - Data.OldValue);
+	if (Delta > 0.5f)
+		OnStaminaChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+			UBaseAttributeSet::GetMaxStaminaAttribute()));
+}
+
+void AMapCharacter::OnStaggerChanged(const FOnAttributeChangeData& Data)
+{
+	OnStaggerChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+		UBaseAttributeSet::GetMaxStaggerAttribute()));
+}
+
+void AMapCharacter::ApplyPerk(UPerkData* Perk)
+{
+	if (!Perk || !Perk->Effect) return;
+
+	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(Perk->Effect, 1.f, Context);
+	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
+
+	for (int i = 0; i < Perks.Num() - 1; i++)
+	{
+		FPerkSlot& Slot = Perks[i];
+
+		if (!Slot.bIsOccupied)
+		{
+			Slot.PerkData = Perk;
+			Slot.bIsOccupied = true;
+			Slot.SlotIndex = i;
+
+			OnPerkApplied.Broadcast(Slot);
+			break;
+		}
+	}
 }
 
 

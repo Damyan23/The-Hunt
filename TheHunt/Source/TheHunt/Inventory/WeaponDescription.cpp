@@ -7,6 +7,13 @@ void UWeaponDescription::SetDescription(UItemDefinition* ItemDefinition)
 {
     if (!ItemDefinition) return;
 
+    Rune1->SetVisibility(ESlateVisibility::Hidden);
+    Rune2->SetVisibility(ESlateVisibility::Hidden);
+    Rune3->SetVisibility(ESlateVisibility::Hidden);
+    Rune1Description->SetVisibility(ESlateVisibility::Hidden);
+    Rune2Description->SetVisibility(ESlateVisibility::Hidden);
+    Rune3Description->SetVisibility(ESlateVisibility::Hidden);
+
     // Set common fields
     ItemName->SetText(FText::FromName(ItemDefinition->ItemName));
     ItemDescription->SetText(ItemDefinition->ItemDescription);

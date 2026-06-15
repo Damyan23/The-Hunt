@@ -121,7 +121,18 @@ private:
 
     FVector DodgeDirection = FVector::ZeroVector;
     bool bDodgeDirectionLocked = false;
+    
+    UPROPERTY(EditAnywhere, Category = "Animation|Hit Reactions")
+    UAnimMontage* DefaultHitF;
 
+    UPROPERTY(EditAnywhere, Category = "Animation|Hit Reactions")
+    UAnimMontage* DefaultHitB;
+
+    UPROPERTY(EditAnywhere, Category = "Animation|Hit Reactions")
+    UAnimMontage* DefaultHitL;
+
+    UPROPERTY(EditAnywhere, Category = "Animation|Hit Reactions")
+    UAnimMontage* DefaultHitR;
 protected:
     // ============================================================
     // INVENTORY & HOTBAR
@@ -230,7 +241,6 @@ protected:
     // MISC
     // ============================================================
     void ShowHitVignette();
-    void TryPlayFootsteps();
     void PlayHitReaction(AActor* Attacker);
 
 private:
@@ -278,6 +288,9 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass);
+
+    UFUNCTION(BlueprintCallable)
+    float UnequipWeapon();
 
     void BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex);
     void EquipRuneToWeapon(UItemDefinition* RuneDef);

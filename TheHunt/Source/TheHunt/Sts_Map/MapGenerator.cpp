@@ -500,9 +500,9 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 			int LeftX = GridWidth / 2 - i;
 			int RightX = GridWidth / 2 + i;
 
-			if (LeftX >= 0 && Grid[LeftX][GridHeight - 1] != 0)
+			if (LeftX >= 0 && PathGrid[LeftX][GridHeight - 1] != 0)
 			{
-				int32 PointIndex = Grid[LeftX][GridHeight - 1] - 1;
+				int32 PointIndex = PathGrid[LeftX][GridHeight - 1] - 1;
 				float Dist = FVector2D::Distance(Points[PointIndex], CenterTop);
 				if (Dist < ClosestDistance)
 				{
@@ -511,9 +511,9 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 				}
 			}
 
-			if (RightX < GridWidth && Grid[RightX][GridHeight - 1] != 0)
+			if (RightX < GridWidth && PathGrid[RightX][GridHeight - 1] != 0)
 			{
-				int32 PointIndex = Grid[RightX][GridHeight - 1] - 1;
+				int32 PointIndex = PathGrid[RightX][GridHeight - 1] - 1;
 				float Dist = FVector2D::Distance(Points[PointIndex], CenterTop);
 				if (Dist < ClosestDistance)
 				{
@@ -529,7 +529,7 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 	}
 
 	// Find end point (bottom row, closest to center)
-	int32 EndCell = Grid[GridWidth / 2][0];
+	int32 EndCell = PathGrid[GridWidth / 2][0];
 	if (EndCell != 0)
 	{
 		EndPointIndex = EndCell - 1;
@@ -545,7 +545,7 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 
 			if (LeftX >= 0 && Grid[LeftX][0] != 0)
 			{
-				int32 PointIndex = Grid[LeftX][0] - 1;
+				int32 PointIndex = PathGrid[LeftX][0] - 1;
 				float Dist = FVector2D::Distance(Points[PointIndex], CenterBottom);
 				if (Dist < ClosestDistance)
 				{
@@ -554,9 +554,9 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 				}
 			}
 
-			if (RightX < GridWidth && Grid[RightX][0] != 0)
+			if (RightX < GridWidth && PathGrid[RightX][0] != 0)
 			{
-				int32 PointIndex = Grid[RightX][0] - 1;
+				int32 PointIndex = PathGrid[RightX][0] - 1;
 				float Dist = FVector2D::Distance(Points[PointIndex], CenterBottom);
 				if (Dist < ClosestDistance)
 				{
@@ -565,7 +565,7 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 				}
 			}
 
-			float NextCellDist = (i + 1) * CellSize;
+			float NextCellDist = (i + 1) * PathCellSize;
 			if (EndPointIndex != -1 && NextCellDist > ClosestDistance)
 				break;
 		}

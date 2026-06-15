@@ -78,7 +78,6 @@ void APlayerCharacter::BeginPlay()
 		AttachWeapon();
 	}
 
-	AttachWeapon();
 
 	if (PC)
 	{
@@ -93,16 +92,7 @@ void APlayerCharacter::BeginPlay()
 		HitVignetteMID = UMaterialInstanceDynamic::Create(HitVignetteMaterial, this);
 		PostProcessComponent->AddOrUpdateBlendable(HitVignetteMID);
 	}
-
-	GetWorldTimerManager().SetTimer(
-		FootstepTimerHandle,
-		this,
-		&APlayerCharacter::TryPlayFootsteps,
-		FootstepInterval,
-		false // not repeating
-	);
 }
-
 
 FPlayerProgressionData APlayerCharacter::GatherProgression()
 {
@@ -117,6 +107,12 @@ FPlayerProgressionData APlayerCharacter::GatherProgression()
 		Data.InventorySlots = Inv->GetInventory(this)->Slots;
 	}
 
+	if (Weapon)
+	{
+		Data.EquippedWeaponDef = Weapon->ItemDefinition;
+	}
+		
+
 	// Attributes
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
@@ -125,6 +121,8 @@ FPlayerProgressionData APlayerCharacter::GatherProgression()
 		for (const FGameplayAttribute& A : Attrs)
 			Data.Attributes.Add(FName(*A.GetName()), ASC->GetNumericAttribute(A));
 	}
+
+
 	return Data;
 }
 
@@ -204,6 +202,10 @@ void APlayerCharacter::OnDeath()
 {
 	Super::OnDeath();
 
+	UE_LOG(LogTemp, Warning, TEXT("OnDeath: DeathMontage=%s, AnimInstance=%s"),
+		DeathMontage ? *DeathMontage->GetName() : TEXT("NULL"),
+		GetMesh()->GetAnimInstance() ? TEXT("valid") : TEXT("NULL"));
+
 	if (PC)
 	{
 		PC->SetIgnoreMoveInput(true);
@@ -262,31 +264,12 @@ void APlayerCharacter::Respawn()
 		DeathScreenWidget = nullptr;
 	}
 
-	// Move to the saved spawn point
-	SetActorLocation(LastSpawnPoint);
-	SetActorRotation(FRotator::ZeroRotator);
+	// Full run reset
+	if (UTheHuntGameInstance* GI = GetGameInstance<UTheHuntGameInstance>())
+		GI->ResetRun();
 
-	AbilitySystemComponent->RemoveLooseGameplayTag(
-		FGameplayTag::RequestGameplayTag("State.Dead"));
-
-	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
-		Capsule->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
-	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-
-	if (PC)
-	{
-		PC->SetIgnoreMoveInput(false);
-		PC->SetIgnoreLookInput(false);
-	}
-
-	// Reset health/stamina via your init effect
-	if (ReviveEffect)
-	{
-		AbilitySystemComponent->ApplyGameplayEffectToSelf(
-			ReviveEffect.GetDefaultObject(), 1.f,
-			AbilitySystemComponent->MakeEffectContext());
-	}
+	// Go back to the map level — it will regenerate fresh and place the player on the start node
+	UGameplayStatics::OpenLevel(this, FName("Lvl_Map"));
 }
 
 void APlayerCharacter::OnBlockBrokenMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -412,6 +395,36 @@ void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
 	AttachWeapon();
 }
 
+float APlayerCharacter::UnequipWeapon()
+{
+	if (!Weapon) return 0;
+
+	// Store reference BEFORE nulling out Weapon
+	AMeleeWeapon* WeaponToDestroy = Weapon;
+
+	// Play the exit-combat montage from the weapon being removed
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	float MontageDuration = 1.f; // default fallback
+	if (AnimInstance && WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat)
+		MontageDuration = AnimInstance->Montage_Play(
+			WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat) / 2;
+
+	// Clear weapon state now so the rest of the game knows we're unarmed
+	Weapon = nullptr;
+	WeaponClass = nullptr;
+	CombatType = ECombatType::Unarmed;
+	OnWeaponEquipped.Broadcast(CombatType);
+
+	// Destroy the weapon actor after the unequip animation plays
+	FTimerHandle UnequipTimer;
+	GetWorldTimerManager().SetTimer(UnequipTimer, [WeaponToDestroy]()
+		{
+			if (IsValid(WeaponToDestroy))
+				WeaponToDestroy->Destroy();
+		}, MontageDuration, false);
+
+	return MontageDuration;
+}
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
@@ -656,33 +669,12 @@ void APlayerCharacter::ShowHitVignette()
 		}, 0.016f, true); // runs every frame roughly
 }
 
-void APlayerCharacter::TryPlayFootsteps()
-{
-	float Speed = GetVelocity().Size();
-
-	if (Speed < 10.f || GetCharacterMovement()->IsFalling())
-	{
-		// Reschedule even when not playing, so it picks up again when moving
-		GetWorldTimerManager().SetTimer(FootstepTimerHandle, this, &APlayerCharacter::TryPlayFootsteps, FootstepInterval, false);
-		return;
-	}
-
-	float Interval = FMath::GetMappedRangeValueClamped(
-		FVector2D(0.f, 600.f),
-		FVector2D(0.5f, 0.25f),
-		Speed
-	);
-
-	GetWorldTimerManager().SetTimer(FootstepTimerHandle, this, &APlayerCharacter::TryPlayFootsteps, Interval, false);
-	PlayFootstepSounds();
-}
-
 void APlayerCharacter::PlayHitReaction(AActor* Attacker)
 {
 	if (AbilitySystemComponent->HasMatchingGameplayTag(
 		FGameplayTag::RequestGameplayTag("State.Dead"))) return;
 
-	if (!Attacker || !Weapon) return;
+	if (!Attacker) return;   // only need an attacker now, not a weapon
 
 	FVector ToAttacker = Attacker->GetActorLocation() - GetActorLocation();
 	ToAttacker.Z = 0;
@@ -693,27 +685,49 @@ void APlayerCharacter::PlayHitReaction(AActor* Attacker)
 
 	UE_LOG(LogTemp, Warning, TEXT("DotForward: %.2f | DotRight: %.2f"), DotForward, DotRight);
 
+	// Pick the montage set: weapon's if armed, defaults if not
+	UAnimMontage* MontageF;
+	UAnimMontage* MontageB;
+	UAnimMontage* MontageL;
+	UAnimMontage* MontageR;
+
+	if (Weapon)
+	{
+		const FWeaponData& WeaponData = Weapon->ItemDefinition->WeaponData;
+		MontageF = WeaponData.HitF;
+		MontageB = WeaponData.HitB;
+		MontageL = WeaponData.HitL;
+		MontageR = WeaponData.HitR;
+	}
+	else
+	{
+		MontageF = DefaultHitF;
+		MontageB = DefaultHitB;
+		MontageL = DefaultHitL;
+		MontageR = DefaultHitR;
+	}
+
+	// Pick direction
 	UAnimMontage* HitMontage = nullptr;
-	FWeaponData WeaponData = Weapon->ItemDefinition->WeaponData;
 
 	if (DotForward > 0.5f)
 	{
-		HitMontage = WeaponData.HitF;
+		HitMontage = MontageF;
 		UE_LOG(LogTemp, Warning, TEXT("Hit direction: FRONT"));
 	}
 	else if (DotForward < -0.5f)
 	{
-		HitMontage = WeaponData.HitB;
+		HitMontage = MontageB;
 		UE_LOG(LogTemp, Warning, TEXT("Hit direction: BACK"));
 	}
 	else if (DotRight < 0.f)
 	{
-		HitMontage = WeaponData.HitL;
+		HitMontage = MontageL;
 		UE_LOG(LogTemp, Warning, TEXT("Hit direction: RIGHT"));
 	}
 	else
 	{
-		HitMontage = WeaponData.HitR;
+		HitMontage = MontageR;
 		UE_LOG(LogTemp, Warning, TEXT("Hit direction: LEFT"));
 	}
 
@@ -1001,29 +1015,10 @@ void APlayerCharacter::UseHotbarSlot(int32 Index)
 	TSubclassOf<AMeleeWeapon> NewWeaponClass = HotbarSlots[Index]->GetWeaponClass();
 	if (!NewWeaponClass) return;
 
+	// Pressing the slot of the already-equipped weapon → unequip
 	if (Weapon && Weapon->ItemDefinition == HotbarSlots[Index])
 	{
-		// Store reference BEFORE nulling out Weapon
-		AMeleeWeapon* WeaponToDestroy = Weapon;
-
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		float MontageDuration = 1.f; // default fallback
-		if (AnimInstance && WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat)
-			MontageDuration = AnimInstance->Montage_Play(WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat) / 2;
-
-		// Now safe to null out
-		Weapon = nullptr;
-		WeaponClass = nullptr;
-		CombatType = ECombatType::Unarmed;
-		OnWeaponEquipped.Broadcast(CombatType);
-
-		FTimerHandle UnequipTimer;
-		GetWorldTimerManager().SetTimer(UnequipTimer, [WeaponToDestroy]()
-			{
-				if (IsValid(WeaponToDestroy))
-					WeaponToDestroy->Destroy();
-			}, MontageDuration, false);
-
+		UnequipWeapon();
 		return;
 	}
 

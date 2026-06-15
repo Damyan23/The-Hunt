@@ -45,8 +45,6 @@ void UCombatStats::Tick(FStateTreeExecutionContext& Context, const float DeltaTi
 {
 	Super::Tick(Context, DeltaTime);
     TagContainer = AbilitySystemComponent->GetOwnedGameplayTags();
-
-    UE_LOG(LogTemp, Warning, TEXT("Util in -> HP:%.2f Stam:%.2f Stag:%.2f"), HealthPercentage, StaminaPercentage, StaggerPercentage);
 }
 
 void UCombatStats::OnHealthChanged(const FOnAttributeChangeData& Data)

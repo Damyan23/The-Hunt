@@ -81,7 +81,7 @@ public:
 	UFUNCTION()
 	void SpawnEnvironment(TArray<FVector2D>& SpawnPoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints);
 
-	void SetNodeTypes(TMap<int32, AMapNode*>& MapGraph);
+	void SetNodeTypes(TMap<int32, AMapNode*>& MapGraph, int32 StartIndex, int32 EndIndex);
 
 	UPROPERTY(EditAnywhere)
 	UStaticMesh* FoliageMesh;
@@ -136,6 +136,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SaveMapState(TArray<FVector2D>& FoliagePoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints);
+
+	// In MapManager.h
+	UPROPERTY(EditAnywhere, Category = "Map")
+	FRotator NodeRotation = FRotator(0.f, -90.f, 0.f); // tune to taste
 
 private:
 	void RebuildMapFromSave();

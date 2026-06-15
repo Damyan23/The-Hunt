@@ -42,5 +42,8 @@ public:
 	UPROPERTY()
 	TArray<FVector2D> RuinPoints;
 
-	int32 CurrentNodeIndex;
+	int32 CurrentNodeIndex = -1;
+
+	UFUNCTION()
+	void ResetRun();
 };

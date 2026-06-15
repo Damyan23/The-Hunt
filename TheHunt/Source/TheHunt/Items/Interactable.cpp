@@ -12,10 +12,15 @@ void AInteractable::BeginPlay()
 {
     Super::BeginPlay();
 
-    ItemDefinition = UItemFunctionLibrary::FindItemById(ItemID);
+    if (HasAnyFlags(RF_ClassDefaultObject)) return;
+    if (!GetWorld() || !GetWorld()->IsGameWorld()) return;
 
-    if (ItemDefinition && ItemDefinition->ItemType == EItemType::Weapon)
-        ItemDefinition = DuplicateObject<UItemDefinition>(ItemDefinition, this);
+    if (!ItemDefinition)
+    {
+        UItemDefinition* Original = UItemFunctionLibrary::FindItemById(ItemID);
+        if (Original && GetGameInstance())
+            ItemDefinition = DuplicateObject<UItemDefinition>(Original, GetGameInstance());
+    }
 }
 
 AInteractable::AInteractable()
@@ -45,6 +50,6 @@ void AInteractable::AddToInventory(AActor* Interactor)
         return;
     }
 
-    Subsystem->AddItemToActor(Interactor, ItemID, ItemDefinition->CurrentQuantity);
+    Subsystem->AddItemToActor(Interactor, ItemDefinition, ItemDefinition->CurrentQuantity);
     AActor::Destroy();
 }

@@ -47,6 +47,7 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 }
 
+/*
 void UInventoryComponent::AddItem(FString ItemID, int32 Amount)
 {
 	UItemDefinition* ItemDefinition = UItemFunctionLibrary::FindItemById(ItemID);
@@ -63,6 +64,7 @@ void UInventoryComponent::AddItem(FString ItemID, int32 Amount)
 		AvailableSlot = CheckForEmptySlots();
 	}
 
+
 	if (AvailableSlot < 0) return;
 
 	FInventorySlot& FreeSlot = Slots[AvailableSlot];
@@ -70,30 +72,17 @@ void UInventoryComponent::AddItem(FString ItemID, int32 Amount)
 
 	OnItemAdded.Broadcast(FreeSlot);
 }
-
+*/
 void UInventoryComponent::AddItemUsingItemDefinition(UItemDefinition* ItemDefinition, float Amount)
 {
 	if (!ItemDefinition) return;
-
-	int AvailableSlot;
-	if (ItemDefinition->bIsStackable)
-	{
-		// Stackable: try to find an existing stack first, else an empty slot
-		int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
-		AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
-	}
-	else
-	{
-		// Non-stackable (weapons, etc.): always a fresh empty slot
-		AvailableSlot = CheckForEmptySlots();
-	}
-
+	// No duplication here — the def passed in is already the unique instance
+	int AvailableSlot = ItemDefinition->bIsStackable
+		? (CheckForExistingItemInSlot(ItemDefinition) >= 0 ? CheckForExistingItemInSlot(ItemDefinition) : CheckForEmptySlots())
+		: CheckForEmptySlots();
 	if (AvailableSlot < 0) return;
-
-	FInventorySlot& FreeSlot = Slots[AvailableSlot];
-	FreeSlot.AddItem(ItemDefinition, Amount);
-
-	OnItemAdded.Broadcast(FreeSlot);
+	Slots[AvailableSlot].AddItem(ItemDefinition, Amount);
+	OnItemAdded.Broadcast(Slots[AvailableSlot]);
 }
 
 void UInventoryComponent::RemoveItem(FInventorySlot* Slot)
@@ -150,6 +139,11 @@ void UInventoryComponent::EquipRuneToWeapon(URuneBase* Rune, int32 SlotIndex)
 	FInventorySlot& Slot = Slots[SlotIndex];
 	UE_LOG(LogTemp, Warning, TEXT("  Slot occupied: %s"), Slot.bIsOccupied ? TEXT("YES") : TEXT("NO"));
 	UE_LOG(LogTemp, Warning, TEXT("  ItemDefinition: %s"), Slot.ItemDefinition ? *Slot.ItemDefinition->GetName() : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("  Slot %d ItemDef: %s (%p)"),
+		SlotIndex,
+		Slot.ItemDefinition ? *Slot.ItemDefinition->GetName() : TEXT("NULL"),
+		static_cast<void*>(Slot.ItemDefinition));
+
 
 	if (!Slot.bIsOccupied || !Slot.ItemDefinition)
 	{
@@ -303,14 +297,14 @@ void UInventoryComponent::UpdateSlotOnDragAndDrop(int32 SourceIndex, int32 Targe
 	if (!Source.ItemDefinition) return;
 
 	// Rune on weapon
+	// Rune on weapon
 	if (Source.ItemDefinition->ItemType == EItemType::Rune
 		&& Target.ItemDefinition
 		&& Target.ItemDefinition->ItemType == EItemType::Weapon)
 	{
-		APlayerCharacter* Player = Cast<APlayerCharacter>(
-			GetWorld()->GetFirstPlayerController()->GetPawn());
-		if (Player && Player->Weapon)
-			Player->EquipRuneToWeapon(Source.ItemDefinition);
+		URuneBase* Rune = Source.ItemDefinition->GetRune();
+		if (Rune)
+			EquipRuneToWeapon(Rune, TargetIndex);     
 
 		Source.ClearSlot();
 		OnItemRemoved.Broadcast(Source);

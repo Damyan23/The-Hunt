@@ -36,8 +36,10 @@ protected:
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	/*
 	UFUNCTION(BlueprintCallable)
 	void AddItem(FString ItemID, int32 Amount);
+	*/
 	UFUNCTION(BlueprintCallable)
 	void AddItemUsingItemDefinition(UItemDefinition* ItemDefinition, float Amount);
 	void RemoveItem(FInventorySlot* Slot);

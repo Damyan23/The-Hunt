@@ -18,7 +18,7 @@ protected:
 public:
     AInteractable();
 
-    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    UPROPERTY(BlueprintReadOnly)
     TObjectPtr<UItemDefinition> ItemDefinition;
 
     UPROPERTY(EditDefaultsOnly, Category = "Item")

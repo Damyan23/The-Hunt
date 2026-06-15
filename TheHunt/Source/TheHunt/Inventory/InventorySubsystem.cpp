@@ -16,12 +16,12 @@ void UInventorySubsystem::RegisterInventory(AActor* actor, UInventoryComponent* 
 	}
 }
 
-void UInventorySubsystem::AddItemToActor(AActor* Target, FString ItemID, int32 Amount)
+void UInventorySubsystem::AddItemToActor(AActor* Target, UItemDefinition* ItemDefinition, int32 Amount)
 {
 	TObjectPtr<UInventoryComponent>* Found = Inventories.Find(Target);
 	if (Found && *Found)
 	{
-		(*Found)->AddItem(ItemID, Amount);
+		(*Found)->AddItemUsingItemDefinition(ItemDefinition, Amount);
 	}
 }
 

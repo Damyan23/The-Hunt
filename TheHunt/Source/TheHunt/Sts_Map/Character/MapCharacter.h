@@ -27,15 +27,26 @@ protected:
 
 
 	//============================================================
-	//  Initialization / Setup
+	//  INITIALIZATION / SETUP
 	//============================================================
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	void SetupMovement();
 	void FindMapManager();
-	bool LoadSaveData();
 	void PlaceOnCurrentNode();
 
+	//============================================================
+	//  SAVA DATA
+	//============================================================
+	bool LoadSaveData();
+public:
+	bool SaveData();
+
+	//============================================================
+	//  INVENTORY
+	//============================================================
+	UPROPERTY()
+	TObjectPtr<UInventoryComponent> InventoryComponent;
 
 	//============================================================
 	//  ABILITY SYSTEM
@@ -49,6 +60,19 @@ public:
 
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+	// ============================================================
+	// PERKS
+	// ============================================================
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<FPerkSlot> Perks;
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyPerk(UPerkData* Perk);
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPerkApplied, FPerkSlot, PerkSlot);
+
+	UPROPERTY(BlueprintAssignable, Category = "Perks")
+	FOnPerkApplied OnPerkApplied;
 
 	//============================================================
 	//  MAP REFERENCES
@@ -89,6 +113,26 @@ private:
 	UPROPERTY()
 	TObjectPtr<AMapNode> PendingNode = nullptr;
 
+	//============================================================
+	//  ATTRIBUTE CHANGE DELEGATES (Blueprint-assignable)
+	//============================================================
+public:
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float, HealthPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnHealthChanged OnHealthChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChanged, float, StaminaPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnStaminaChanged OnStaminaChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaggerChanged, float, StaggerPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnStaggerChanged OnStaggerChangedEvent;
+
+protected:
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
+	virtual void OnStaminaChanged(const FOnAttributeChangeData& Data);
+	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
 
 	//============================================================
 	//  CASHED REFERENCES
@@ -99,4 +143,7 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UTheHuntGameInstance> GI;
+
+	UPROPERTY()
+	TObjectPtr<UItemDefinition> ItemDefinition;
 };
