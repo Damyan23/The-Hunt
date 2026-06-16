@@ -7,6 +7,7 @@
 #include "Engine/GameInstance.h"
 #include "Inventory/InventorySlot.h"
 #include "Items/ItemSoundData.h"
+#include "MainMenu/TransitionWidget.h"
 #include "Sts_Map/Nodes/MapNode.h"
 #include "TheHuntGameInstance.generated.h"
 
@@ -46,4 +47,21 @@ public:
 
 	UFUNCTION()
 	void ResetRun();
+
+	// In your GameInstance
+	UFUNCTION(BlueprintCallable)
+	void TransitionToLevel(TSoftObjectPtr<UWorld> Level);
+
+	UPROPERTY(EditAnywhere, Category = "Transition")
+	TSubclassOf<UTransitionWidget> TransitionWidgetClass;
+
+	// Dissolve timing
+	UPROPERTY(EditAnywhere, Category = "Transition")
+	float TransitionDuration = 1.f;
+
+	TSoftObjectPtr<UWorld> PendingLevel;
+
+private:
+	UPROPERTY()
+	UTransitionWidget* ActiveTransitionWidget = nullptr;
 };

@@ -24,7 +24,7 @@ void AInteractable::BeginPlay()
 }
 
 AInteractable::AInteractable()
-{
+{   
     PrimaryActorTick.bCanEverTick = false;
 }
 

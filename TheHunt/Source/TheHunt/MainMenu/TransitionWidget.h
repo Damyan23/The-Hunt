@@ -28,6 +28,7 @@ class THEHUNT_API UTransitionWidget : public UUserWidget
 	float DissolveDuration = 1.f;
 	bool  bDissolving = false;
 
+public:
 	UFUNCTION(BlueprintCallable)
 	void PlayDissolve(float From, float To, float Duration);
 
