@@ -36,6 +36,19 @@ void AMapCharacter::BeginPlay()
 	FindMapManager();
 	PlaceOnCurrentNode();
 
+
+	if (PC)
+	{
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute MaxHealth");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute health");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute MaxStamina");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute stamina");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute MaxStagger");
+		PC->ConsoleCommand("AbilitySystem.DebugAttribute stagger");
+		PC->ConsoleCommand("AbilitySystem.DebugAbilityTags");
+	}
+
+
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		UBaseAttributeSet::GetHealthAttribute())
 		.AddUObject(this, &AMapCharacter::OnHealthChanged);
@@ -43,7 +56,26 @@ void AMapCharacter::BeginPlay()
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaminaAttribute()).AddUObject(this, &AMapCharacter::OnStaminaChanged);
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaggerAttribute()).AddUObject(this, &AMapCharacter::OnStaggerChanged);
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		UBaseAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &AMapCharacter::OnMaxHealthChanged);
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		UBaseAttributeSet::GetMaxStaminaAttribute()).AddUObject(this, &AMapCharacter::OnMaxStaminaChanged);
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		UBaseAttributeSet::GetMaxStaggerAttribute()).AddUObject(this, &AMapCharacter::OnMaxStaggerChanged);
+
+	// At the end of BeginPlay, after binding delegates — push initial values to UI
+	OnMaxHealthChangedEvent.Broadcast(
+		AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxHealthAttribute()));
+	OnMaxStaminaChangedEvent.Broadcast(
+		AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxStaminaAttribute()));
+	OnMaxStaggerChangedEvent.Broadcast(
+		AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxStaggerAttribute()));
 }
+
+
 
 // Called every frame
 void AMapCharacter::Tick(float DeltaTime)
@@ -267,15 +299,47 @@ void AMapCharacter::OnStaggerChanged(const FOnAttributeChangeData& Data)
 		UBaseAttributeSet::GetMaxStaggerAttribute()));
 }
 
+void AMapCharacter::OnMaxHealthChanged(const FOnAttributeChangeData& Data)
+{
+	OnMaxHealthChangedEvent.Broadcast(Data.NewValue);
+	float CurrentHealth = AbilitySystemComponent->GetNumericAttribute(
+		UBaseAttributeSet::GetHealthAttribute());
+	OnHealthChangedEvent.Broadcast(CurrentHealth / Data.NewValue);
+}
+
+void AMapCharacter::OnMaxStaminaChanged(const FOnAttributeChangeData& Data)
+{
+	OnMaxStaminaChangedEvent.Broadcast(Data.NewValue);
+	float CurrentStamina = AbilitySystemComponent->GetNumericAttribute(
+		UBaseAttributeSet::GetStaminaAttribute());
+	OnStaminaChangedEvent.Broadcast(CurrentStamina / Data.NewValue);
+}
+
+void AMapCharacter::OnMaxStaggerChanged(const FOnAttributeChangeData& Data)
+{
+	OnMaxStaggerChangedEvent.Broadcast(Data.NewValue);
+	float CurrentStagger = AbilitySystemComponent->GetNumericAttribute(
+		UBaseAttributeSet::GetStaggerAttribute());
+	OnStaggerChangedEvent.Broadcast(CurrentStagger / Data.NewValue);
+}
+
 void AMapCharacter::ApplyPerk(UPerkData* Perk)
 {
 	if (!Perk || !Perk->Effect) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("Before: MaxHealth=%f MaxStamina=%f"),
+		AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxHealthAttribute()),
+		AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxStaminaAttribute()));
 
 	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
 	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(Perk->Effect, 1.f, Context);
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 
-	for (int i = 0; i < Perks.Num() - 1; i++)
+	UE_LOG(LogTemp, Warning, TEXT("After: MaxHealth=%f MaxStamina=%f"),
+		AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxHealthAttribute()),
+		AbilitySystemComponent->GetNumericAttribute(UBaseAttributeSet::GetMaxStaminaAttribute()));
+
+	for (int i = 0; i < Perks.Num(); i++)
 	{
 		FPerkSlot& Slot = Perks[i];
 

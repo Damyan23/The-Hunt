@@ -87,6 +87,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
     class UInputAction* ToggleCombatAction;
 
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* HealAction;
+
     // ============================================================
     // LOCK-ON
     // ============================================================
@@ -188,6 +191,15 @@ protected:
 
     FTimerHandle FootstepTimerHandle;
 
+    // ============================================================
+    // HEALING
+    // ============================================================
+
+public:
+    UPROPERTY()
+    TObjectPtr<UItemDefinition> HealingItem;
+
+    int HealingItemSlotIndex;
 
     // ============================================================
     // COMBAT
@@ -228,6 +240,7 @@ protected:
     void Interact();
     void ToggleInventory();
     void Dash();
+    void Heal();
 
     // ============================================================
     // LOCK-ON LOGIC
@@ -277,6 +290,18 @@ public:
     // ============================================================
     FPlayerProgressionData GatherProgression();
     void ApplyProgression(const FPlayerProgressionData& Data);
+
+    // ============================================================
+    // HEALING
+    // ============================================================
+    UFUNCTION(BlueprintCallable)
+    void EquipHealingItem(UItemDefinition* ItemDef, int SlotIndex);
+
+    UFUNCTION(BlueprintCallable)
+    void UnequipHealingItem();
+
+    UFUNCTION(BlueprintCallable)
+    void ConsumeHealItem();
 
     // ============================================================
     // PUBLIC API

@@ -9,6 +9,7 @@ void UUIEventData::OnEnter_Implementation(APlayerController* PC)
     Widget = CreateWidget<UBaseEventWidget>(PC, EventWidget);
     if (Widget)
     {
+        Widget->EventData = this;
         Widget->AddToViewport();
     }
 }

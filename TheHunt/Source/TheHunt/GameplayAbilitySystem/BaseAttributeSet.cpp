@@ -25,6 +25,7 @@ void UBaseAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
         // Clamp Health between 0 and MaxHealth
         float CurrentMaxHealth = GetMaxHealth();
         SetHealth(FMath::Clamp(GetHealth(), 0.0f, CurrentMaxHealth));
+        
     }
 
     if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
@@ -33,6 +34,7 @@ void UBaseAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
         float CurrentHealth = GetHealth();
         float NewMaxHealth = GetMaxHealth();
         SetHealth(FMath::Clamp(CurrentHealth, 0.0f, NewMaxHealth));
+        UE_LOG(LogTemp, Warning, TEXT("new current health"))
     }
 
     if (Data.EvaluatedData.Attribute == GetStaminaAttribute())

@@ -370,6 +370,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		Input->BindAction(LockOnAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleLockOn);
 
+		Input->BindAction(HealAction, ETriggerEvent::Started, this, &APlayerCharacter::Heal);
+
 		TArray<FKey> HotbarKeys = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four };
 		for (int32 i = 0; i < HotbarKeys.Num(); i++)
 		{
@@ -465,6 +467,9 @@ void APlayerCharacter::Attack()
 	if (CombatType == ECombatType::Unarmed) return;
 
 	if (AbilitySystemComponent->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Healing"))) return;
+
+	if (AbilitySystemComponent->HasMatchingGameplayTag(
 		FGameplayTag::RequestGameplayTag("State.Attacking")))
 	{
 		// Just queue, don't activate
@@ -492,7 +497,11 @@ void APlayerCharacter::StartBlock()
 {
 	if (!Weapon) return;
 
-	if (AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking"))) return;
+	if (AbilitySystemComponent->HasMatchingGameplayTag
+		(FGameplayTag::RequestGameplayTag("State.Healing"))) return;
+
+	if (AbilitySystemComponent->HasMatchingGameplayTag
+		(FGameplayTag::RequestGameplayTag("State.Attacking"))) return;
 
 	FGameplayTagContainer TagContainer;
 	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Block")));
@@ -611,6 +620,9 @@ void APlayerCharacter::ToggleInventory()
 
 void APlayerCharacter::Dash()
 {
+	if (AbilitySystemComponent->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Healing"))) return;
+
 	FGameplayTag LockOnTag = FGameplayTag::RequestGameplayTag(FName("State.LockedOn"));
 	FGameplayTagContainer TagContainer;
 
@@ -619,6 +631,14 @@ void APlayerCharacter::Dash()
 	else
 		TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Movement.Normal.Dash")));
 	
+	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
+}
+
+void APlayerCharacter::Heal()
+{
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Heal")));
+
 	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
 }
 
@@ -1025,3 +1045,23 @@ void APlayerCharacter::UseHotbarSlot(int32 Index)
 	EquipWeapon(NewWeaponClass);
 }
 
+void APlayerCharacter::EquipHealingItem(UItemDefinition* ItemDef, int SlotIndex)
+{
+	if (!ItemDef) return;
+	if (ItemDef->ItemType != EItemType::Consumable) return;   // only consumables
+
+	HealingItem = ItemDef;
+	HealingItemSlotIndex = SlotIndex;
+}
+
+void APlayerCharacter::UnequipHealingItem()
+{
+	HealingItem = nullptr;
+}
+
+void APlayerCharacter::ConsumeHealItem()
+{
+	if (!HealingItem || !AbilitySystemComponent) return;
+
+	GetGameInstance()->GetSubsystem<UInventorySubsystem>()->GetInventory(this)->RemoveFromItemQuantity(HealingItemSlotIndex, 1);
+}

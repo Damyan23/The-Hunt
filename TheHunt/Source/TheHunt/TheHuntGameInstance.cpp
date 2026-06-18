@@ -44,7 +44,7 @@ void UTheHuntGameInstance::TransitionToLevel(TSoftObjectPtr<UWorld> Level)
         return;
     }
 
-    ActiveTransitionWidget->AddToViewport(1000); // high z-order so it covers everything
+    ActiveTransitionWidget->AddToViewport(1);
 
     ActiveTransitionWidget->PlayDissolve(0.f, 1.5f, TransitionDuration);
 

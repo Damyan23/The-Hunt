@@ -129,10 +129,27 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Attributes")
 	FOnStaggerChanged OnStaggerChangedEvent;
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChanged, float, HealthPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnMaxHealthChanged OnMaxHealthChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxStaminaChanged, float, StaminaPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnMaxStaminaChanged OnMaxStaminaChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxStaggerChanged, float, StaggerPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnMaxStaggerChanged OnMaxStaggerChangedEvent;
+
 protected:
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 	virtual void OnStaminaChanged(const FOnAttributeChangeData& Data);
 	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
+
+	virtual void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
+	virtual void OnMaxStaminaChanged(const FOnAttributeChangeData& Data);
+	virtual void OnMaxStaggerChanged(const FOnAttributeChangeData& Data);
+
 
 	//============================================================
 	//  CASHED REFERENCES
