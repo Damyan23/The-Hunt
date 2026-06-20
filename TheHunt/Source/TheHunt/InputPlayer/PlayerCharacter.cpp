@@ -110,8 +110,14 @@ FPlayerProgressionData APlayerCharacter::GatherProgression()
 	if (Weapon)
 	{
 		Data.EquippedWeaponDef = Weapon->ItemDefinition;
+		Data.EquippedWeaponSlotIndex = EquippedWeaponSlotIndex;
 	}
 		
+	if (HealingItem)
+	{
+		Data.EquippedPotion = HealingItem;
+		Data.EquippedPotionSlotIndex = HealingItemSlotIndex;
+	}
 
 	// Attributes
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
@@ -146,7 +152,16 @@ void APlayerCharacter::ApplyProgression(const FPlayerProgressionData& Data)
 	{
 		TSubclassOf<AMeleeWeapon> SavedClass = Data.EquippedWeaponDef->GetWeaponClass();
 		if (SavedClass)
-			EquipWeapon(SavedClass);
+			EquipWeapon(SavedClass, Data.EquippedWeaponSlotIndex, Data.EquippedWeaponDef);
+
+		OnWeaponEquippedFromSlotEvent.Broadcast(Data.EquippedWeaponSlotIndex);
+	}
+
+	if (Data.EquippedPotion)
+	{
+		EquipHealingItem(Data.EquippedPotion, Data.EquippedPotionSlotIndex);
+
+		OnPotionEquippedFromSlotEvent.Broadcast(Data.EquippedPotionSlotIndex);
 	}
 
 	// Attributes
@@ -317,15 +332,36 @@ void APlayerCharacter::AttachWeapon()
 	Weapon = GetWorld()->SpawnActor<AMeleeWeapon>(WeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
 	if (!Weapon) return;
 
+	// Use the inventory slot's ItemDefinition (the one with the runes), not the weapon's default
+	if (PendingWeaponItemDef)
+		Weapon->ItemDefinition = PendingWeaponItemDef;
+
 	Weapon->AttachToComponent(
 		GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Weapon_R");
+
+	// Now ItemDefinition is the correct instance — load its runes
+	if (Weapon->ItemDefinition)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AttachWeapon: loading %d runes from def %s"),
+			Weapon->ItemDefinition->WeaponData.Runes.Num(),
+			*Weapon->ItemDefinition->GetName());
+
+		for (URuneBase* Rune : Weapon->ItemDefinition->WeaponData.Runes)
+		{
+			if (Rune)
+			{
+				bool ok = Weapon->EquipRune(Rune);
+				UE_LOG(LogTemp, Warning, TEXT("  Loaded rune %s -> %s, Weapon Runes now %d"),
+					*Rune->GetName(), ok ? TEXT("OK") : TEXT("FAIL"), Weapon->Runes.Num());
+			}
+		}
+	}
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	AnimInstance->Montage_Play(Weapon->ItemDefinition->WeaponData.EnterCombat);
 	CombatType = Weapon->ItemDefinition->WeaponData.CombatType;
 
 	OnWeaponEquipped.Broadcast(CombatType);
-	
 	DeathMontage = Weapon->ItemDefinition->WeaponData.Death;
 	Weapon->DisableAttackHitbox();
 }
@@ -385,7 +421,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
-void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
+void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass, int SlotIndex, UItemDefinition* SourceItemDef)
 {
 	if (Weapon)
 	{
@@ -394,7 +430,9 @@ void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
 	}
 
 	WeaponClass = NewWeaponClass;
+	PendingWeaponItemDef = SourceItemDef;   // a new UPROPERTY() UItemDefinition* member
 	AttachWeapon();
+	EquippedWeaponSlotIndex = SlotIndex;
 }
 
 float APlayerCharacter::UnequipWeapon()
@@ -671,22 +709,29 @@ void APlayerCharacter::ShowHitVignette()
 	// Set intensity to full
 	HitVignetteMID->SetScalarParameterValue(FName("HitIntensity"), 1.0f);
 
-	// Fade it out over time
-	GetWorldTimerManager().SetTimer(HitVignetteTimer, [this]()
+	// Fade it out over time — capture a weak ptr so the timer can't touch a dead actor
+	TWeakObjectPtr<APlayerCharacter> WeakThis(this);
+	GetWorldTimerManager().SetTimer(HitVignetteTimer, [WeakThis]()
 		{
+			APlayerCharacter* Self = WeakThis.Get();
+			if (!Self || !Self->HitVignetteMID)
+			{
+				return;   // actor or MID gone — bail (timer will be cleared below or on destroy)
+			}
+
 			float CurrentIntensity;
-			HitVignetteMID->GetScalarParameterValue(FName("HitIntensity"), CurrentIntensity);
+			Self->HitVignetteMID->GetScalarParameterValue(FName("HitIntensity"), CurrentIntensity);
 
 			if (CurrentIntensity > 0.f)
 			{
-				HitVignetteMID->SetScalarParameterValue(
+				Self->HitVignetteMID->SetScalarParameterValue(
 					FName("HitIntensity"), CurrentIntensity - 0.05f);
 			}
 			else
 			{
-				GetWorldTimerManager().ClearTimer(HitVignetteTimer);
+				Self->GetWorldTimerManager().ClearTimer(Self->HitVignetteTimer);
 			}
-		}, 0.016f, true); // runs every frame roughly
+		}, 0.016f, true);
 }
 
 void APlayerCharacter::PlayHitReaction(AActor* Attacker)
@@ -1042,7 +1087,7 @@ void APlayerCharacter::UseHotbarSlot(int32 Index)
 		return;
 	}
 
-	EquipWeapon(NewWeaponClass);
+	EquipWeapon(NewWeaponClass, Index, HotbarSlots[Index]);
 }
 
 void APlayerCharacter::EquipHealingItem(UItemDefinition* ItemDef, int SlotIndex)

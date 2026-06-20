@@ -96,25 +96,20 @@ void UInventoryComponent::RemoveItem(FInventorySlot* Slot)
 void UInventoryComponent::UseItem(const int32 Index)
 {
 	if (!Slots.IsValidIndex(Index)) return;
-
-	FInventorySlot& Slot = Slots[Index];;
+	FInventorySlot& Slot = Slots[Index];
 	if (!Slot.bIsOccupied) return;
-
 	UItemDefinition* ItemDef = Slot.ItemDefinition;
-
 	if (!ItemDef) return;
 
 	APlayerCharacter* Player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-
 	if (ItemDef->ItemType == EItemType::Weapon)
 	{
 		TSubclassOf<AMeleeWeapon> WeaponClass = ItemDef->GetWeaponClass();
 		if (WeaponClass)
 		{
-			Player->EquipWeapon(WeaponClass);
+			Player->EquipWeapon(WeaponClass, Index, ItemDef);
 		}
 	}
-
 	RemoveItem(&Slot);
 }
 

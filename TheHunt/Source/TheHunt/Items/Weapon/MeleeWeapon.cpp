@@ -42,13 +42,26 @@ AMeleeWeapon::AMeleeWeapon()
 // Called when the game starts or when spawned
 void AMeleeWeapon::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
+
+    UE_LOG(LogTemp, Warning, TEXT("Weapon BeginPlay: ItemDefinition=%s"),
+        ItemDefinition ? *ItemDefinition->GetName() : TEXT("NULL"));
 
     if (ItemDefinition)
     {
+        UE_LOG(LogTemp, Warning, TEXT("  WeaponData.Runes count: %d"),
+            ItemDefinition->WeaponData.Runes.Num());
+
         for (URuneBase* Rune : ItemDefinition->WeaponData.Runes)
         {
-            if (Rune) EquipRune(Rune);
+            UE_LOG(LogTemp, Warning, TEXT("    Def rune: %s"),
+                Rune ? *Rune->GetName() : TEXT("NULL"));
+            if (Rune)
+            {
+                bool ok = EquipRune(Rune);
+                UE_LOG(LogTemp, Warning, TEXT("    EquipRune -> %s, Runes.Num now %d"),
+                    ok ? TEXT("OK") : TEXT("FAIL"), Runes.Num());
+            }
         }
     }
 }
@@ -223,11 +236,9 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
         for (int i = 0; i < Runes.Num(); i++)
         {
             if (!Runes[i]) continue;
-            if (AttackerASC->HasMatchingGameplayTag(
-                FGameplayTag::RequestGameplayTag("State.Attacking")))
-            {
-                Runes[i]->OnHit(Attacker, Target, 0);
-            }
+          
+            UE_LOG(LogTemp, Warning, TEXT("rune should be used"));
+            Runes[i]->OnHit(Attacker, Target, 0);
         }
     }
 

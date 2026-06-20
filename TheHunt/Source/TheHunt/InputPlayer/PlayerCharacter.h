@@ -149,6 +149,16 @@ protected:
     UPROPERTY()
     TArray<TObjectPtr<UItemDefinition>> HotbarSlots;
 
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquippedFromSlot, int, SlotIndex);
+    UPROPERTY(BlueprintAssignable)
+    FOnWeaponEquippedFromSlot OnWeaponEquippedFromSlotEvent;
+
+    UPROPERTY()
+    int EquippedWeaponSlotIndex;
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPotionEquippedFromSlot, int, SlotIndex);
+    UPROPERTY(BlueprintAssignable)
+    FOnPotionEquippedFromSlot OnPotionEquippedFromSlotEvent;
 public:
     // ============================================================
     // PERKS
@@ -199,6 +209,7 @@ public:
     UPROPERTY()
     TObjectPtr<UItemDefinition> HealingItem;
 
+    UPROPERTY()
     int HealingItemSlotIndex;
 
     // ============================================================
@@ -312,7 +323,10 @@ public:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     UFUNCTION(BlueprintCallable)
-    void EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass);
+    void EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass, int SlotIndex, UItemDefinition* SourceItemDef);
+
+    UPROPERTY()
+    UItemDefinition* PendingWeaponItemDef;
 
     UFUNCTION(BlueprintCallable)
     float UnequipWeapon();

@@ -51,6 +51,7 @@ public:
 	// In your GameInstance
 	UFUNCTION(BlueprintCallable)
 	void TransitionToLevel(TSoftObjectPtr<UWorld> Level);
+	void TransitionToLevel(FName LevelName);
 
 	UPROPERTY(EditAnywhere, Category = "Transition")
 	TSubclassOf<UTransitionWidget> TransitionWidgetClass;
@@ -59,7 +60,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Transition")
 	float TransitionDuration = 1.f;
 
+	UPROPERTY()
 	TSoftObjectPtr<UWorld> PendingLevel;
+	UPROPERTY()
+	FName PendingLevelName;
 
 private:
 	UPROPERTY()

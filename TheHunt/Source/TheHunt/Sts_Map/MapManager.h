@@ -81,7 +81,8 @@ public:
 	UFUNCTION()
 	void SpawnEnvironment(TArray<FVector2D>& SpawnPoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints);
 
-	void SetNodeTypes(TMap<int32, AMapNode*>& MapGraph, int32 StartIndex, int32 EndIndex);
+	// Header (MapManager.h)
+	void SetNodeTypes(TMap<int32, AMapNode*>& MapGraph, const TArray<TArray<int32>>& AllPaths, int32 StartIndex, int32 EndIndex);
 
 	UPROPERTY(EditAnywhere)
 	UStaticMesh* FoliageMesh;

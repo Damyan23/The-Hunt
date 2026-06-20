@@ -30,6 +30,15 @@ public:
     UItemDefinition* EquippedWeaponDef = nullptr;
 
     UPROPERTY()
+    int EquippedWeaponSlotIndex = -1;
+
+    UPROPERTY()
+    TObjectPtr<UItemDefinition> EquippedPotion;
+
+    UPROPERTY()
+    int EquippedPotionSlotIndex = -1;
+
+    UPROPERTY()
     TArray<FInventorySlot> InventorySlots;
 
     UPROPERTY()

@@ -16,7 +16,9 @@ AMapCharacter::AMapCharacter()
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	BaseAttributes = CreateDefaultSubobject<UBaseAttributeSet>(TEXT("BaseAttributesSet"));
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("Inventory"));
 
+	Perks.SetNum(15);
 }
 
 UAbilitySystemComponent* AMapCharacter::GetAbilitySystemComponent() const

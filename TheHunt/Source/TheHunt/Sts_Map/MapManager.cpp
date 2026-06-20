@@ -184,7 +184,7 @@ void AMapManager::Regenerate()
     int32 EndIndex = AllPaths[0].Last();
     StartNode = MapGraph[StartIndex];
 
-    SetNodeTypes(MapGraph, StartIndex, EndIndex);
+    SetNodeTypes(MapGraph, AllPaths, StartIndex, EndIndex);
 
     for (auto& Pair : MapGraph)
         SpawnedNodes.Add(Pair.Value);
@@ -245,117 +245,126 @@ void AMapManager::SpawnEnvironment(TArray<FVector2D>& FoliagePoints, TArray<FVec
     }
 }
 
-void AMapManager::SetNodeTypes(TMap<int32, AMapNode*>& MapGraph, int32 StartIndex, int32 EndIndex)
+void AMapManager::SetNodeTypes(TMap<int32, AMapNode*>& MapGraph, const TArray<TArray<int32>>& AllPaths, int32 StartIndex, int32 EndIndex)
 {
-    if (NodeEventData)
+    if (!NodeEventData) return;
+
+    // All node types from the enum (skip the _MAX entry)
+    TArray<ENodeType> Types;
+    const UEnum* EnumPtr = StaticEnum<ENodeType>();
+    for (int32 i = 0; i < EnumPtr->NumEnums() - 1; i++)
+        Types.Add((ENodeType)EnumPtr->GetValueByIndex(i));
+
+    TMap<AMapNode*, ENodeType> Assigned;
+    const int32 SpacingRadius = 1;   // no same type within this many steps along a path
+
+    // --- Assign types path by path ---
+    for (const TArray<int32>& Path : AllPaths)
     {
-        TArray<ENodeType> Types;
-        const UEnum* EnumPtr = StaticEnum<ENodeType>();
-        for (int32 i = 0; i < EnumPtr->NumEnums() - 1; i++)
+        // Track the type assigned at each position along THIS path,
+        // so we can look back up to SpacingRadius steps.
+        TArray<ENodeType> PathTypes;
+        PathTypes.Reserve(Path.Num());
+
+        for (int32 PosInPath = 0; PosInPath < Path.Num(); PosInPath++)
         {
-            ENodeType T = (ENodeType)EnumPtr->GetValueByIndex(i);
-            Types.Add(T);
-        }
+            int32 NodeIndex = Path[PosInPath];
+            AMapNode** NodePtr = MapGraph.Find(NodeIndex);
+            if (!NodePtr || !*NodePtr) { PathTypes.Add(ENodeType::Combat); continue; }
+            AMapNode* Node = *NodePtr;
 
-        TMap<AMapNode*, ENodeType> AssignedTypes;
-
-        for (auto& Pair : MapGraph)
-        {
-            AMapNode* Node = Pair.Value;
-
-            ENodeType AssignedType;
-
-            // Force the start and end nodes to always be Combat
-            if (Pair.Key == StartIndex || Pair.Key == EndIndex)
+            // Convergence point already assigned by an earlier path — keep it
+            if (Assigned.Contains(Node))
             {
-                AssignedType = ENodeType::Combat;
+                PathTypes.Add(Assigned[Node]);
+                continue;
+            }
+
+            ENodeType Chosen;
+
+            if (NodeIndex == StartIndex || NodeIndex == EndIndex)
+            {
+                Chosen = ENodeType::Combat;
             }
             else
             {
-                // Collect forbidden types from neighbours and neighbours-of-neighbours
-                TSet<ENodeType> ForbiddenTypes;
-                for (AMapNode* Next : Node->NextNodes)
+                // Collect the types within SpacingRadius steps BEHIND us on this path
+                TSet<ENodeType> Forbidden;
+                int32 Back = FMath::Max(0, PosInPath - SpacingRadius);
+                for (int32 j = Back; j < PosInPath; j++)
+                    Forbidden.Add(PathTypes[j]);
+
+                // Prefer Combat whenever spacing allows it
+                if (!Forbidden.Contains(ENodeType::Combat))
                 {
-                    if (AssignedTypes.Contains(Next))
-                        ForbiddenTypes.Add(AssignedTypes[Next]);
-                    for (AMapNode* NextNext : Next->NextNodes)
-                        if (AssignedTypes.Contains(NextNext))
-                            ForbiddenTypes.Add(AssignedTypes[NextNext]);
+                    Chosen = ENodeType::Combat;
                 }
-
-                // Filter available types
-                TArray<ENodeType> Available = Types.FilterByPredicate([&](ENodeType T)
-                    {
-                        return !ForbiddenTypes.Contains(T);
-                    });
-
-                if (Available.IsEmpty()) Available = Types; // fallback if all types forbidden
-
-                // Pick random available type
-                AssignedType = Available[FMath::RandRange(0, Available.Num() - 1)];
-            }
-
-            AssignedTypes.Add(Node, AssignedType);
-            Node->NodeType = AssignedType;
-
-            // Look up event pool for this type
-            FNodeEventPool* Pool = NodeEventData->NodeMappings.Find(TEnumAsByte<ENodeType>(AssignedType));
-            if (!Pool || Pool->Events.IsEmpty()) continue;
-
-            // Pick random event from pool
-            int32 EventIndex = FMath::RandRange(0, Pool->Events.Num() - 1);
-            UMapEventData* Event = Pool->Events[EventIndex].LoadSynchronous();
-            if (!Event) continue;
-
-            Node->AssignEvent(Event);
-
-            // Spawn the node's visual actor
-            if (Event->NodeActorClass)
-            {
-                FActorSpawnParameters SpawnParams;
-                SpawnParams.Owner = Node;
-                AActor* NodeActor = GetWorld()->SpawnActor<AActor>(
-                    Event->NodeActorClass, Node->GetActorLocation(), NodeRotation, SpawnParams);
-                if (NodeActor)
+                else
                 {
-                    NodeActor->AttachToActor(Node, FAttachmentTransformRules::KeepWorldTransform);
+                    TArray<ENodeType> Available = Types.FilterByPredicate([&](ENodeType T)
+                        { return T != ENodeType::Combat && !Forbidden.Contains(T); });
 
-                    // The visual inherits AMapNode — give it a pointer back to the graph node
-                    if (AMapNode* VisualNode = Cast<AMapNode>(NodeActor))
-                        VisualNode->GraphNode = Node;
+                    if (Available.IsEmpty())
+                        Available = Types.FilterByPredicate([&](ENodeType T) { return T != ENodeType::Combat; });
 
-                    SpawnedVisualizationNodes.Add(NodeActor);
+                    Chosen = Available.IsEmpty()
+                        ? ENodeType::Combat
+                        : Available[FMath::RandRange(0, Available.Num() - 1)];
                 }
             }
 
-            // Spawn spline paths to next nodes
-            for (AMapNode* NextNode : Node->NextNodes)
+            Assigned.Add(Node, Chosen);
+            Node->NodeType = Chosen;
+            PathTypes.Add(Chosen);
+        }
+    }
+
+    // --- Now that every node has a type, spawn events / visuals / splines ---
+    for (auto& Pair : MapGraph)
+    {
+        AMapNode* Node = Pair.Value;
+        if (!Node) continue;
+
+        ENodeType NodeType = Node->NodeType;
+
+        FNodeEventPool* Pool = NodeEventData->NodeMappings.Find(TEnumAsByte<ENodeType>(NodeType));
+        if (!Pool || Pool->Events.IsEmpty()) continue;
+
+        UMapEventData* Event = Pool->Events[FMath::RandRange(0, Pool->Events.Num() - 1)].LoadSynchronous();
+        if (!Event) continue;
+        Node->AssignEvent(Event);
+
+        // --- Visual actor ---
+        if (Event->NodeActorClass)
+        {
+            FActorSpawnParameters SpawnParams;
+            SpawnParams.Owner = Node;
+            if (AActor* NodeActor = GetWorld()->SpawnActor<AActor>(
+                Event->NodeActorClass, Node->GetActorLocation(), NodeRotation, SpawnParams))
             {
-                if (!NextNode) continue;
+                NodeActor->AttachToActor(Node, FAttachmentTransformRules::KeepWorldTransform);
+                if (AMapNode* VisualNode = Cast<AMapNode>(NodeActor))
+                    VisualNode->GraphNode = Node;
+                SpawnedVisualizationNodes.Add(NodeActor);
+            }
+        }
 
-                FVector From = Node->GetActorLocation();
-                FVector To = NextNode->GetActorLocation();
-
-                AActor* PathActor = GetWorld()->SpawnActor<AActor>(
-                    SplinePathActorClass,
-                    FVector::ZeroVector,
-                    FRotator::ZeroRotator
-                );
-
-                if (PathActor)
+        // --- Spline paths to next nodes ---
+        for (AMapNode* NextNode : Node->NextNodes)
+        {
+            if (!NextNode) continue;
+            if (AActor* PathActor = GetWorld()->SpawnActor<AActor>(
+                SplinePathActorClass, FVector::ZeroVector, FRotator::ZeroRotator))
+            {
+                if (USplineComponent* Spline = PathActor->FindComponentByClass<USplineComponent>())
                 {
-                    USplineComponent* Spline = PathActor->FindComponentByClass<USplineComponent>();
-                    if (Spline)
-                    {
-                        Spline->SetWorldLocationAtSplinePoint(0, From);
-                        Spline->SetWorldLocationAtSplinePoint(1, To);
-                        Spline->UpdateSpline();
-
-                        UFunction* Func = PathActor->FindFunction(FName("RebuildSegments"));
-                        if (Func) PathActor->ProcessEvent(Func, nullptr);
-                    }
-                    SpawnedPathActors.Add(PathActor);
+                    Spline->SetWorldLocationAtSplinePoint(0, Node->GetActorLocation());
+                    Spline->SetWorldLocationAtSplinePoint(1, NextNode->GetActorLocation());
+                    Spline->UpdateSpline();
+                    if (UFunction* Func = PathActor->FindFunction(FName("RebuildSegments")))
+                        PathActor->ProcessEvent(Func, nullptr);
                 }
+                SpawnedPathActors.Add(PathActor);
             }
         }
     }

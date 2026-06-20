@@ -1,8 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TheHuntGameInstance.h"
+
+#include "InputPlayer/PlayerCharacter.h"
 #include "Inventory/InventoryComponent.h" 
 #include "MainMenu/TransitionWidget.h"
+#include "Sts_Map/Character/MapCharacter.h"
 
 void UTheHuntGameInstance::ResetRun()
 {
@@ -23,21 +26,33 @@ void UTheHuntGameInstance::ResetRun()
 void UTheHuntGameInstance::TransitionToLevel(TSoftObjectPtr<UWorld> Level)
 {
     PendingLevel = Level;
-
     UWorld* World = GetWorld();
+
+    // Save the map character's progression BEFORE transitioning
+    if (World)
+    {
+        if (APlayerController* PC = World->GetFirstPlayerController())
+        {
+            if (AMapCharacter* MapChar = Cast<AMapCharacter>(PC->GetPawn()))
+            {
+                MapChar->SaveData();
+            }
+            else if (APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(PC->GetPawn()))
+            {
+                this->StoreProgression(PlayerCharacter->GatherProgression());
+            }
+        }
+    }
+
     if (!World || !TransitionWidgetClass)
     {
-        // No widget set up — just open immediately as a fallback
         UGameplayStatics::OpenLevelBySoftObjectPtr(this, Level);
         return;
     }
 
     APlayerController* PC = World->GetFirstPlayerController();
-
-    // Create and show the transition widget
     ActiveTransitionWidget = CreateWidget<UTransitionWidget>(
         PC ? Cast<APlayerController>(PC) : nullptr, TransitionWidgetClass);
-
     if (!ActiveTransitionWidget)
     {
         UGameplayStatics::OpenLevelBySoftObjectPtr(this, Level);
@@ -45,13 +60,57 @@ void UTheHuntGameInstance::TransitionToLevel(TSoftObjectPtr<UWorld> Level)
     }
 
     ActiveTransitionWidget->AddToViewport(1);
-
     ActiveTransitionWidget->PlayDissolve(0.f, 1.5f, TransitionDuration);
 
-    // Open the level once the screen is fully covered
     FTimerHandle Timer;
     World->GetTimerManager().SetTimer(Timer, [this]()
         {
             UGameplayStatics::OpenLevelBySoftObjectPtr(this, PendingLevel);
+        }, TransitionDuration, false);
+}
+
+void UTheHuntGameInstance::TransitionToLevel(FName LevelName)
+{
+    PendingLevelName = LevelName;
+    UWorld* World = GetWorld();
+
+    // Save the map character's progression BEFORE transitioning
+    if (World)
+    {
+        if (APlayerController* PC = World->GetFirstPlayerController())
+        {
+            if (AMapCharacter* MapChar = Cast<AMapCharacter>(PC->GetPawn()))
+            {
+                MapChar->SaveData();
+            }
+            else if (APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(PC->GetPawn()))
+            {
+                this->StoreProgression(PlayerCharacter->GatherProgression());
+            }
+        }
+    }
+
+    if (!World || !TransitionWidgetClass)
+    {
+        UGameplayStatics::OpenLevel(this, LevelName);
+        return;
+    }
+
+    APlayerController* PC = World->GetFirstPlayerController();
+    ActiveTransitionWidget = CreateWidget<UTransitionWidget>(
+        PC ? Cast<APlayerController>(PC) : nullptr, TransitionWidgetClass);
+    if (!ActiveTransitionWidget)
+    {
+        UGameplayStatics::OpenLevel(this, LevelName);
+        return;
+    }
+
+    ActiveTransitionWidget->AddToViewport(1);
+    ActiveTransitionWidget->PlayDissolve(0.f, 1.5f, TransitionDuration);
+
+    FTimerHandle Timer;
+    World->GetTimerManager().SetTimer(Timer, [this]()
+        {
+            UGameplayStatics::OpenLevel(this, PendingLevelName);
         }, TransitionDuration, false);
 }

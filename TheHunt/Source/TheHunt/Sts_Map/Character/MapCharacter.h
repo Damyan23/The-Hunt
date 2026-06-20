@@ -45,7 +45,7 @@ public:
 	//============================================================
 	//  INVENTORY
 	//============================================================
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UInventoryComponent> InventoryComponent;
 
 	//============================================================
