@@ -1,12 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "LootTableRow.h"
+
+#if WITH_EDITOR
 #include "DataTableEditorUtils.h"
 
 void FLootTableRow::OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName)
 {
 	Super::OnDataTableChanged(InDataTable, InRowName);
-
 	if (ItemDefinition && InRowName != ItemDefinition->ItemName)
 	{
 		FDataTableEditorUtils::RenameRow(
@@ -15,3 +14,4 @@ void FLootTableRow::OnDataTableChanged(const UDataTable* InDataTable, const FNam
 			ItemDefinition->ItemName);
 	}
 }
+#endif

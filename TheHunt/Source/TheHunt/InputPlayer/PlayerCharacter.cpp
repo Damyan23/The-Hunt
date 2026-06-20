@@ -78,15 +78,6 @@ void APlayerCharacter::BeginPlay()
 		AttachWeapon();
 	}
 
-
-	if (PC)
-	{
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute health");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute stamina");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute stagger");
-		PC->ConsoleCommand("AbilitySystem.DebugAbilityTags");
-	}
-
 	if (HitVignetteMaterial)
 	{
 		HitVignetteMID = UMaterialInstanceDynamic::Create(HitVignetteMaterial, this);

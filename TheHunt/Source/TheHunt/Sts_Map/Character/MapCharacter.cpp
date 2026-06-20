@@ -38,18 +38,7 @@ void AMapCharacter::BeginPlay()
 	FindMapManager();
 	PlaceOnCurrentNode();
 
-
-	if (PC)
-	{
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute MaxHealth");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute health");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute MaxStamina");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute stamina");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute MaxStagger");
-		PC->ConsoleCommand("AbilitySystem.DebugAttribute stagger");
-		PC->ConsoleCommand("AbilitySystem.DebugAbilityTags");
-	}
-
+	PC->bEnableClickEvents = true;
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		UBaseAttributeSet::GetHealthAttribute())

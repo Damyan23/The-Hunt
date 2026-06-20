@@ -110,7 +110,7 @@ void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
         bool bDamageFromActor = false;
         if (Data.GEModData != nullptr)
         {
-            const FGameplayTagContainer& EffectTags = Data.GEModData->EffectSpec.Def->InheritableGameplayEffectTags.CombinedTags;
+            const FGameplayTagContainer& EffectTags = Data.GEModData->EffectSpec.Def->GetAssetTags();
             if (EffectTags.HasTag(FGameplayTag::RequestGameplayTag("Damage.Direct")))
             {
                 bDamageFromActor = true;
