@@ -136,7 +136,17 @@ void APlayerCharacter::ApplyProgression(const FPlayerProgressionData& Data)
 {
 	// Hotbar & perks
 	HotbarSlots = Data.HotbarSlots;
+
 	Perks = Data.Perks;
+	for (const FPerkSlot& Slot : Perks)
+	{
+		if (Slot.bIsOccupied && Slot.PerkData)
+		{
+			OnPerkApplied.Broadcast(Slot);
+		}
+	}
+
+	// Then attributes — but skip the ones perks already set, or you'll double up
 
 	// Inventory
 	if (UInventorySubsystem* Sub = GetGameInstance()->GetSubsystem<UInventorySubsystem>())
@@ -304,7 +314,7 @@ void APlayerCharacter::ApplyPerk(UPerkData* Perk)
 	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(Perk->Effect, 1.f, Context);
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 
-	for (int i = 0; i < Perks.Num() - 1; i++)
+	for (int i = 0; i < Perks.Num(); i++)
 	{
 		FPerkSlot& Slot = Perks[i];
 
@@ -332,29 +342,32 @@ void APlayerCharacter::AttachWeapon()
 	Weapon = GetWorld()->SpawnActor<AMeleeWeapon>(WeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
 	if (!Weapon) return;
 
-	// Use the inventory slot's ItemDefinition (the one with the runes), not the weapon's default
+	// ---- ADD THIS ----
+	UE_LOG(LogTemp, Warning, TEXT(">>> AttachWeapon: PendingWeaponItemDef = %s"),
+		PendingWeaponItemDef ? *PendingWeaponItemDef->GetName() : TEXT("NULL"));
+
 	if (PendingWeaponItemDef)
+	{
 		Weapon->ItemDefinition = PendingWeaponItemDef;
+		UE_LOG(LogTemp, Warning, TEXT(">>> AttachWeapon: OVERRODE weapon def to %s"),
+			*Weapon->ItemDefinition->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT(">>> AttachWeapon: NO override, weapon keeps %s"),
+			Weapon->ItemDefinition ? *Weapon->ItemDefinition->GetName() : TEXT("NULL"));
+	}
+	// ------------------
 
-	Weapon->AttachToComponent(
-		GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Weapon_R");
+	Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Weapon_R");
 
-	// Now ItemDefinition is the correct instance — load its runes
 	if (Weapon->ItemDefinition)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("AttachWeapon: loading %d runes from def %s"),
 			Weapon->ItemDefinition->WeaponData.Runes.Num(),
 			*Weapon->ItemDefinition->GetName());
-
 		for (URuneBase* Rune : Weapon->ItemDefinition->WeaponData.Runes)
-		{
-			if (Rune)
-			{
-				bool ok = Weapon->EquipRune(Rune);
-				UE_LOG(LogTemp, Warning, TEXT("  Loaded rune %s -> %s, Weapon Runes now %d"),
-					*Rune->GetName(), ok ? TEXT("OK") : TEXT("FAIL"), Weapon->Runes.Num());
-			}
-		}
+			if (Rune) Weapon->EquipRune(Rune);
 	}
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
