@@ -256,7 +256,7 @@ void AMapManager::SetNodeTypes(TMap<int32, AMapNode*>& MapGraph, const TArray<TA
         Types.Add((ENodeType)EnumPtr->GetValueByIndex(i));
 
     TMap<AMapNode*, ENodeType> Assigned;
-    const int32 SpacingRadius = 3;   // no same type within this many steps along a path
+    const int32 SpacingRadius = 2;   // no same type within this many steps along a path
 
     // --- Assign types path by path ---
     for (const TArray<int32>& Path : AllPaths)

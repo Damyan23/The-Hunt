@@ -83,9 +83,6 @@ void AEnemyAIController::Tick(float DeltaSeconds)
             LastSeenTime = -1.f;
         }
     }
-
-    UE_LOG(LogTemp, Warning, TEXT("ForceSeeActor: TargetPlayer set to %s"),
-        ForcedTarget ? *ForcedTarget->GetName() : TEXT("NULL"));
 }
 
 void AEnemyAIController::ForceSeeActor(AActor* Actor)
@@ -93,6 +90,4 @@ void AEnemyAIController::ForceSeeActor(AActor* Actor)
     ForcedTarget = Cast<APawn>(Actor);
     LastSeenTime = GetWorld()->GetTimeSeconds();
     ForcedTargetUntil = GetWorld()->GetTimeSeconds() + MemoryDuration;
-    UE_LOG(LogTemp, Warning, TEXT("ForceSeeActor: TargetPlayer set to %s"),
-        ForcedTarget ? *ForcedTarget->GetName() : TEXT("NULL"));
 }

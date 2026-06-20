@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -14,7 +12,9 @@ struct THEHUNT_API FLootTableRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
+#if WITH_EDITOR
 	virtual void OnDataTableChanged(const UDataTable* InDataTable, const FName InRowName) override;
+#endif
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UItemDefinition> ItemDefinition;
@@ -22,8 +22,6 @@ struct THEHUNT_API FLootTableRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EItemRarity Rarity = EItemRarity::Common;
 
-	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EItemType ItemType = EItemType::Weapon;
-	
 };
