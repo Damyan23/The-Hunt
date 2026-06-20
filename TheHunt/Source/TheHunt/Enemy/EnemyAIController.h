@@ -15,10 +15,13 @@ class THEHUNT_API AEnemyAIController : public AAIController
 
 public:
     UPROPERTY()
-    TObjectPtr<APawn> TargetPlayer;
+    TObjectPtr<APawn> ForcedTarget;
+
+    float ForcedTargetUntil = -1.f;
 
 protected:
     virtual void OnPossess(APawn* InPawn) override;
+    virtual FGenericTeamId GetGenericTeamId() const override { return FGenericTeamId(1); }   // team 1 = enemies
 
     // Perception
     UPROPERTY(VisibleAnywhere)
@@ -26,6 +29,14 @@ protected:
 
     UFUNCTION()
     void OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+    float LastSeenTime = -1.f;
+
+    UPROPERTY(EditAnywhere, Category = "AI")
+    float MemoryDuration = 5.f;
+
+public:
+    void ForceSeeActor(AActor* Actor);
 
     // Animation
     UPROPERTY()
@@ -46,4 +57,7 @@ protected:
 
     UPROPERTY(VisibleAnywhere, Category = "AI")
     TObjectPtr<UStateTreeComponent> StateTreeComponent;
+
+    virtual void Tick(float DeltaSeconds) override;
+    UPROPERTY(EditAnywhere, Category = "AI") float ProximityRadius = 250.f;
 };

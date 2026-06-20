@@ -4,6 +4,7 @@
 #include "EnemyAIController.h"
 #include "Components/CapsuleComponent.h"
 #include "Items/Weapon/MeleeWeapon.h"
+#include "Kismet/GameplayStatics.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -39,6 +40,17 @@ void AEnemyCharacter::BeginPlay()
 void AEnemyCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+}
+
+void AEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+    Super::OnHealthChanged(Data);
+
+    if (AEnemyAIController* AIC = Cast<AEnemyAIController>(GetController()))
+    {
+        if (APawn* Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+            AIC->ForceSeeActor(Player);
+    }
 }
 
 void AEnemyCharacter::OnDeath()
@@ -110,7 +122,6 @@ bool AEnemyCharacter::SetStagger()
 
     if (CurrentStagger >= MaxStagger)
     {
-        UE_LOG(LogTemp, Warning, TEXT("sDADASDAS"));
         AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Staggered")));
         return true;
     }

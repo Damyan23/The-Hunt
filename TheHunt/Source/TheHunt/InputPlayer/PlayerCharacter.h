@@ -11,9 +11,11 @@
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
-class THEHUNT_API APlayerCharacter : public ABaseCharacter
+class THEHUNT_API APlayerCharacter : public ABaseCharacter, public IGenericTeamAgentInterface
 {
     GENERATED_BODY()
+
+    virtual FGenericTeamId GetGenericTeamId() const override { return FGenericTeamId(0); }   // team 0 = player
 
     // ============================================================
     // CORE COMPONENTS

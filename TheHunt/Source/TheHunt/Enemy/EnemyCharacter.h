@@ -16,6 +16,7 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
     virtual void OnDeath() override;
 
     UPROPERTY(EditDefaultsOnly, Category = "Animation")
