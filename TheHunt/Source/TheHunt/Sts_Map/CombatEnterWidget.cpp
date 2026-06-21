@@ -11,6 +11,8 @@ void UCombatEnterWidget::TriggerLevel() const
 {
     if (UTheHuntGameInstance* GI = GetGameInstance<UTheHuntGameInstance>())
         GI->TransitionToLevel(CombatLevel);
+    else
+        UE_LOG(LogTemp, Warning, TEXT("im goinna kill myserlf"));
 }
 
 FReply UCombatEnterWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)

@@ -29,6 +29,7 @@ void UCombatMapData::OnEnter_Implementation(APlayerController* PC)
         {
             EventWidget->AddToViewport();
 
+            EventWidget->CombatLevel = this->CombatLevel;
             // So the player can click it, show the cursor and allow UI input
             PC->bShowMouseCursor = true;
             FInputModeGameAndUI InputMode;
