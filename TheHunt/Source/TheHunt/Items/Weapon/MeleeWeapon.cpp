@@ -236,8 +236,7 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
         for (int i = 0; i < Runes.Num(); i++)
         {
             if (!Runes[i]) continue;
-          
-            UE_LOG(LogTemp, Warning, TEXT("rune should be used"));
+
             Runes[i]->OnHit(Attacker, Target, 0);
         }
     }
