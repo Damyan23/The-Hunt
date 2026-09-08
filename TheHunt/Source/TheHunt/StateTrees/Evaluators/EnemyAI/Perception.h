@@ -19,7 +19,7 @@ class THEHUNT_API UPerception : public UStateTreeEvaluatorBlueprintBase
 protected:
 	virtual void TreeStart(FStateTreeExecutionContext& Context) override;
 	virtual void TreeStop(FStateTreeExecutionContext& Context) override;
-
+	virtual void Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
 #if WITH_EDITOR
 	virtual FText GetDescription(const FGuid& ID, FStateTreeDataView InstanceDataView, const IStateTreeBindingLookup& BindingLookup, EStateTreeNodeFormatting Formatting) const
 	{

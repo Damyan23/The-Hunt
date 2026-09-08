@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+	// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Inventory/InventoryComponent.h"
@@ -34,6 +34,8 @@ void UInventoryComponent::OnComponentCreated()
 
 	for (int i = 0; i < NumberOfSlots; i++)
 		Slots.Add(FInventorySlot(nullptr, false, i));
+
+	UE_LOG(LogTemp, Warning, TEXT("gets intialized"));
 }
 
 
@@ -45,39 +47,42 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	// ...
 }
 
+/*
 void UInventoryComponent::AddItem(FString ItemID, int32 Amount)
 {
 	UItemDefinition* ItemDefinition = UItemFunctionLibrary::FindItemById(ItemID);
 	if (!ItemDefinition) return;
 
-	int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
-	int AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
+	int AvailableSlot;
+	if (ItemDefinition->bIsStackable)
+	{
+		int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
+		AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
+	}
+	else
+	{
+		AvailableSlot = CheckForEmptySlots();
+	}
+
 
 	if (AvailableSlot < 0) return;
 
 	FInventorySlot& FreeSlot = Slots[AvailableSlot];
 	FreeSlot.AddItem(ItemDefinition, Amount);
-
-	UE_LOG(LogTemp, Warning, TEXT("AddItem: Slot %d, Quantity: %d"), AvailableSlot, FreeSlot.Quantity);
 
 	OnItemAdded.Broadcast(FreeSlot);
 }
-
+*/
 void UInventoryComponent::AddItemUsingItemDefinition(UItemDefinition* ItemDefinition, float Amount)
 {
 	if (!ItemDefinition) return;
-
-	int PossibleSlot = CheckForExistingItemInSlot(ItemDefinition);
-	int AvailableSlot = PossibleSlot >= 0 ? PossibleSlot : CheckForEmptySlots();
-
+	// No duplication here — the def passed in is already the unique instance
+	int AvailableSlot = ItemDefinition->bIsStackable
+		? (CheckForExistingItemInSlot(ItemDefinition) >= 0 ? CheckForExistingItemInSlot(ItemDefinition) : CheckForEmptySlots())
+		: CheckForEmptySlots();
 	if (AvailableSlot < 0) return;
-
-	FInventorySlot& FreeSlot = Slots[AvailableSlot];
-	FreeSlot.AddItem(ItemDefinition, Amount);
-
-	UE_LOG(LogTemp, Warning, TEXT("AddItem: Slot %d, Quantity: %d"), AvailableSlot, FreeSlot.Quantity);
-
-	OnItemAdded.Broadcast(FreeSlot);
+	Slots[AvailableSlot].AddItem(ItemDefinition, Amount);
+	OnItemAdded.Broadcast(Slots[AvailableSlot]);
 }
 
 void UInventoryComponent::RemoveItem(FInventorySlot* Slot)
@@ -91,26 +96,116 @@ void UInventoryComponent::RemoveItem(FInventorySlot* Slot)
 void UInventoryComponent::UseItem(const int32 Index)
 {
 	if (!Slots.IsValidIndex(Index)) return;
-
-	FInventorySlot& Slot = Slots[Index];;
+	FInventorySlot& Slot = Slots[Index];
 	if (!Slot.bIsOccupied) return;
-
 	UItemDefinition* ItemDef = Slot.ItemDefinition;
-
 	if (!ItemDef) return;
 
 	APlayerCharacter* Player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-
 	if (ItemDef->ItemType == EItemType::Weapon)
 	{
 		TSubclassOf<AMeleeWeapon> WeaponClass = ItemDef->GetWeaponClass();
 		if (WeaponClass)
 		{
-			Player->EquipWeapon(WeaponClass);
+			Player->EquipWeapon(WeaponClass, Index, ItemDef);
 		}
 	}
-
 	RemoveItem(&Slot);
+}
+
+void UInventoryComponent::EquipRuneToWeapon(URuneBase* Rune, int32 SlotIndex)
+{
+	UE_LOG(LogTemp, Warning, TEXT("=== EquipRuneToWeapon Called ==="));
+	UE_LOG(LogTemp, Warning, TEXT("  SlotIndex: %d"), SlotIndex);
+	UE_LOG(LogTemp, Warning, TEXT("  Rune: %s"), Rune ? *Rune->GetName() : TEXT("NULL"));
+
+	if (!Rune)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  FAILED: Rune is null"));
+		return;
+	}
+
+	if (!Slots.IsValidIndex(SlotIndex))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  FAILED: SlotIndex %d is out of range (Slots.Num: %d)"), SlotIndex, Slots.Num());
+		return;
+	}
+
+	FInventorySlot& Slot = Slots[SlotIndex];
+	UE_LOG(LogTemp, Warning, TEXT("  Slot occupied: %s"), Slot.bIsOccupied ? TEXT("YES") : TEXT("NO"));
+	UE_LOG(LogTemp, Warning, TEXT("  ItemDefinition: %s"), Slot.ItemDefinition ? *Slot.ItemDefinition->GetName() : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("  Slot %d ItemDef: %s (%p)"),
+		SlotIndex,
+		Slot.ItemDefinition ? *Slot.ItemDefinition->GetName() : TEXT("NULL"),
+		static_cast<void*>(Slot.ItemDefinition));
+
+
+	if (!Slot.bIsOccupied || !Slot.ItemDefinition)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  FAILED: Slot not occupied or no item definition"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("  ItemType: %d (Weapon = %d)"), (int32)Slot.ItemDefinition->ItemType, (int32)EItemType::Weapon);
+
+	if (Slot.ItemDefinition->ItemType != EItemType::Weapon)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  FAILED: Item is not a weapon"));
+		return;
+	}
+
+	// Add rune to item definition
+	bool bSlotFound = false;
+	for (int32 i = 0; i < Slot.ItemDefinition->WeaponData.Runes.Num(); i++)
+	{
+		if (!Slot.ItemDefinition->WeaponData.Runes[i])
+		{
+			Slot.ItemDefinition->WeaponData.Runes[i] = Rune;
+			bSlotFound = true;
+			UE_LOG(LogTemp, Warning, TEXT("  Rune placed in slot %d"), i);
+			break;
+		}
+	}
+	if (!bSlotFound)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  FAILED: No empty rune slots in item definition"));
+		return;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("  Rune added to item definition. Total runes: %d"), Slot.ItemDefinition->WeaponData.Runes.Num());
+
+	// Check if weapon is currently equipped
+	ABaseCharacter* Owner = Cast<ABaseCharacter>(GetOwner());
+	UE_LOG(LogTemp, Warning, TEXT("  Owner: %s"), Owner ? *Owner->GetName() : TEXT("NULL"));
+
+	if (!Owner)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  No owner — rune saved to item definition only"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("  Owner Weapon: %s"), Owner->Weapon ? *Owner->Weapon->GetName() : TEXT("NULL"));
+
+	if (!Owner->Weapon)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  No weapon equipped — rune saved to item definition only"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("  Weapon ItemDef: %s"), Owner->Weapon->ItemDefinition ? *Owner->Weapon->ItemDefinition->GetName() : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("  Slot ItemDef:   %s"), *Slot.ItemDefinition->GetName());
+	UE_LOG(LogTemp, Warning, TEXT("  Pointers match: %s"), Owner->Weapon->ItemDefinition == Slot.ItemDefinition ? TEXT("YES") : TEXT("NO"));
+
+	if (Owner->Weapon->ItemDefinition == Slot.ItemDefinition)
+	{
+		bool bSuccess = Owner->Weapon->EquipRune(Rune);
+		UE_LOG(LogTemp, Warning, TEXT("  EquipRune on live weapon: %s"), bSuccess ? TEXT("SUCCESS") : TEXT("FAILED - no empty slots"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("  Weapon equipped but item definition pointer mismatch — rune saved to definition only"));
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("=== EquipRuneToWeapon Done ==="));
 }
 
 void UInventoryComponent::DropItem(UPARAM(ref) FInventorySlot& Slot)
@@ -197,14 +292,14 @@ void UInventoryComponent::UpdateSlotOnDragAndDrop(int32 SourceIndex, int32 Targe
 	if (!Source.ItemDefinition) return;
 
 	// Rune on weapon
+	// Rune on weapon
 	if (Source.ItemDefinition->ItemType == EItemType::Rune
 		&& Target.ItemDefinition
 		&& Target.ItemDefinition->ItemType == EItemType::Weapon)
 	{
-		APlayerCharacter* Player = Cast<APlayerCharacter>(
-			GetWorld()->GetFirstPlayerController()->GetPawn());
-		if (Player && Player->Weapon)
-			Player->EquipRuneToWeapon(Source.ItemDefinition);
+		URuneBase* Rune = Source.ItemDefinition->GetRune();
+		if (Rune)
+			EquipRuneToWeapon(Rune, TargetIndex);     
 
 		Source.ClearSlot();
 		OnItemRemoved.Broadcast(Source);
@@ -248,6 +343,13 @@ void UInventoryComponent::RemoveFromItemQuantity(int SlotIndex, float Amount)
 
 	Slot.RemoveQuantity(Amount);
 	OnItemAdded.Broadcast(Slot);
+}
+
+void UInventoryComponent::LoadInventory(const TArray<FInventorySlot>& LoadedSlots)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Inventory loaded"));
+	Slots = LoadedSlots;
+	OnInventoryLoaded.Broadcast();
 }
 
 void UInventoryComponent::MoveSlot(FInventorySlot& From, FInventorySlot& To)

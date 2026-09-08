@@ -13,11 +13,12 @@ class THEHUNT_API AInteractable : public AActor
 
 protected:
     virtual void OnConstruction(const FTransform& Transform) override;
+    virtual void BeginPlay() override;
 
 public:
     AInteractable();
 
-    UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Item")
+    UPROPERTY(BlueprintReadOnly)
     TObjectPtr<UItemDefinition> ItemDefinition;
 
     UPROPERTY(EditDefaultsOnly, Category = "Item")

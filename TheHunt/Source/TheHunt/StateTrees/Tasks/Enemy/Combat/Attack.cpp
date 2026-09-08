@@ -10,27 +10,14 @@ EStateTreeRunStatus FAttack::EnterState(FStateTreeExecutionContext& Context,
 {
     FStateTreeTaskCommonBase::EnterState(Context, Transition);
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-
     if (!InstanceData.AbilitySystemComponent)
         return EStateTreeRunStatus::Failed;
 
-    InstanceData.bAbilityEnded = false;
-
-    // Bind before activating so we don't miss a fast-ending ability
-    InstanceData.AbilityEndedHandle = InstanceData.AbilitySystemComponent->OnAbilityEnded.AddLambda(
-        [&InstanceData](const FAbilityEndedData& Data)
-        {
-            if (Data.AbilityThatEnded->AbilityTags.HasTag(
-                FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash"))))
-            {
-                InstanceData.bAbilityEnded = true;
-            }
-        });
+    InstanceData.TimeInState = 0.f;
 
     FGameplayTagContainer TagContainer;
     TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Attack.Slash")));
     InstanceData.AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
-    InstanceData.AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking"));
 
     return EStateTreeRunStatus::Running;
 }
@@ -39,20 +26,51 @@ EStateTreeRunStatus FAttack::Tick(FStateTreeExecutionContext& Context, const flo
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 
-    // If enemy got staggered during attack, fail immediately
+    InstanceData.TimeInState += DeltaTime;
+
+    // Keep rotating toward target during the wind-up window
+    if (InstanceData.TimeInState <= InstanceData.RotateTrackDuration
+        && InstanceData.Character && InstanceData.TargetActor)
+    {
+        FVector ToTarget = InstanceData.TargetActor->GetActorLocation() - InstanceData.Character->GetActorLocation();
+        ToTarget.Z = 0.f;
+        if (!ToTarget.IsNearlyZero())
+        {
+            FRotator TargetRot = ToTarget.Rotation();
+            FRotator CurrentRot = InstanceData.Character->GetActorRotation();
+            FRotator NewRot = FMath::RInterpTo(CurrentRot, TargetRot, DeltaTime, InstanceData.RotationSpeed);
+            NewRot.Pitch = 0.f;
+            NewRot.Roll = 0.f;
+            InstanceData.Character->SetActorRotation(NewRot);
+        }
+    }
+
     if (InstanceData.AbilitySystemComponent->HasMatchingGameplayTag(
         FGameplayTag::RequestGameplayTag("State.Staggered")))
     {
-        // Cancel the attack ability
         FGameplayTagContainer TagContainer;
         TagContainer.AddTag(FGameplayTag::RequestGameplayTag("Ability.Attack.Slash"));
         InstanceData.AbilitySystemComponent->CancelAbilities(&TagContainer);
-        InstanceData.AbilitySystemComponent->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag("State.Attacking"));
+
         return EStateTreeRunStatus::Failed;
     }
 
-    if (InstanceData.bAbilityEnded)
+    // Ability finished if no instance of it is still active
+    FGameplayTagContainer Query;
+    Query.AddTag(FGameplayTag::RequestGameplayTag("Ability.Attack.Slash"));
+    TArray<FGameplayAbilitySpec*> Specs;
+    InstanceData.AbilitySystemComponent->GetActivatableGameplayAbilitySpecsByAllMatchingTags(Query, Specs);
+
+    bool bStillActive = false;
+    for (FGameplayAbilitySpec* Spec : Specs)
+    {
+        if (Spec->IsActive()) { bStillActive = true; break; }
+    }
+
+    if (!bStillActive)
+    {
         return EStateTreeRunStatus::Succeeded;
+    }
 
     return EStateTreeRunStatus::Running;
 }

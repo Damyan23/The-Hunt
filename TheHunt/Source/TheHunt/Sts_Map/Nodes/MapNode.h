@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "NodeTypeData.h"
-#include "InputPlayer/PlayerCharacter.h"
+#include "Components/PointLightComponent.h"
 #include "Sts_Map/Node Events/MapEventData.h"
 #include "UObject/Class.h"
 #include "MapNode.generated.h"
@@ -16,6 +16,28 @@ class AMapNode : public AActor
 
     virtual void OnConstruction(const FTransform& Transform) override;
     AMapNode();
+
+protected:
+    virtual void NotifyActorOnClicked(FKey ButtonPressed = EKeys::LeftMouseButton) override;
+    virtual void NotifyActorBeginCursorOver() override;
+    virtual void NotifyActorEndCursorOver() override;
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaSeconds) override;
+
+private:
+    bool bIsHovered = false;
+    float HoverInterpSpeed = 8.f;     // how fast it lerps
+
+public:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TObjectPtr<UPointLightComponent> HoverLight;
+
+    float HoverLightIntensity = 7000.f;
+
+    UPROPERTY(EditDefaultsOnly)
+    TObjectPtr<USoundBase> HoverSoundFX;
+
+
 
 public:
     UPROPERTY(BlueprintReadOnly)
@@ -40,5 +62,10 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     TObjectPtr<UStaticMeshComponent> MeshComponent;
+
+    UPROPERTY()
+    TObjectPtr<AMapNode> GraphNode;
+
+    UMapEventData* GetAssignedEvent() { return Event; }
 };
 

@@ -92,7 +92,7 @@ void ALootSpawner::BeginPlay()
 {
     Super::BeginPlay();
 
-    // SpawnItem(); // Temporarily disabled to avoid build errors while header has commented declarations
+    SpawnItem();
 }
 
 void ALootSpawner::OnConstruction(const FTransform& Transform)
@@ -151,14 +151,17 @@ FString ALootSpawner::GetItemTypeLabel() const
 
 void ALootSpawner::SpawnItem()
 {
-    if (!ItemRegistry) return;
-
-    TArray<FLootTableRow*> FilteredRows;
+    if (!ItemRegistry)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SpawnItem: ItemRegistry is null"));
+        return;
+    }
 
     TArray<FLootTableRow*> AllRows;
     FString ContextString(TEXT("LootSpawner"));
     ItemRegistry->GetAllRows<FLootTableRow>(ContextString, AllRows);
 
+    TArray<FLootTableRow*> FilteredRows;
     for (FLootTableRow* Row : AllRows)
     {
         if (!Row) continue;
@@ -168,16 +171,41 @@ void ALootSpawner::SpawnItem()
         }
     }
 
-    if (FilteredRows.IsEmpty()) return;
+    UE_LOG(LogTemp, Warning, TEXT("SpawnItem: %d total rows, %d matched rarity=%d type=%d"),
+        AllRows.Num(), FilteredRows.Num(), (int)AllowedRarity, (int)AllowedItemTypes);
+
+    if (FilteredRows.IsEmpty())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SpawnItem: no rows matched the allowed rarity/type"));
+        return;
+    }
 
     FLootTableRow* ChosenRow = FilteredRows[FMath::RandRange(0, FilteredRows.Num() - 1)];
-
-    if (ChosenRow)
+    if (!ChosenRow || !ChosenRow->ItemDefinition)
     {
-        UItemDefinition* ItemDefinition = ChosenRow->ItemDefinition;
-        FActorSpawnParameters Params;
-        FTransform SpawnTransform(GetActorRotation(), GetActorLocation(), FVector(1.f, 1.f, 1.f));
-
-        GetWorld()->SpawnActor<AMeleeWeapon>(ItemDefinition->ItemClass, SpawnTransform, Params);
+        UE_LOG(LogTemp, Warning, TEXT("SpawnItem: chosen row or its ItemDefinition is null"));
+        return;
     }
+
+    UItemDefinition* ItemDefinition = ChosenRow->ItemDefinition;
+    if (!ItemDefinition->ItemClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SpawnItem: ItemDefinition %s has no ItemClass set"),
+            *ItemDefinition->GetName());
+        return;
+    }
+
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    FTransform SpawnTransform(GetActorRotation(), GetActorLocation(), FVector(1.f));
+
+    AActor* Spawned = GetWorld()->SpawnActor<AActor>(ItemDefinition->ItemClass, SpawnTransform, Params);
+    if (!Spawned)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SpawnItem: SpawnActor failed for class %s"),
+            *ItemDefinition->ItemClass->GetName());
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("SpawnItem: spawned %s"), *Spawned->GetName());
 }

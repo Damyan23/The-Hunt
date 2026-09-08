@@ -17,11 +17,11 @@ class THEHUNT_API URuneBase : public UPrimaryDataAsset
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditDefaultsOnly, Category="Rune")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Rune")
 	FText RuneDescription;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Rune")
-	TSoftObjectPtr<UTexture2D> RuneIcon;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Rune")
+	TObjectPtr<UTexture2D> RuneIcon;
 
 	virtual void OnEquipped(ABaseCharacter* Owner);
 	virtual void OnUnequipped(ABaseCharacter* Owner);

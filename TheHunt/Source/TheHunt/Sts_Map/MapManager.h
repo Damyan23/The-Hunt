@@ -29,6 +29,11 @@ struct FMapGeneratorSettings
 	UPROPERTY(EditAnywhere) int MaxRemovedPoints = 8;
 
 	// ============================================================
+	// NODES SETTINGS
+	// ============================================================
+	UPROPERTY(EditAnywhere) float NodeClearanceRadius = 200.f;
+
+	// ============================================================
 	// FOLIAGE SETTINGS
 	// ============================================================
 	UPROPERTY(EditAnywhere) float MinDistFoliage = 80.f;
@@ -60,8 +65,6 @@ protected:
 	void ClearMap();
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, Category = "Map Generation")
 	FMapGeneratorSettings GeneratorSettings;
@@ -78,7 +81,8 @@ public:
 	UFUNCTION()
 	void SpawnEnvironment(TArray<FVector2D>& SpawnPoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints);
 
-	void SetNodeTypes(TMap<int32, AMapNode*>& MapGraph);
+	// Header (MapManager.h)
+	void SetNodeTypes(TMap<int32, AMapNode*>& MapGraph, const TArray<TArray<int32>>& AllPaths, int32 StartIndex, int32 EndIndex);
 
 	UPROPERTY(EditAnywhere)
 	UStaticMesh* FoliageMesh;
@@ -128,4 +132,16 @@ public:
 
 	UPROPERTY()
 	UMapNodeConnectionsWidget* ConnectionsWidget;
+
+	TArray<AActor*> SpawnedVisualizationNodes;
+
+	UFUNCTION(BlueprintCallable)
+	void SaveMapState(TArray<FVector2D>& FoliagePoints, TArray<FVector2D>& HousePoints, TArray<FVector2D>& RuinPoints);
+
+	// In MapManager.h
+	UPROPERTY(EditAnywhere, Category = "Map")
+	FRotator NodeRotation = FRotator(0.f, -90.f, 0.f); // tune to taste
+
+private:
+	void RebuildMapFromSave();
 };

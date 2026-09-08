@@ -21,11 +21,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = Context)
 	TObjectPtr<AEnemyCharacter> Character;
 
+	UPROPERTY(EditAnywhere, Category = Input)
+	TObjectPtr<AActor> CurrentActor = nullptr;
+
 	UPROPERTY(EditAnywhere, Category = Parameters)
 	float MinDuration = 1.5f;
 
 	UPROPERTY(EditAnywhere, Category = Parameters)
 	float MaxDuration = 4.0f;
+
+	UPROPERTY(EditAnywhere, Category = Parameters)
+	float RotationSpeed = 8.0f;
 
 	UPROPERTY()
 	float TargetDuration = 0.f;

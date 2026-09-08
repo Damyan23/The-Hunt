@@ -45,8 +45,7 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
     int CurrentQuantity;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item",
-        meta = (EditCondition = "ItemType != EItemType::Rune", EditConditionHides))
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
     TSubclassOf<AInteractable> ItemClass;
     // -------------------------
     // WEAPON DATA

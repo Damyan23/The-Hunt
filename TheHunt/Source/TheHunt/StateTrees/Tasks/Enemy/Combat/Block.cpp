@@ -5,9 +5,10 @@
 
 #include "GameplayAbilitySystem/Abilities/BasicBlockingAbility.h"
 #include "StateTreeExecutionContext.h"
+#include "GameplayAbilitySystem/Abilities/Enemies/BlockAbilityEnemy.h"
 
 EStateTreeRunStatus FBlock::EnterState(FStateTreeExecutionContext& Context,
-    const FStateTreeTransitionResult& Transition) const
+                                       const FStateTreeTransitionResult& Transition) const
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 
@@ -41,7 +42,6 @@ EStateTreeRunStatus FBlock::Tick(FStateTreeExecutionContext& Context, const floa
 {
     FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
 
-    // Ability already fully ended (either from our request or guard break)
     if (InstanceData.bAbilityEnded)
         return EStateTreeRunStatus::Succeeded;
 
@@ -50,22 +50,36 @@ EStateTreeRunStatus FBlock::Tick(FStateTreeExecutionContext& Context, const floa
     if (InstanceData.Character->SetStagger())
         return EStateTreeRunStatus::Failed;
 
-    // Duration expired — request the ability to play its exit animation
+    // Rotate to face the target while blocking
+    if (InstanceData.Character && InstanceData.CurrentActor)
+    {
+        FVector ToTarget = InstanceData.CurrentActor->GetActorLocation() - InstanceData.Character->GetActorLocation();
+        ToTarget.Z = 0.f; // keep level, don't tilt up/down
+
+        if (!ToTarget.IsNearlyZero())
+        {
+            FRotator TargetRotation = ToTarget.Rotation();
+            FRotator CurrentRotation = InstanceData.Character->GetActorRotation();
+            FRotator NewRotation = FMath::RInterpTo(CurrentRotation, TargetRotation, DeltaTime, InstanceData.RotationSpeed);
+            NewRotation.Pitch = 0.f;
+            NewRotation.Roll = 0.f;
+            InstanceData.Character->SetActorRotation(NewRotation);
+        }
+    }
+
+    // Duration expired — request exit
     if (!InstanceData.bExitRequested && InstanceData.TimeInState >= InstanceData.TargetDuration)
     {
         InstanceData.bExitRequested = true;
-
         FGameplayTagContainer BlockTag;
         BlockTag.AddTag(FGameplayTag::RequestGameplayTag("Ability.Block"));
-
         TArray<FGameplayAbilitySpec*> MatchingSpecs;
         InstanceData.AbilitySystemComponent->GetActivatableGameplayAbilitySpecsByAllMatchingTags(BlockTag, MatchingSpecs);
-
         for (FGameplayAbilitySpec* Spec : MatchingSpecs)
         {
             if (Spec->IsActive())
             {
-                UBasicBlockingAbility* BlockAbility = Cast<UBasicBlockingAbility>(Spec->GetPrimaryInstance());
+                UBlockAbilityEnemy* BlockAbility = Cast<UBlockAbilityEnemy>(Spec->GetPrimaryInstance());
                 if (BlockAbility)
                 {
                     BlockAbility->RequestBlockExit();

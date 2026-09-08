@@ -13,14 +13,19 @@ AMeleeWeapon::AMeleeWeapon()
 {
     PrimaryActorTick.bCanEverTick = true;
 
-    // Explicitly set root first
+    // Scene root so the mesh can have its own relative rotation
+    USceneComponent* SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    SetRootComponent(SceneRoot);
+
     ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-    SetRootComponent(ItemMesh);
+    ItemMesh->SetupAttachment(SceneRoot);
+
+    // Now you can rotate the mesh freely relative to the root
+    ItemMesh->SetRelativeRotation(FRotator(0.f, 0.f, 0.f)); // <-- set your correction here
 
     if (GetOwner())
     {
         ItemMesh->IgnoreActorWhenMoving(GetOwner(), true);
-        // This actually ignores overlaps with the owner
         TArray<UPrimitiveComponent*> OwnerComponents;
         GetOwner()->GetComponents<UPrimitiveComponent>(OwnerComponents);
         for (UPrimitiveComponent* Comp : OwnerComponents)
@@ -29,22 +34,36 @@ AMeleeWeapon::AMeleeWeapon()
             Comp->IgnoreComponentWhenMoving(ItemMesh, true);
         }
     }
+
     ItemMesh->OnComponentBeginOverlap.AddDynamic(this, &AMeleeWeapon::OnSwordHit);
-
     Runes.SetNum(3);
-
-    UE_LOG(LogTemp, Warning, TEXT("=== SWORD COLLISION SETUP ==="));
-    UE_LOG(LogTemp, Warning, TEXT("Collision Enabled: %d"), (int32)ItemMesh->GetCollisionEnabled());
-    UE_LOG(LogTemp, Warning, TEXT("Object Type: %d"), (int32)ItemMesh->GetCollisionObjectType());
-    UE_LOG(LogTemp, Warning, TEXT("Generate Overlaps: %s"), ItemMesh->GetGenerateOverlapEvents() ? TEXT("YES") : TEXT("NO"));
-    UE_LOG(LogTemp, Warning, TEXT("Overlap Response to Pawn: %d"), (int32)ItemMesh->GetCollisionResponseToChannel(ECC_Pawn));
-    UE_LOG(LogTemp, Warning, TEXT("Owner: %s"), GetOwner() ? *GetOwner()->GetName() : TEXT("NULL"));
 }
 
 // Called when the game starts or when spawned
 void AMeleeWeapon::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
+
+    UE_LOG(LogTemp, Warning, TEXT("Weapon BeginPlay: ItemDefinition=%s"),
+        ItemDefinition ? *ItemDefinition->GetName() : TEXT("NULL"));
+
+    if (ItemDefinition)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("  WeaponData.Runes count: %d"),
+            ItemDefinition->WeaponData.Runes.Num());
+
+        for (URuneBase* Rune : ItemDefinition->WeaponData.Runes)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("    Def rune: %s"),
+                Rune ? *Rune->GetName() : TEXT("NULL"));
+            if (Rune)
+            {
+                bool ok = EquipRune(Rune);
+                UE_LOG(LogTemp, Warning, TEXT("    EquipRune -> %s, Runes.Num now %d"),
+                    ok ? TEXT("OK") : TEXT("FAIL"), Runes.Num());
+            }
+        }
+    }
 }
 
 void AMeleeWeapon::OnConstruction(const FTransform& Transform)
@@ -125,10 +144,10 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
     if (!AttackerASC || !TargetASC) return;
 
     // Get attack ability early since we need it in multiple places
-    UBasicAttackAbility* AttackAbility = nullptr;
+    UCombatAbilityBase* AttackAbility = nullptr;
     for (const FGameplayAbilitySpec& Spec : AttackerASC->GetActivatableAbilities())
     {
-        AttackAbility = Cast<UBasicAttackAbility>(Spec.Ability);
+        AttackAbility = Cast<UCombatAbilityBase>(Spec.Ability);
         if (AttackAbility) break;
     }
 
@@ -179,6 +198,7 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
 
         UGameplayStatics::PlaySoundAtLocation(this, WeaponSoundData.BlockSound, GetActorLocation());
 
+
         // Apply stagger to blocker even though damage is blocked
         if (AttackAbility && AttackAbility->StaggerEffect)
         {
@@ -216,11 +236,8 @@ void AMeleeWeapon::OnSwordHit(UPrimitiveComponent* OverlappedComp, AActor* Other
         for (int i = 0; i < Runes.Num(); i++)
         {
             if (!Runes[i]) continue;
-            if (AttackerASC->HasMatchingGameplayTag(
-                FGameplayTag::RequestGameplayTag("State.Attacking")))
-            {
-                Runes[i]->OnHit(Attacker, Target, 0);
-            }
+
+            Runes[i]->OnHit(Attacker, Target, 0);
         }
     }
 

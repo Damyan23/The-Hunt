@@ -111,11 +111,11 @@ struct FWeaponData
     TObjectPtr<UAnimMontage> KnockbackB;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Hit")
-    TObjectPtr<UAnimMontage> Die;
+    TObjectPtr<UAnimMontage> Death;
 
     // ---- Animations|Block ----
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Block")
-    TArray<TObjectPtr<UAnimMontage>> Block;
+    TArray<TObjectPtr<UAnimMontage>> Blocks;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Animations|Block")
     TObjectPtr<UAnimMontage> BlockBroken;

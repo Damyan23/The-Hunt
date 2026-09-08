@@ -26,6 +26,9 @@ void UMapGenerator::GenerateMap(
 	// Points
 	TArray<FVector2D> Points = PoissonDiskSample(Settings.BoardSize, Settings.MinDistancePath, Settings.SamplesBeforeRejectionPath);
 
+	PathGrid = Grid;
+	PathCellSize = CellSize;
+
 	// Delaunay
 	TArray<TPair<int32, int32>> Edges = BuildDelaunayConnections(Points);
 
@@ -53,7 +56,7 @@ void UMapGenerator::GenerateMap(
 	// Foliage
 	OutVegetationPoints = PoissonDiskSample(
 		Settings.BoardSize, Settings.MinDistFoliage, Settings.SamplesBeforeRejectionFoliage,
-		PathNodePositions, Settings.MinDistFoliage,
+		PathNodePositions, Settings.NodeClearanceRadius,
 		PathSegments, Settings.PathClearanceRadius,
 		Settings.LargeObjectSpawnChance, Settings.LargeObjectClearanceRadius, OutHousePoints,
 		Settings.RuinsSpawnChance, Settings.RuinsClearanceRadius, OutRuinPoints);
@@ -475,10 +478,14 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 	StartPointIndex = -1;
 	EndPointIndex = -1;
 
-	const int32 GridWidth = FMath::CeilToInt(BoundingBox.X / CellSize);
-	const int32 GridHeight = FMath::CeilToInt(BoundingBox.Y / CellSize);
+	const int32 GridWidth = FMath::CeilToInt(BoundingBox.X / PathCellSize);
+	const int32 GridHeight = FMath::CeilToInt(BoundingBox.Y / PathCellSize);
 
-	int32 StartingCell = Grid[GridWidth / 2][GridHeight - 1];
+	if (PathGrid.Num() == 0 || GridWidth <= 0 || GridHeight <= 0) return;
+	if (GridWidth / 2 >= PathGrid.Num()) return;
+	if (GridHeight - 1 >= PathGrid[0].Num()) return;
+
+	int32 StartingCell = PathGrid[GridWidth / 2][GridHeight - 1];
 
 	if (StartingCell != 0)
 	{
@@ -493,9 +500,9 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 			int LeftX = GridWidth / 2 - i;
 			int RightX = GridWidth / 2 + i;
 
-			if (LeftX >= 0 && Grid[LeftX][GridHeight - 1] != 0)
+			if (LeftX >= 0 && PathGrid[LeftX][GridHeight - 1] != 0)
 			{
-				int32 PointIndex = Grid[LeftX][GridHeight - 1] - 1;
+				int32 PointIndex = PathGrid[LeftX][GridHeight - 1] - 1;
 				float Dist = FVector2D::Distance(Points[PointIndex], CenterTop);
 				if (Dist < ClosestDistance)
 				{
@@ -504,9 +511,9 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 				}
 			}
 
-			if (RightX < GridWidth && Grid[RightX][GridHeight - 1] != 0)
+			if (RightX < GridWidth && PathGrid[RightX][GridHeight - 1] != 0)
 			{
-				int32 PointIndex = Grid[RightX][GridHeight - 1] - 1;
+				int32 PointIndex = PathGrid[RightX][GridHeight - 1] - 1;
 				float Dist = FVector2D::Distance(Points[PointIndex], CenterTop);
 				if (Dist < ClosestDistance)
 				{
@@ -522,7 +529,7 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 	}
 
 	// Find end point (bottom row, closest to center)
-	int32 EndCell = Grid[GridWidth / 2][0];
+	int32 EndCell = PathGrid[GridWidth / 2][0];
 	if (EndCell != 0)
 	{
 		EndPointIndex = EndCell - 1;
@@ -538,7 +545,7 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 
 			if (LeftX >= 0 && Grid[LeftX][0] != 0)
 			{
-				int32 PointIndex = Grid[LeftX][0] - 1;
+				int32 PointIndex = PathGrid[LeftX][0] - 1;
 				float Dist = FVector2D::Distance(Points[PointIndex], CenterBottom);
 				if (Dist < ClosestDistance)
 				{
@@ -547,9 +554,9 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 				}
 			}
 
-			if (RightX < GridWidth && Grid[RightX][0] != 0)
+			if (RightX < GridWidth && PathGrid[RightX][0] != 0)
 			{
-				int32 PointIndex = Grid[RightX][0] - 1;
+				int32 PointIndex = PathGrid[RightX][0] - 1;
 				float Dist = FVector2D::Distance(Points[PointIndex], CenterBottom);
 				if (Dist < ClosestDistance)
 				{
@@ -558,7 +565,7 @@ void UMapGenerator::GetStartAndEndPoint(int32& StartPointIndex, int32& EndPointI
 				}
 			}
 
-			float NextCellDist = (i + 1) * CellSize;
+			float NextCellDist = (i + 1) * PathCellSize;
 			if (EndPointIndex != -1 && NextCellDist > ClosestDistance)
 				break;
 		}
@@ -599,15 +606,22 @@ TArray<TArray<int32>> UMapGenerator::GeneratePaths(TArray<TPair<int32, int32>> E
 		// Pick convergence points from first path
 		if (p == 0)
 		{
-			while (ConvergencePoints.Num() < MinConvergencePoints)
+			int32 EligibleCount = FMath::Max(0, Path.Num() - 2); // interior nodes
+			int32 TargetConvergence = FMath::Min(MinConvergencePoints, EligibleCount);
+
+			int32 SafetyCounter = 0;
+			while (ConvergencePoints.Num() < TargetConvergence && SafetyCounter < 1000)
 			{
 				ConvergencePoints.Empty();
 				for (int32 i = 1; i < Path.Num() - 1; i++)
 				{
+					UE_LOG(LogTemp, Warning, TEXT("Convergence loop: have %d, need %d, pathlen %d"),
+						ConvergencePoints.Num(), MinConvergencePoints, Path.Num());
 					if (ConvergencePoints.Num() >= MaxConvergencePoints) break;
 					if (FMath::FRand() < 0.3f)
 						ConvergencePoints.Add(Path[i]);
 				}
+				SafetyCounter++;
 			}
 		}
 

@@ -18,8 +18,9 @@ void UBasicAttackAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	//ApplyCost(Handle, ActorInfo, ActivationInfo);
     CommitAbility(Handle, ActorInfo, ActivationInfo);
+	APlayerCharacter* Player = Cast<APlayerCharacter>(GetAvatarActorFromActorInfo());
+	if (Player) Player->StartStaminaRegenDelay();
 
 	UAnimInstance* AnimInstance = ActorInfo->GetAnimInstance();
 	if (!AnimInstance) return;
@@ -33,8 +34,6 @@ void UBasicAttackAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	// Clamp index
 	CurrentComboIndex = FMath::Clamp(CurrentComboIndex, 0, ComboAttacks.Num() - 1);
 	UAnimMontage* Montage = ComboAttacks[CurrentComboIndex];
-
-	CommitAbility(Handle, ActorInfo, ActivationInfo);
 
 	float Duration = AnimInstance->Montage_Play(Montage);
 	if (Duration > 0.f)
@@ -90,6 +89,12 @@ void UBasicAttackAbility::OnAttackFinished(UAnimMontage* Montage, bool bInterrup
 void UBasicAttackAbility::TriggerNextAttack()
 {
 	if (!bNextAttackQueued || CurrentComboIndex >= ComboAttacks.Num() - 1) return;
+
+	if (!CommitAbilityCost(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo))
+		return; // not enough stamina to continue combo
+
+	APlayerCharacter* Player = Cast<APlayerCharacter>(GetAvatarActorFromActorInfo());
+	if (Player) Player->StartStaminaRegenDelay();
 
 	UAnimInstance* AnimInstance = CurrentActorInfo->GetAnimInstance();
 	if (!AnimInstance) return;

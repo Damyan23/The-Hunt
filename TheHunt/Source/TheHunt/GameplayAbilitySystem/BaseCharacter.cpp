@@ -32,6 +32,8 @@ void ABaseCharacter::BeginPlay()
         UBaseAttributeSet::GetHealthAttribute())
         .AddUObject(this, &ABaseCharacter::OnHealthChanged);
 
+    AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaminaAttribute()).AddUObject(this, &ABaseCharacter::OnStaminaChanged);
+
     AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBaseAttributeSet::GetStaggerAttribute()).AddUObject(this, &ABaseCharacter::OnStaggerChanged);
 }
 
@@ -81,18 +83,24 @@ UAbilitySystemComponent* ABaseCharacter::GetAbilitySystemComponent() const
 
 void ABaseCharacter::Die()
 {
+  
 }
 
 void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {  
-    if (IsDead) return;
+    if (AbilitySystemComponent->HasMatchingGameplayTag(
+        FGameplayTag::RequestGameplayTag("State.Dead"))) return;
 
     OnHealthUpdated(Data.NewValue, AbilitySystemComponent->GetNumericAttribute(
         UBaseAttributeSet::GetMaxHealthAttribute()));
-
+    float Delta = FMath::Abs(Data.NewValue - Data.OldValue);
+    if (Delta > 0.5f)
+        OnHealthChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+            UBaseAttributeSet::GetMaxHealthAttribute()));
     if (Data.NewValue <= 0.f)
     {
-        IsDead = true;
+        AbilitySystemComponent->AddLooseGameplayTag(
+            FGameplayTag::RequestGameplayTag("State.Dead"));
         OnDeath();
         return;
     }   
@@ -102,7 +110,7 @@ void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
         bool bDamageFromActor = false;
         if (Data.GEModData != nullptr)
         {
-            const FGameplayTagContainer& EffectTags = Data.GEModData->EffectSpec.Def->InheritableGameplayEffectTags.CombinedTags;
+            const FGameplayTagContainer& EffectTags = Data.GEModData->EffectSpec.Def->GetAssetTags();
             if (EffectTags.HasTag(FGameplayTag::RequestGameplayTag("Damage.Direct")))
             {
                 bDamageFromActor = true;
@@ -175,8 +183,34 @@ void ABaseCharacter::OnDeath()
 {
 }
 
+void ABaseCharacter::OnStaminaChanged(const FOnAttributeChangeData& Data)
+{
+    float Delta = FMath::Abs(Data.NewValue - Data.OldValue);
+    if (Delta > 0.5f)
+        OnStaminaChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+            UBaseAttributeSet::GetMaxStaminaAttribute()));
+}
+
 void ABaseCharacter::OnStaggerChanged(const FOnAttributeChangeData& Data)
 {
+    if (Data.NewValue != Data.OldValue)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Stagger: %f"), Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+            UBaseAttributeSet::GetMaxStaggerAttribute()));
+
+        OnStaggerChangedEvent.Broadcast(Data.NewValue / AbilitySystemComponent->GetNumericAttribute(
+            UBaseAttributeSet::GetMaxStaggerAttribute()));
+    }
+
+
+    float MaxStagger = AbilitySystemComponent->GetNumericAttribute(
+        UBaseAttributeSet::GetMaxStaggerAttribute());
+    if (Data.NewValue >= MaxStagger && Data.OldValue < MaxStagger)
+    {
+        OnGuardBroken();
+        return;
+    }
+
     UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
     if (!AnimInstance) return;
 
@@ -198,24 +232,6 @@ void ABaseCharacter::OnGuardBroken()
     AbilitySystemComponent->CancelAbilities(&BlockTag);
 
     AbilitySystemComponent->AddLooseGameplayTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("State.Stunned")));
-
-    if (StaggerMontage)
-        GetMesh()->GetAnimInstance()->Montage_Play(StaggerMontage);
-
-    FTimerHandle StunTimer;
-    GetWorldTimerManager().SetTimer(StunTimer, [this]()
-    {
-        UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-        if (StaggerMontage && AnimInstance)
-            AnimInstance->Montage_JumpToSection(FName("StaggerExit"), StaggerMontage);
-
-        AbilitySystemComponent->RemoveLooseGameplayTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("State.Stunned")));
-
-        AbilitySystemComponent->ApplyGameplayEffectToSelf(
-            StaggerResetEffect.GetDefaultObject(), 1.f,
-            AbilitySystemComponent->MakeEffectContext());
-
-    }, StunDuration, false);
 }
 
 void ABaseCharacter::PlayFootstepSounds()
@@ -233,5 +249,18 @@ void ABaseCharacter::PlayRandomSoundAtLocation(const TArray<USoundBase*>& Sounds
     USoundBase* Sound = Sounds[FMath::RandRange(0, Sounds.Num() - 1)];
     if (Sound)
         UGameplayStatics::PlaySoundAtLocation(this, Sound, Location, FRotator::ZeroRotator, 0.25);
+}
+
+void ABaseCharacter::StartStaminaRegenDelay()
+{
+    bStaminaRegenAllowed = false;
+    GetWorldTimerManager().ClearTimer(StaminaRegenDelayTimer);
+    GetWorldTimerManager().SetTimer(StaminaRegenDelayTimer, this,
+        &APlayerCharacter::AllowStaminaRegen, 1.5f, false);
+}
+
+void ABaseCharacter::AllowStaminaRegen()
+{
+    bStaminaRegenAllowed = true;
 }
 

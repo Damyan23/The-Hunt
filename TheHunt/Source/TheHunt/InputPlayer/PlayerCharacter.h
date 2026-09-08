@@ -7,12 +7,15 @@
 #include "Inventory/UI/InventoryWidget.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Perks/PerkData.h"
+#include "Perks/PerkSlot.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
-class THEHUNT_API APlayerCharacter : public ABaseCharacter
+class THEHUNT_API APlayerCharacter : public ABaseCharacter, public IGenericTeamAgentInterface
 {
     GENERATED_BODY()
+
+    virtual FGenericTeamId GetGenericTeamId() const override { return FGenericTeamId(0); }   // team 0 = player
 
     // ============================================================
     // CORE COMPONENTS
@@ -86,6 +89,9 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
     class UInputAction* ToggleCombatAction;
 
+    UPROPERTY(EditDefaultsOnly, Category = "EnhancedInput")
+    class UInputAction* HealAction;
+
     // ============================================================
     // LOCK-ON
     // ============================================================
@@ -115,12 +121,23 @@ protected:
     // ============================================================
     // Combat
     // ============================================================
-public:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    bool bIsCombatEnabled = false;
 private:
     ECombatType CombatType = ECombatType::Unarmed;
 
+    FVector DodgeDirection = FVector::ZeroVector;
+    bool bDodgeDirectionLocked = false;
+    
+    UPROPERTY(EditAnywhere, Category = "Animation|Hit Reactions")
+    UAnimMontage* DefaultHitF;
+
+    UPROPERTY(EditAnywhere, Category = "Animation|Hit Reactions")
+    UAnimMontage* DefaultHitB;
+
+    UPROPERTY(EditAnywhere, Category = "Animation|Hit Reactions")
+    UAnimMontage* DefaultHitL;
+
+    UPROPERTY(EditAnywhere, Category = "Animation|Hit Reactions")
+    UAnimMontage* DefaultHitR;
 protected:
     // ============================================================
     // INVENTORY & HOTBAR
@@ -134,12 +151,27 @@ protected:
     UPROPERTY()
     TArray<TObjectPtr<UItemDefinition>> HotbarSlots;
 
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquippedFromSlot, int, SlotIndex);
+    UPROPERTY(BlueprintAssignable)
+    FOnWeaponEquippedFromSlot OnWeaponEquippedFromSlotEvent;
+
+    UPROPERTY()
+    int EquippedWeaponSlotIndex;
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPotionEquippedFromSlot, int, SlotIndex);
+    UPROPERTY(BlueprintAssignable)
+    FOnPotionEquippedFromSlot OnPotionEquippedFromSlotEvent;
 public:
     // ============================================================
     // PERKS
     // ============================================================
-    UPROPERTY()
-    TArray<TObjectPtr<UPerkData>> ActivePerks;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    TArray<FPerkSlot> Perks;
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPerkApplied, FPerkSlot, PerkSlot);
+
+    UPROPERTY(BlueprintAssignable, Category = "Perks")
+    FOnPerkApplied OnPerkApplied;
 protected:
 
     // ============================================================
@@ -172,6 +204,17 @@ protected:
     FTimerHandle FootstepTimerHandle;
 
     // ============================================================
+    // HEALING
+    // ============================================================
+
+public:
+    UPROPERTY()
+    TObjectPtr<UItemDefinition> HealingItem;
+
+    UPROPERTY()
+    int HealingItemSlotIndex;
+
+    // ============================================================
     // COMBAT
     // ============================================================
 public:
@@ -180,14 +223,13 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Combat")
     FOnWeaponEquipped OnWeaponEquipped;
 
-    UFUNCTION()
-    void ToggleCombat();
+    void OnBlockBrokenMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
     // ============================================================
     // PERKS   
     // ============================================================
+    UFUNCTION(BlueprintCallable)
     void ApplyPerk(UPerkData* Perk);
-
 protected:
     // ============================================================
     // OVERRIDES
@@ -196,6 +238,8 @@ protected:
     virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
     virtual void BeginPlay() override;
     virtual void OnConstruction(const FTransform& Transform) override;
+    virtual void OnGuardBroken() override;
+    virtual void OnDeath() override;
 
     // ============================================================
     // INPUT HANDLERS
@@ -209,6 +253,7 @@ protected:
     void Interact();
     void ToggleInventory();
     void Dash();
+    void Heal();
 
     // ============================================================
     // LOCK-ON LOGIC
@@ -222,24 +267,83 @@ protected:
     // MISC
     // ============================================================
     void ShowHitVignette();
-    void TryPlayFootsteps();
     void PlayHitReaction(AActor* Attacker);
 
 private:
     void UseHotbarSlot(int32 Index);
 
     // ============================================================
+    // DEATH STATE
+    // ============================================================
+    UPROPERTY(EditDefaultsOnly, Category = "Death")
+    TSubclassOf<UUserWidget> DeathScreenWidgetClass;
+
+    UPROPERTY()
+    TObjectPtr<UUserWidget> DeathScreenWidget;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Death")
+    float DeathScreenDuration = 3.0f;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Death")
+    TSubclassOf<UGameplayEffect> ReviveEffect;
+
+    UFUNCTION()
+    void OnDeathMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+    void ShowDeathScreen();
+    void Respawn();
+
+
+
+public:
+    UPROPERTY(BlueprintReadWrite, Category = "Death")
+    FVector LastSpawnPoint = FVector::ZeroVector;
+    // ============================================================
+    // SAVE DATA
+    // ============================================================
+    FPlayerProgressionData GatherProgression();
+    void ApplyProgression(const FPlayerProgressionData& Data);
+
+    // ============================================================
+    // HEALING
+    // ============================================================
+    UFUNCTION(BlueprintCallable)
+    void EquipHealingItem(UItemDefinition* ItemDef, int SlotIndex);
+
+    UFUNCTION(BlueprintCallable)
+    void UnequipHealingItem();
+
+    UFUNCTION(BlueprintCallable)
+    void ConsumeHealItem();
+
+    // ============================================================
     // PUBLIC API
     // ============================================================
-public:
     APlayerCharacter();
 
     virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     UFUNCTION(BlueprintCallable)
-    void EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass);
+    void EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass, int SlotIndex, UItemDefinition* SourceItemDef);
+
+    UPROPERTY()
+    UItemDefinition* PendingWeaponItemDef;
+
+    UFUNCTION(BlueprintCallable)
+    float UnequipWeapon();
 
     void BindItemToSlot(UItemDefinition* ItemDefinition, int32 HotbarSlotIndex);
     void EquipRuneToWeapon(UItemDefinition* RuneDef);
+
+    void EnableHitbox() const;
+    void DisableHitbox() const;
+
+    bool IsLockedOn() const {
+        return AbilitySystemComponent->HasMatchingGameplayTag(
+            FGameplayTag::RequestGameplayTag("State.LockedOn"));
+    }
+
+    AActor* GetLockOnTarget() const { return LockOnTarget; }
+
 };

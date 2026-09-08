@@ -16,53 +16,7 @@
 #include "GameplayEffectExtension.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameplayAbilitySystem/BasicAttackAbility.h"
-
-void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-	Super::OnHealthChanged(Data);
-
-	UE_LOG(LogTemp, Warning, TEXT("Health went from %f to %f"), Data.OldValue, Data.NewValue);
-
-	if (Data.NewValue < Data.OldValue)
-	{
-		ShowHitVignette();
-		// Get attacker from effect context
-		if (AbilitySystemComponent)
-		{
-			const FGameplayEffectModCallbackData* ModData = Data.GEModData;
-			if (ModData)
-			{
-				AActor* Attacker = ModData->EffectSpec.GetContext().GetInstigator();
-				PlayHitReaction(Attacker);
-			}
-		}
-	}
-}
-
-void APlayerCharacter::ShowHitVignette()
-{
-	if (!HitVignetteMID) return;
-
-	// Set intensity to full
-	HitVignetteMID->SetScalarParameterValue(FName("HitIntensity"), 1.0f);
-
-	// Fade it out over time
-	GetWorldTimerManager().SetTimer(HitVignetteTimer, [this]()
-		{
-			float CurrentIntensity;
-			HitVignetteMID->GetScalarParameterValue(FName("HitIntensity"), CurrentIntensity);
-
-			if (CurrentIntensity > 0.f)
-			{
-				HitVignetteMID->SetScalarParameterValue(
-					FName("HitIntensity"), CurrentIntensity - 0.05f);
-			}
-			else
-			{
-				GetWorldTimerManager().ClearTimer(HitVignetteTimer);
-			}
-		}, 0.016f, true); // runs every frame roughly
-}
+#include "GameplayAbilitySystem/Abilities/BasicBlockingAbility.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -94,6 +48,8 @@ APlayerCharacter::APlayerCharacter()
 	PostProcessComponent->SetupAttachment(RootComponent);
 
 	HotbarSlots.SetNum(4);
+
+	Perks.SetNum(15);
 }
 
 void APlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -111,26 +67,234 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	PC = GetWorld()->GetFirstPlayerController();
-	AttachWeapon();
+
+	UTheHuntGameInstance* GI = GetGameInstance<UTheHuntGameInstance>();
+	if (GI && GI->bHasSaved)
+	{
+		ApplyProgression(GI->GetProgression());
+	}
+	else
+	{
+		AttachWeapon();
+	}
 
 	if (HitVignetteMaterial)
 	{
 		HitVignetteMID = UMaterialInstanceDynamic::Create(HitVignetteMaterial, this);
 		PostProcessComponent->AddOrUpdateBlendable(HitVignetteMID);
 	}
-
-	GetWorldTimerManager().SetTimer(
-		FootstepTimerHandle,
-		this,
-		&APlayerCharacter::TryPlayFootsteps,
-		FootstepInterval,
-		false // not repeating
-	);
 }
 
-
-void APlayerCharacter::ToggleCombat()
+FPlayerProgressionData APlayerCharacter::GatherProgression()
 {
+	FPlayerProgressionData Data;
+	Data.HotbarSlots = HotbarSlots;
+	Data.Perks = Perks;
+	Data.EquippedWeaponDef = Weapon ? Weapon->ItemDefinition : nullptr;
+
+	// Inventory from the subsystem
+	if (UInventorySubsystem* Inv = GetGameInstance()->GetSubsystem<UInventorySubsystem>())
+	{
+		Data.InventorySlots = Inv->GetInventory(this)->Slots;
+	}
+
+	if (Weapon)
+	{
+		Data.EquippedWeaponDef = Weapon->ItemDefinition;
+		Data.EquippedWeaponSlotIndex = EquippedWeaponSlotIndex;
+	}
+		
+	if (HealingItem)
+	{
+		Data.EquippedPotion = HealingItem;
+		Data.EquippedPotionSlotIndex = HealingItemSlotIndex;
+	}
+
+	// Attributes
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		TArray<FGameplayAttribute> Attrs;
+		ASC->GetAllAttributes(Attrs);
+		for (const FGameplayAttribute& A : Attrs)
+			Data.Attributes.Add(FName(*A.GetName()), ASC->GetNumericAttribute(A));
+	}
+
+
+	return Data;
+}
+
+void APlayerCharacter::ApplyProgression(const FPlayerProgressionData& Data)
+{
+	// Hotbar & perks
+	HotbarSlots = Data.HotbarSlots;
+
+	Perks = Data.Perks;
+	for (const FPerkSlot& Slot : Perks)
+	{
+		if (Slot.bIsOccupied && Slot.PerkData)
+		{
+			OnPerkApplied.Broadcast(Slot);
+		}
+	}
+
+	// Then attributes — but skip the ones perks already set, or you'll double up
+
+	// Inventory
+	if (UInventorySubsystem* Sub = GetGameInstance()->GetSubsystem<UInventorySubsystem>())
+	{
+		if (UInventoryComponent* Inv = Sub->GetInventory(this))
+		{
+			Inv->LoadInventory(Data.InventorySlots);
+		}
+	}
+
+	// Equipped weapon — rebuild from the saved definition
+	if (Data.EquippedWeaponDef)
+	{
+		TSubclassOf<AMeleeWeapon> SavedClass = Data.EquippedWeaponDef->GetWeaponClass();
+		if (SavedClass)
+			EquipWeapon(SavedClass, Data.EquippedWeaponSlotIndex, Data.EquippedWeaponDef);
+
+		OnWeaponEquippedFromSlotEvent.Broadcast(Data.EquippedWeaponSlotIndex);
+	}
+
+	if (Data.EquippedPotion)
+	{
+		EquipHealingItem(Data.EquippedPotion, Data.EquippedPotionSlotIndex);
+
+		OnPotionEquippedFromSlotEvent.Broadcast(Data.EquippedPotionSlotIndex);
+	}
+
+	// Attributes
+	if (AbilitySystemComponent)
+	{
+		TArray<FGameplayAttribute> Attributes;
+		AbilitySystemComponent->GetAllAttributes(Attributes);
+
+		// Pass 1: Max attributes first (so current values clamp correctly)
+		for (const FGameplayAttribute& Attr : Attributes)
+		{
+			const FName AttrName = Attr.GetUProperty()->GetFName();
+			if (AttrName.ToString().Contains(TEXT("Max")))
+				if (const float* Saved = Data.Attributes.Find(AttrName))
+					AbilitySystemComponent->SetNumericAttributeBase(Attr, *Saved);
+		}
+
+		// Pass 2: current values
+		for (const FGameplayAttribute& Attr : Attributes)
+		{
+			const FName AttrName = Attr.GetUProperty()->GetFName();
+			if (!AttrName.ToString().Contains(TEXT("Max")))
+				if (const float* Saved = Data.Attributes.Find(AttrName))
+					AbilitySystemComponent->SetNumericAttributeBase(Attr, *Saved);
+		}
+	}
+}
+
+void APlayerCharacter::OnGuardBroken()
+{
+	Super::OnGuardBroken();
+	UE_LOG(LogTemp, Warning, TEXT("it should be playing the anim?"));
+
+	if (Weapon)
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (!AnimInstance) return;
+
+		UAnimMontage* BlockBrokenMontage = Weapon->ItemDefinition->WeaponData.BlockBroken;
+		if (!BlockBrokenMontage) return;
+
+		float Duration = AnimInstance->Montage_Play(BlockBrokenMontage);
+		if (Duration > 0.f)
+		{
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &APlayerCharacter::OnBlockBrokenMontageEnded);
+			AnimInstance->Montage_SetEndDelegate(EndDelegate, BlockBrokenMontage);
+		}
+	}
+}
+
+void APlayerCharacter::OnDeath()
+{
+	Super::OnDeath();
+
+	UE_LOG(LogTemp, Warning, TEXT("OnDeath: DeathMontage=%s, AnimInstance=%s"),
+		DeathMontage ? *DeathMontage->GetName() : TEXT("NULL"),
+		GetMesh()->GetAnimInstance() ? TEXT("valid") : TEXT("NULL"));
+
+	if (PC)
+	{
+		PC->SetIgnoreMoveInput(true);
+		PC->SetIgnoreLookInput(true);
+	}
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAllAbilities();
+	}
+	if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+	{
+		Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+	GetCharacterMovement()->DisableMovement();
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && DeathMontage)
+	{
+		AnimInstance->Montage_Play(DeathMontage);
+	}
+
+	// Show the death screen after 0.2 seconds regardless of montage length
+	FTimerHandle DeathScreenTimer;
+	GetWorldTimerManager().SetTimer(DeathScreenTimer, this,
+		&APlayerCharacter::ShowDeathScreen, 0.2f, false);
+}
+
+void APlayerCharacter::OnDeathMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	ShowDeathScreen();
+}
+
+void APlayerCharacter::ShowDeathScreen()
+{
+	if (DeathScreenWidgetClass && PC)
+	{
+		DeathScreenWidget = CreateWidget<UUserWidget>(PC, DeathScreenWidgetClass);
+		if (DeathScreenWidget)
+		{
+			DeathScreenWidget->AddToViewport();
+		}
+	}
+
+	// Respawn after a delay (gives the widget animation time to play)
+	FTimerHandle RespawnTimer;
+	GetWorldTimerManager().SetTimer(RespawnTimer, this,
+		&APlayerCharacter::Respawn, DeathScreenDuration, false);
+}
+
+void APlayerCharacter::Respawn()
+{
+	// Remove the death screen
+	if (DeathScreenWidget)
+	{
+		DeathScreenWidget->RemoveFromParent();
+		DeathScreenWidget = nullptr;
+	}
+
+	// Full run reset
+	if (UTheHuntGameInstance* GI = GetGameInstance<UTheHuntGameInstance>())
+		GI->ResetRun();
+
+	// Go back to the map level — it will regenerate fresh and place the player on the start node
+	UGameplayStatics::OpenLevel(this, FName("Lvl_Map"));
+}
+
+void APlayerCharacter::OnBlockBrokenMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if (!AbilitySystemComponent || !StaggerResetEffect) return;
+
+	AbilitySystemComponent->ApplyGameplayEffectToSelf(
+		StaggerResetEffect.GetDefaultObject(), 1.f,
+		AbilitySystemComponent->MakeEffectContext());
 }
 
 void APlayerCharacter::ApplyPerk(UPerkData* Perk)
@@ -138,10 +302,23 @@ void APlayerCharacter::ApplyPerk(UPerkData* Perk)
 	if (!Perk || !Perk->Effect) return;
 
 	FGameplayEffectContextHandle Context = AbilitySystemComponent->MakeEffectContext();
-	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(Perk->Effect, 1.0f, Context);
+	FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(Perk->Effect, 1.f, Context);
 	AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*Spec.Data.Get());
 
-	ActivePerks.Add(Perk);
+	for (int i = 0; i < Perks.Num(); i++)
+	{
+		FPerkSlot& Slot = Perks[i];
+
+		if (!Slot.bIsOccupied)
+		{
+			Slot.PerkData = Perk;
+			Slot.bIsOccupied = true;
+			Slot.SlotIndex = i;
+
+			OnPerkApplied.Broadcast(Slot);
+			break;
+		}
+	}
 }
 
 void APlayerCharacter::AttachWeapon()
@@ -156,14 +333,41 @@ void APlayerCharacter::AttachWeapon()
 	Weapon = GetWorld()->SpawnActor<AMeleeWeapon>(WeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, Params);
 	if (!Weapon) return;
 
-	Weapon->AttachToComponent(
-		GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Weapon_R");
+	// ---- ADD THIS ----
+	UE_LOG(LogTemp, Warning, TEXT(">>> AttachWeapon: PendingWeaponItemDef = %s"),
+		PendingWeaponItemDef ? *PendingWeaponItemDef->GetName() : TEXT("NULL"));
+
+	if (PendingWeaponItemDef)
+	{
+		Weapon->ItemDefinition = PendingWeaponItemDef;
+		UE_LOG(LogTemp, Warning, TEXT(">>> AttachWeapon: OVERRODE weapon def to %s"),
+			*Weapon->ItemDefinition->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT(">>> AttachWeapon: NO override, weapon keeps %s"),
+			Weapon->ItemDefinition ? *Weapon->ItemDefinition->GetName() : TEXT("NULL"));
+	}
+	// ------------------
+
+	Weapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, "Weapon_R");
+
+	if (Weapon->ItemDefinition)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AttachWeapon: loading %d runes from def %s"),
+			Weapon->ItemDefinition->WeaponData.Runes.Num(),
+			*Weapon->ItemDefinition->GetName());
+		for (URuneBase* Rune : Weapon->ItemDefinition->WeaponData.Runes)
+			if (Rune) Weapon->EquipRune(Rune);
+	}
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	AnimInstance->Montage_Play(Weapon->ItemDefinition->WeaponData.EnterCombat);
 	CombatType = Weapon->ItemDefinition->WeaponData.CombatType;
 
 	OnWeaponEquipped.Broadcast(CombatType);
+	DeathMontage = Weapon->ItemDefinition->WeaponData.Death;
+	Weapon->DisableAttackHitbox();
 }
 
 // Called every frame
@@ -172,11 +376,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateLockOn(DeltaTime);
-
-	if (AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Poisoned")))
-	{
-		UE_LOG(LogTemp,Warning,TEXT("kurrec"))
-	}
 }
 
 // Called to bind functionality to input
@@ -211,7 +410,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		Input->BindAction(LockOnAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleLockOn);
 
-		Input->BindAction(ToggleCombatAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleCombat);
+		Input->BindAction(HealAction, ETriggerEvent::Started, this, &APlayerCharacter::Heal);
 
 		TArray<FKey> HotbarKeys = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four };
 		for (int32 i = 0; i < HotbarKeys.Num(); i++)
@@ -226,7 +425,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
-void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
+void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass, int SlotIndex, UItemDefinition* SourceItemDef)
 {
 	if (Weapon)
 	{
@@ -235,9 +434,41 @@ void APlayerCharacter::EquipWeapon(TSubclassOf<AMeleeWeapon> NewWeaponClass)
 	}
 
 	WeaponClass = NewWeaponClass;
+	PendingWeaponItemDef = SourceItemDef;   // a new UPROPERTY() UItemDefinition* member
 	AttachWeapon();
+	EquippedWeaponSlotIndex = SlotIndex;
 }
 
+float APlayerCharacter::UnequipWeapon()
+{
+	if (!Weapon) return 0;
+
+	// Store reference BEFORE nulling out Weapon
+	AMeleeWeapon* WeaponToDestroy = Weapon;
+
+	// Play the exit-combat montage from the weapon being removed
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	float MontageDuration = 1.f; // default fallback
+	if (AnimInstance && WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat)
+		MontageDuration = AnimInstance->Montage_Play(
+			WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat) / 2;
+
+	// Clear weapon state now so the rest of the game knows we're unarmed
+	Weapon = nullptr;
+	WeaponClass = nullptr;
+	CombatType = ECombatType::Unarmed;
+	OnWeaponEquipped.Broadcast(CombatType);
+
+	// Destroy the weapon actor after the unequip animation plays
+	FTimerHandle UnequipTimer;
+	GetWorldTimerManager().SetTimer(UnequipTimer, [WeaponToDestroy]()
+		{
+			if (IsValid(WeaponToDestroy))
+				WeaponToDestroy->Destroy();
+		}, MontageDuration, false);
+
+	return MontageDuration;
+}
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
@@ -278,6 +509,9 @@ void APlayerCharacter::Attack()
 	if (CombatType == ECombatType::Unarmed) return;
 
 	if (AbilitySystemComponent->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Healing"))) return;
+
+	if (AbilitySystemComponent->HasMatchingGameplayTag(
 		FGameplayTag::RequestGameplayTag("State.Attacking")))
 	{
 		// Just queue, don't activate
@@ -303,6 +537,14 @@ void APlayerCharacter::Attack()
 
 void APlayerCharacter::StartBlock()
 {
+	if (!Weapon) return;
+
+	if (AbilitySystemComponent->HasMatchingGameplayTag
+		(FGameplayTag::RequestGameplayTag("State.Healing"))) return;
+
+	if (AbilitySystemComponent->HasMatchingGameplayTag
+		(FGameplayTag::RequestGameplayTag("State.Attacking"))) return;
+
 	FGameplayTagContainer TagContainer;
 	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Block")));
 	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
@@ -320,12 +562,22 @@ void APlayerCharacter::StartBlock()
 
 void APlayerCharacter::StopBlock()
 {
-	UE_LOG(LogTemp, Warning, TEXT("StopBlock called"));
 	if (!AbilitySystemComponent) return;
 
-	FGameplayTagContainer TagContainer;
-	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Block")));
-	AbilitySystemComponent->CancelAbilities(&TagContainer);
+	for (FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
+	{
+		for (UGameplayAbility* Instance : Spec.GetAbilityInstances())
+		{
+			if (UBasicBlockingAbility* Block = Cast<UBasicBlockingAbility>(Instance))
+			{
+				if (Block->IsActive())
+				{
+					Block->RequestBlockExit();
+					return;
+				}
+			}
+		}
+	}
 }
 
 void APlayerCharacter::Interact()
@@ -365,8 +617,10 @@ void APlayerCharacter::Interact()
 		{
 			if (IsValid(Hit.GetActor()) && Hit.GetActor() != this && Hit.GetActor() != Weapon)
 			{
+				UE_LOG(LogTemp,Warning, TEXT("hmm why does it go here and not down"))
 				if (AInteractable* Interactable = Cast<AInteractable>(Hit.GetActor()))
 				{
+					UE_LOG(LogTemp, Warning, TEXT("should interact"));
 					Interactable->OnInteract(this);
 				}
 			}
@@ -408,6 +662,9 @@ void APlayerCharacter::ToggleInventory()
 
 void APlayerCharacter::Dash()
 {
+	if (AbilitySystemComponent->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Healing"))) return;
+
 	FGameplayTag LockOnTag = FGameplayTag::RequestGameplayTag(FName("State.LockedOn"));
 	FGameplayTagContainer TagContainer;
 
@@ -419,30 +676,74 @@ void APlayerCharacter::Dash()
 	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
 }
 
-void APlayerCharacter::TryPlayFootsteps()
+void APlayerCharacter::Heal()
 {
-	float Speed = GetVelocity().Size();
+	FGameplayTagContainer TagContainer;
+	TagContainer.AddTag(FGameplayTag::RequestGameplayTag(FName("Ability.Heal")));
 
-	if (Speed < 10.f || GetCharacterMovement()->IsFalling())
+	AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
+}
+
+void APlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	Super::OnHealthChanged(Data);
+
+	UE_LOG(LogTemp, Warning, TEXT("Health went from %f to %f"), Data.OldValue, Data.NewValue);
+
+	if (Data.NewValue < Data.OldValue)
 	{
-		// Reschedule even when not playing, so it picks up again when moving
-		GetWorldTimerManager().SetTimer(FootstepTimerHandle, this, &APlayerCharacter::TryPlayFootsteps, FootstepInterval, false);
-		return;
+		ShowHitVignette();
+		// Get attacker from effect context
+		if (AbilitySystemComponent)
+		{
+			const FGameplayEffectModCallbackData* ModData = Data.GEModData;
+			if (ModData)
+			{
+				AActor* Attacker = ModData->EffectSpec.GetContext().GetInstigator();
+				PlayHitReaction(Attacker);
+			}
+		}
 	}
+}
 
-	float Interval = FMath::GetMappedRangeValueClamped(
-		FVector2D(0.f, 600.f),
-		FVector2D(0.5f, 0.25f),
-		Speed
-	);
+void APlayerCharacter::ShowHitVignette()
+{
+	if (!HitVignetteMID) return;
 
-	GetWorldTimerManager().SetTimer(FootstepTimerHandle, this, &APlayerCharacter::TryPlayFootsteps, Interval, false);
-	PlayFootstepSounds();
+	// Set intensity to full
+	HitVignetteMID->SetScalarParameterValue(FName("HitIntensity"), 1.0f);
+
+	// Fade it out over time — capture a weak ptr so the timer can't touch a dead actor
+	TWeakObjectPtr<APlayerCharacter> WeakThis(this);
+	GetWorldTimerManager().SetTimer(HitVignetteTimer, [WeakThis]()
+		{
+			APlayerCharacter* Self = WeakThis.Get();
+			if (!Self || !Self->HitVignetteMID)
+			{
+				return;   // actor or MID gone — bail (timer will be cleared below or on destroy)
+			}
+
+			float CurrentIntensity;
+			Self->HitVignetteMID->GetScalarParameterValue(FName("HitIntensity"), CurrentIntensity);
+
+			if (CurrentIntensity > 0.f)
+			{
+				Self->HitVignetteMID->SetScalarParameterValue(
+					FName("HitIntensity"), CurrentIntensity - 0.05f);
+			}
+			else
+			{
+				Self->GetWorldTimerManager().ClearTimer(Self->HitVignetteTimer);
+			}
+		}, 0.016f, true);
 }
 
 void APlayerCharacter::PlayHitReaction(AActor* Attacker)
 {
-	if (!Attacker || !Weapon) return;
+	if (AbilitySystemComponent->HasMatchingGameplayTag(
+		FGameplayTag::RequestGameplayTag("State.Dead"))) return;
+
+	if (!Attacker) return;   // only need an attacker now, not a weapon
 
 	FVector ToAttacker = Attacker->GetActorLocation() - GetActorLocation();
 	ToAttacker.Z = 0;
@@ -453,27 +754,49 @@ void APlayerCharacter::PlayHitReaction(AActor* Attacker)
 
 	UE_LOG(LogTemp, Warning, TEXT("DotForward: %.2f | DotRight: %.2f"), DotForward, DotRight);
 
+	// Pick the montage set: weapon's if armed, defaults if not
+	UAnimMontage* MontageF;
+	UAnimMontage* MontageB;
+	UAnimMontage* MontageL;
+	UAnimMontage* MontageR;
+
+	if (Weapon)
+	{
+		const FWeaponData& WeaponData = Weapon->ItemDefinition->WeaponData;
+		MontageF = WeaponData.HitF;
+		MontageB = WeaponData.HitB;
+		MontageL = WeaponData.HitL;
+		MontageR = WeaponData.HitR;
+	}
+	else
+	{
+		MontageF = DefaultHitF;
+		MontageB = DefaultHitB;
+		MontageL = DefaultHitL;
+		MontageR = DefaultHitR;
+	}
+
+	// Pick direction
 	UAnimMontage* HitMontage = nullptr;
-	FWeaponData WeaponData = Weapon->ItemDefinition->WeaponData;
 
 	if (DotForward > 0.5f)
 	{
-		HitMontage = WeaponData.HitF;
+		HitMontage = MontageF;
 		UE_LOG(LogTemp, Warning, TEXT("Hit direction: FRONT"));
 	}
 	else if (DotForward < -0.5f)
 	{
-		HitMontage = WeaponData.HitB;
+		HitMontage = MontageB;
 		UE_LOG(LogTemp, Warning, TEXT("Hit direction: BACK"));
 	}
 	else if (DotRight < 0.f)
 	{
-		HitMontage = WeaponData.HitL;
+		HitMontage = MontageL;
 		UE_LOG(LogTemp, Warning, TEXT("Hit direction: RIGHT"));
 	}
 	else
 	{
-		HitMontage = WeaponData.HitR;
+		HitMontage = MontageR;
 		UE_LOG(LogTemp, Warning, TEXT("Hit direction: LEFT"));
 	}
 
@@ -515,6 +838,16 @@ void APlayerCharacter::EquipRuneToWeapon(UItemDefinition* RuneDef)
 	}
 
 	Weapon->EquipRune(Rune);
+}
+
+void APlayerCharacter::EnableHitbox() const
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+}
+
+void APlayerCharacter::DisableHitbox() const
+{
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::Type::NoCollision);
 }
 
 void APlayerCharacter::ToggleLockOn()
@@ -680,26 +1013,67 @@ void APlayerCharacter::UpdateLockOn(float DeltaTime)
 		}
 	}
 
-	// Rotate camera toward current target
 	FVector DirectionToTarget = LockOnTarget->GetActorLocation() - GetActorLocation();
 	FRotator TargetRotation = DirectionToTarget.Rotation();
 	FRotator NewRotation = FMath::RInterpTo(GetControlRotation(), TargetRotation, DeltaTime, 20.f);
 	NewRotation.Roll = 0;
 	NewRotation.Pitch += LockOnOffsetZ;
+	GetController()->SetControlRotation(NewRotation);
 
-	FRotator CurrentRotation = GetActorRotation();
-	FRotator NewCharacterRotation = FMath::RInterpTo(
-		CurrentRotation,
-		TargetRotation,
-		DeltaTime,
-		10.f // rotation speed, tweak this
-	);
+
+	bool bDodging = AbilitySystemComponent->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("State.Dodging"));
+
+	if (bDodging)
+	{
+		if (bDodgeDirectionLocked) return;
+		bDodgeDirectionLocked = true;
+
+		FVector Input = GetCharacterMovement()->GetLastInputVector();
+		FVector ToTarget = DirectionToTarget; ToTarget.Z = 0.f; ToTarget.Normalize();
+		FVector RightOfTarget = FVector::CrossProduct(FVector::UpVector, ToTarget);
+
+		FVector DodgeDir;
+		if (Input.IsNearlyZero())
+		{
+			DodgeDir = -ToTarget;
+			UE_LOG(LogTemp, Warning, TEXT("DODGE: no input -> backstep"));
+		}
+		else
+		{
+			Input.Z = 0.f; Input.Normalize();
+			float fwd = FVector::DotProduct(Input, ToTarget);
+			float right = FVector::DotProduct(Input, RightOfTarget);
+			UE_LOG(LogTemp, Warning, TEXT("DODGE: Input=%s fwd=%.2f right=%.2f"),
+				*Input.ToString(), fwd, right);
+
+			if (FMath::Abs(right) > FMath::Abs(fwd))
+			{
+				// Lateral dodge, but biased toward the enemy so it arcs inward (diagonal)
+				FVector LateralDir = (right > 0.f) ? RightOfTarget : -RightOfTarget;
+				// Blend in some "toward target" — tune InwardBias 0..1
+				float InwardBias = 0.6f; // 0 = pure sideways, 1 = straight at enemy
+				DodgeDir = (LateralDir * (1.f - InwardBias) + ToTarget * InwardBias).GetSafeNormal();
+			}
+			else
+			{
+				DodgeDir = (fwd > 0.f) ? ToTarget : -ToTarget;
+			}
+		}
+		UE_LOG(LogTemp, Warning, TEXT("DODGE: chosen DodgeDir=%s"), *DodgeDir.ToString());
+
+		FRotator DodgeRot = DodgeDir.Rotation();
+		DodgeRot.Pitch = 0.f; DodgeRot.Roll = 0.f;
+		SetActorRotation(DodgeRot);
+		return;
+	}
+	else
+		bDodgeDirectionLocked = false;
+
+	// Normal locked-on body rotation toward target
+	FRotator NewCharacterRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 10.f);
 	NewCharacterRotation.Pitch = 0.f;
 	NewCharacterRotation.Roll = 0.f;
-
 	SetActorRotation(NewCharacterRotation);
-	GetController()->SetControlRotation(NewRotation);
-	
 }
 
 void APlayerCharacter::UseHotbarSlot(int32 Index)
@@ -710,32 +1084,33 @@ void APlayerCharacter::UseHotbarSlot(int32 Index)
 	TSubclassOf<AMeleeWeapon> NewWeaponClass = HotbarSlots[Index]->GetWeaponClass();
 	if (!NewWeaponClass) return;
 
+	// Pressing the slot of the already-equipped weapon → unequip
 	if (Weapon && Weapon->ItemDefinition == HotbarSlots[Index])
 	{
-		// Store reference BEFORE nulling out Weapon
-		AMeleeWeapon* WeaponToDestroy = Weapon;
-
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		float MontageDuration = 1.f; // default fallback
-		if (AnimInstance && WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat)
-			MontageDuration = AnimInstance->Montage_Play(WeaponToDestroy->ItemDefinition->WeaponData.ExitCombat) / 2;
-
-		// Now safe to null out
-		Weapon = nullptr;
-		WeaponClass = nullptr;
-		CombatType = ECombatType::Unarmed;
-		OnWeaponEquipped.Broadcast(CombatType);
-
-		FTimerHandle UnequipTimer;
-		GetWorldTimerManager().SetTimer(UnequipTimer, [WeaponToDestroy]()
-			{
-				if (IsValid(WeaponToDestroy))
-					WeaponToDestroy->Destroy();
-			}, MontageDuration, false);
-
+		UnequipWeapon();
 		return;
 	}
 
-	EquipWeapon(NewWeaponClass);
+	EquipWeapon(NewWeaponClass, Index, HotbarSlots[Index]);
 }
 
+void APlayerCharacter::EquipHealingItem(UItemDefinition* ItemDef, int SlotIndex)
+{
+	if (!ItemDef) return;
+	if (ItemDef->ItemType != EItemType::Consumable) return;   // only consumables
+
+	HealingItem = ItemDef;
+	HealingItemSlotIndex = SlotIndex;
+}
+
+void APlayerCharacter::UnequipHealingItem()
+{
+	HealingItem = nullptr;
+}
+
+void APlayerCharacter::ConsumeHealItem()
+{
+	if (!HealingItem || !AbilitySystemComponent) return;
+
+	GetGameInstance()->GetSubsystem<UInventorySubsystem>()->GetInventory(this)->RemoveFromItemQuantity(HealingItemSlotIndex, 1);
+}

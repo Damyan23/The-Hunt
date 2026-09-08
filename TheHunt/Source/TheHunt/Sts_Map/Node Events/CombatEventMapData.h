@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "MapEventData.h"
+#include "Sts_Map/CombatEnterWidget.h"
 #include "CombatEventMapData.generated.h"
 
 /**
@@ -18,4 +19,8 @@ class THEHUNT_API UCombatMapData : public UMapEventData
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	TSoftObjectPtr<UWorld> CombatLevel;
+
+	// In CombatEventMapData.h
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	TSubclassOf<UCombatEnterWidget> CombatWidgetClass;
 };

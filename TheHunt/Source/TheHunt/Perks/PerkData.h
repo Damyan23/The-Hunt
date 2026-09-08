@@ -26,7 +26,4 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Perk")
     TSubclassOf<UGameplayEffect> Effect;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Perk")
-    float Duration = 30.f;
 };

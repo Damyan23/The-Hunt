@@ -6,12 +6,25 @@
 void AInteractable::OnConstruction(const FTransform& Transform)
 {
     Super::OnConstruction(Transform);
+}
 
-    ItemDefinition = UItemFunctionLibrary::FindItemById(ItemID);
+void AInteractable::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (HasAnyFlags(RF_ClassDefaultObject)) return;
+    if (!GetWorld() || !GetWorld()->IsGameWorld()) return;
+
+    if (!ItemDefinition)
+    {
+        UItemDefinition* Original = UItemFunctionLibrary::FindItemById(ItemID);
+        if (Original && GetGameInstance())
+            ItemDefinition = DuplicateObject<UItemDefinition>(Original, GetGameInstance());
+    }
 }
 
 AInteractable::AInteractable()
-{
+{   
     PrimaryActorTick.bCanEverTick = false;
 }
 
@@ -37,6 +50,6 @@ void AInteractable::AddToInventory(AActor* Interactor)
         return;
     }
 
-    Subsystem->AddItemToActor(Interactor, ItemID, ItemDefinition->CurrentQuantity);
+    Subsystem->AddItemToActor(Interactor, ItemDefinition, ItemDefinition->CurrentQuantity);
     AActor::Destroy();
 }

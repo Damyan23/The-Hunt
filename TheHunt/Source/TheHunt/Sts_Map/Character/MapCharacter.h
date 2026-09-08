@@ -3,31 +3,81 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TheHuntGameInstance.h"
 #include "Sts_Map/MapManager.h"
 #include "Sts_Map/Nodes/MapNode.h"
 #include "GameFramework/Character.h"
 #include "MapCharacter.generated.h"
 
 UCLASS()
-class THEHUNT_API AMapCharacter : public ACharacter
+class THEHUNT_API AMapCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
 	AMapCharacter();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
+	//============================================================
+	//  LIFECYCLE
+	//============================================================
+protected:
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	//============================================================
+	//  INITIALIZATION / SETUP
+	//============================================================
+protected:
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void SetupMovement();
+	void FindMapManager();
+	void PlaceOnCurrentNode();
+
+	//============================================================
+	//  SAVA DATA
+	//============================================================
+	bool LoadSaveData();
+public:
+	bool SaveData();
+
+	//============================================================
+	//  INVENTORY
+	//============================================================
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UInventoryComponent> InventoryComponent;
+
+	//============================================================
+	//  ABILITY SYSTEM
+	//============================================================
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	TObjectPtr<UBaseAttributeSet> BaseAttributes;
+
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	// ============================================================
+	// PERKS
+	// ============================================================
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TArray<FPerkSlot> Perks;
+
+	UFUNCTION(BlueprintCallable)
+	void ApplyPerk(UPerkData* Perk);
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPerkApplied, FPerkSlot, PerkSlot);
+
+	UPROPERTY(BlueprintAssignable, Category = "Perks")
+	FOnPerkApplied OnPerkApplied;
+
+	//============================================================
+	//  MAP REFERENCES
+	//============================================================
+public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<AMapManager> Map;
 
@@ -37,6 +87,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	AMapNode* SelectedNode;
 
+
+	//============================================================
+	//  NODE TRAVEL
+	//============================================================
+public:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsMoving = false;
 
@@ -46,11 +101,66 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void TravelToNode(AMapNode* TargetNode);
 
+
+	//============================================================
+	//  INTERNAL TRAVEL STATE
+	//============================================================
 private:
 	float TravelAlpha = 0.f;
 	FVector TravelStart;
 	FVector TravelEnd;
-	AMapNode* PendingNode = nullptr;
 
+	UPROPERTY()
+	TObjectPtr<AMapNode> PendingNode = nullptr;
+
+	//============================================================
+	//  ATTRIBUTE CHANGE DELEGATES (Blueprint-assignable)
+	//============================================================
+public:
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, float, HealthPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnHealthChanged OnHealthChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChanged, float, StaminaPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnStaminaChanged OnStaminaChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaggerChanged, float, StaggerPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnStaggerChanged OnStaggerChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxHealthChanged, float, HealthPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnMaxHealthChanged OnMaxHealthChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxStaminaChanged, float, StaminaPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnMaxStaminaChanged OnMaxStaminaChangedEvent;
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxStaggerChanged, float, StaggerPercent);
+	UPROPERTY(BlueprintAssignable, Category = "Attributes")
+	FOnMaxStaggerChanged OnMaxStaggerChangedEvent;
+
+protected:
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
+	virtual void OnStaminaChanged(const FOnAttributeChangeData& Data);
+	virtual void OnStaggerChanged(const FOnAttributeChangeData& Data);
+
+	virtual void OnMaxHealthChanged(const FOnAttributeChangeData& Data);
+	virtual void OnMaxStaminaChanged(const FOnAttributeChangeData& Data);
+	virtual void OnMaxStaggerChanged(const FOnAttributeChangeData& Data);
+
+
+	//============================================================
+	//  CASHED REFERENCES
+	//============================================================
+private:
+	UPROPERTY()
 	TObjectPtr<APlayerController> PC;
+
+	UPROPERTY()
+	TObjectPtr<UTheHuntGameInstance> GI;
+
+	UPROPERTY()
+	TObjectPtr<UItemDefinition> ItemDefinition;
 };

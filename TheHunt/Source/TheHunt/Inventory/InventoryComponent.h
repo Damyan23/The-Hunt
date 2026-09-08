@@ -31,15 +31,22 @@ protected:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, FInventorySlot, InventorySlot);
 
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSlotMoved, FInventorySlot, InventorySlot);
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryLoaded);
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	/*
 	UFUNCTION(BlueprintCallable)
 	void AddItem(FString ItemID, int32 Amount);
+	*/
 	UFUNCTION(BlueprintCallable)
 	void AddItemUsingItemDefinition(UItemDefinition* ItemDefinition, float Amount);
 	void RemoveItem(FInventorySlot* Slot);
 	void UseItem(const int32 Index);	
+
+	UFUNCTION(BlueprintCallable)
+	void EquipRuneToWeapon(URuneBase* Rune, int32 SlotIndex);
 
 	UFUNCTION(BlueprintCallable)
 	void DropItem(UPARAM(ref) FInventorySlot& Slot);
@@ -50,10 +57,11 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnItemAdded OnItemRemoved;
 
-
 	UPROPERTY(BlueprintAssignable)
 	FOnSlotMoved OnSlotMoved;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnInventoryLoaded OnInventoryLoaded;
 	// Bound event
 	UPROPERTY()
 	FOnSlotClickedWithKey OnSlotClickedWithKey;
@@ -80,6 +88,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveFromItemQuantity(int SlotIndex, float Amount);
+
+	void LoadInventory(const TArray<FInventorySlot>& LoadedSlots);
 private:
 	int CheckForEmptySlots();
 	int CheckForExistingItemInSlot(UItemDefinition* ItemDefinition);

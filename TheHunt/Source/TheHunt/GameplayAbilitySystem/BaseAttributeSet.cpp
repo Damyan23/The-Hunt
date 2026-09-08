@@ -4,6 +4,7 @@
 #include "BaseAttributeSet.h"
 
 #include "GameplayEffectExtension.h"
+#include "InputPlayer/PlayerCharacter.h"
 
 UBaseAttributeSet::UBaseAttributeSet()
 {
@@ -24,6 +25,7 @@ void UBaseAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
         // Clamp Health between 0 and MaxHealth
         float CurrentMaxHealth = GetMaxHealth();
         SetHealth(FMath::Clamp(GetHealth(), 0.0f, CurrentMaxHealth));
+        
     }
 
     if (Data.EvaluatedData.Attribute == GetMaxHealthAttribute())
@@ -32,6 +34,29 @@ void UBaseAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectMo
         float CurrentHealth = GetHealth();
         float NewMaxHealth = GetMaxHealth();
         SetHealth(FMath::Clamp(CurrentHealth, 0.0f, NewMaxHealth));
+        UE_LOG(LogTemp, Warning, TEXT("new current health"))
     }
+
+    if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
+    {
+        // Clamp stamina to max
+        float NewStamina = FMath::Clamp(GetStamina(), 0.f, GetMaxStamina());
+        SetStamina(NewStamina);
+    }
+}
+
+bool UBaseAttributeSet::PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data)
+{
+    if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
+    {
+        if (GetStamina() >= GetMaxStamina() && Data.EvaluatedData.Magnitude > 0.f)
+            return false;
+
+        // Block regen if delay is active
+        ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwningActor());
+        if (Character && !Character->bStaminaRegenAllowed && Data.EvaluatedData.Magnitude > 0.f)
+            return false;
+    }
+    return true;
 }
 

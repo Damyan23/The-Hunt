@@ -4,6 +4,7 @@
 #include "EnemyAIController.h"
 #include "Components/CapsuleComponent.h"
 #include "Items/Weapon/MeleeWeapon.h"
+#include "Kismet/GameplayStatics.h"
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -41,6 +42,17 @@ void AEnemyCharacter::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
 }
 
+void AEnemyCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+    Super::OnHealthChanged(Data);
+
+    if (AEnemyAIController* AIC = Cast<AEnemyAIController>(GetController()))
+    {
+        if (APawn* Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+            AIC->ForceSeeActor(Player);
+    }
+}
+
 void AEnemyCharacter::OnDeath()
 {
     Super::OnDeath();
@@ -70,6 +82,29 @@ void AEnemyCharacter::OnDeath()
     }
 }
 
+void AEnemyCharacter::OnGuardBroken()
+{
+    Super::OnGuardBroken();
+
+    if (StaggerMontage)
+        GetMesh()->GetAnimInstance()->Montage_Play(StaggerMontage);
+
+    FTimerHandle StunTimer;
+    GetWorldTimerManager().SetTimer(StunTimer, [this]()
+        {
+            UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+            if (StaggerMontage && AnimInstance)
+                AnimInstance->Montage_JumpToSection(FName("StaggerExit"), StaggerMontage);
+
+            AbilitySystemComponent->RemoveLooseGameplayTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag("State.Stunned")));
+
+            AbilitySystemComponent->ApplyGameplayEffectToSelf(
+                StaggerResetEffect.GetDefaultObject(), 1.f,
+                AbilitySystemComponent->MakeEffectContext());
+
+        }, StunDuration, false);
+}
+
 void AEnemyCharacter::OpenParryWindow()
 {
     AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Parryable")));
@@ -87,7 +122,6 @@ bool AEnemyCharacter::SetStagger()
 
     if (CurrentStagger >= MaxStagger)
     {
-        UE_LOG(LogTemp, Warning, TEXT("sDADASDAS"));
         AbilitySystemComponent->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag(FName("State.Staggered")));
         return true;
     }
